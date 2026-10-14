@@ -192,7 +192,9 @@ export class ProceduralCharacterRig {
         bobY = Math.round(1.2 * scaleUnit);
         torsoLeanX = -Math.round(fx * .8 * scaleUnit);
         leftArmForward = 3.6 * scaleUnit;
-        leftArmRaiseY = -Math.round(2.4 * scaleUnit);
+        // Keep the guarding off-hand visibly above the idle pose even when
+        // facing South, whose forward projection otherwise lowers the hand.
+        leftArmRaiseY = -Math.round(5.2 * scaleUnit);
         rightArmForward = -1.5 * scaleUnit;
         rightArmRaiseY = -Math.round(1.5 * scaleUnit);
         weaponSwingAngleDeg = -40;
