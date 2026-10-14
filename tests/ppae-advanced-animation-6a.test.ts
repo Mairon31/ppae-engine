@@ -81,8 +81,9 @@ describe('PPAE 2.0 Phase 6A — 28-action animation library and 8-direction rig'
     expect(block.joints.hand_l.y).not.toBe(idle.joints.hand_l.y);
     expect(carrying.joints.hand_l.y).not.toBe(idle.joints.hand_l.y);
     expect(carrying.joints.hand_r.y).not.toBe(idle.joints.hand_r.y);
-    expect(pose('sprint',1,6).joints.foot_r.x).not.toBe(
-      pose('sneak',1,6).joints.foot_r.x);
+    // Facing South projects forward stride onto the screen Y axis, not X.
+    expect(pose('sprint',1,6).joints.foot_r.y).not.toBe(
+      pose('sneak',1,6).joints.foot_r.y);
   });
 
   it('emits frame-specific profession, combat and magical events and returns to sprint', () => {
