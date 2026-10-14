@@ -23,9 +23,9 @@ import {
   BOSS_IDS, CHARACTER_ACTIONS, CROP_STAGES, CREATURE_ACTIONS,
   EIGHT_DIRECTIONS, formatPlaygroundLabel, getPlaygroundSection,
   PLAYGROUND_OPTIONS,
-  PLAYGROUND_SECTIONS, PlaygroundSectionId, TREE_STAGES, AUTOTILE_MASKS
+  PLAYGROUND_SECTIONS, PlaygroundSectionId, TREE_STAGES
 } from './playground-catalog';
-import { AVATAR_FIELDS, AVATAR_VARIANTS, generateAvatarPreset, shadeHex } from './avatar-lab';
+import { AVATAR_FIELDS, generateAvatarPreset, shadeHex } from './avatar-lab';
 
 const byId = <T extends HTMLElement>(id: string): T => {
   const element = document.getElementById(id);
