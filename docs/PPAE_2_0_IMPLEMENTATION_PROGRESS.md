@@ -29,7 +29,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
 | 10 — Weather, Lighting & VFX Overhaul | VERIFIED | Sombras solares direccionales, relámpagos ramificados, bancos de niebla orgánicos, 16 emisores y cuatro formas de partícula; QA de navegador dirigida |
 | 11 — Procedural Art Quality Evaluator | VERIFIED | 10 referencias con huellas RGBA fijas, QA de siluetas, luz/materiales, ruido, paletas y costuras; 200 tests y Browser QA en el commit de código |
-| 12 — Interactive Showcase, Visual Inspector & Production Integration | IMPLEMENTED — CI/QA PENDING | Render compuesto con Y-sorting, sombras reales, fachada PPAEEngine, 32 laboratorios, inspección 4/6/8/16/32, telemetría y golden registry |
+| 12 — Interactive Showcase, Visual Inspector & Production Integration | VERIFIED (TECHNICAL) | Render compuesto con Y-sorting, sombras reales, fachada PPAEEngine, 32 laboratorios, inspección 4/6/8/16/32, telemetría y golden registry |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -494,3 +494,12 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 
 - Corrected mobile Portuguese browser QA: navigation is intentionally collapsed in the 390px viewport, so the Playwright test now opens `#toggle-sidebar` before clicking the Art Quality Inspector, and asserts it closes afterward. Earlier CI passed 203 tests and Pages deployment; the previous browser run tested the first 32 labs and Phase 12 exports successfully but failed when clicking a hidden nav item. This is a test interaction issue, not an omitted lab. Final workflows pending.
 - Updated SEO meta, EN/ES/PT-BR marketing metadata, README and Playground guide/coverage counts to **32**.
+
+### Phase 12 — Final verification
+
+- GitHub CI: https://github.com/Mairon31/ppae-engine/actions/runs/38653590264 — 36 suites and 204 tests passed, build and package checks passed.
+- Chromium: https://github.com/Mairon31/ppae-engine/actions/runs/38653590372 — 32 laboratories passed, including production scene/quality inspectors, mobile Portuguese navigation and JSON exports.
+- GitHub Pages: https://github.com/Mairon31/ppae-engine/actions/runs/38653590416 — deployment successful.
+- npm package dry run: 53 files, 140242 bytes compressed; not published. Website and docs excluded.
+- The technical phase is verified. Full manual artistic review and broader device performance checks remain pending.
+- PR #2 remains open; master unchanged.
