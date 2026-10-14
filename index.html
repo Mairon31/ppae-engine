@@ -51,6 +51,7 @@
           <div class="preview-footer"><span><span class="live-dot"></span> <strong id="engine-live">LISTO</strong></span><span id="render-stats">—</span><span id="fps-counter">— FPS</span></div>
         </section>
         <div class="section-heading"><div><div class="eyebrow">CATÁLOGO EXPLORABLE</div><h2 id="gallery-title">Variaciones disponibles</h2></div><div class="gallery-nav"><span id="gallery-range">—</span><button type="button" id="gallery-prev" aria-label="Página anterior">←</button><button type="button" id="gallery-next" aria-label="Página siguiente">→</button></div></div>
+        <div class="catalog-tools"><label class="catalog-search-label" for="catalog-search">Buscar en el catálogo<input id="catalog-search" type="search" placeholder="Filtrar variantes y recursos…" autocomplete="off"/></label><span id="catalog-summary" class="catalog-summary"></span></div>
         <div id="cards-container" class="cards-grid" aria-live="polite"></div>
         <section class="bottom-info"><div><strong>Sprites generados, no mockups</strong><p>Las muestras utilizan los generadores públicos de PPAE y semilla determinista. El visor no altera el repositorio ni el mundo guardado.</p></div><div class="bottom-actions"><button type="button" id="download-atlas" class="secondary-button">Exportar spritesheet</button><button type="button" id="download-json" class="secondary-button">Metadatos JSON</button></div></section>
       </main>
@@ -77,6 +78,8 @@
         <label>Estado / etapa<select id="stage-select"></select></label>
         <label>Complexión / edad<select id="age-select"><option value="adult">Adulto</option><option value="juvenile">Juvenil</option><option value="alpha_elder">Alfa / anciano</option></select></label>
         <label>Condición<select id="health-select"><option value="healthy">Normal</option><option value="wounded">Herido</option><option value="corrupted">Corrupto</option></select></label>
+        <section id="avatar-lab-controls" class="extended-inspector" aria-label="Personalización completa del avatar" hidden></section>
+        <section id="system-lab-controls" class="extended-inspector" aria-label="Opciones avanzadas del generador" hidden></section>
         <div class="control-section-title">ESCENA <span>04</span></div>
         <label>Hora del día<select id="time-select"><option value="noon">Mediodía</option><option value="dawn">Amanecer</option><option value="dusk">Atardecer</option><option value="night">Noche</option></select></label>
         <label>Clima<select id="weather-select"><option value="clear">Despejado</option><option value="rain">Lluvia</option><option value="snow">Nieve</option><option value="thunderstorm">Tormenta</option></select></label>
