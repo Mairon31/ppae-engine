@@ -177,3 +177,33 @@
 .studio .studio-top-home .px-icon,.studio .studio-home-link .px-icon{color:var(--accent)}
 .studio .nav-link:focus-visible,.studio .icon-button:focus-visible,.studio .gallery-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:520px){.lp-feature-icon .px-icon{width:48px;height:48px}.lp-ticker-content .px-icon{margin:0 12px}}
+
+/* EN / ES / PT product language controls — shared by both routes. */
+.site-language-control{
+  display:inline-flex;align-items:center;gap:8px;
+  white-space:nowrap;font:8px/1.5 "Press Start 2P",monospace;
+  color:#caff70;flex-shrink:0;
+}
+.site-language-control select{
+  font:600 14px/1.2 "Pixelify Sans",system-ui,sans-serif;
+  color:#edf4ed;background:#1b2b42;
+  border:2px solid #7186a0;border-radius:2px;
+  padding:8px 22px 8px 8px;
+  max-width:140px;min-height:37px;cursor:pointer;
+}
+.site-language-control select:focus-visible{outline:2px solid #caff70;outline-offset:3px}
+.studio .top-actions .site-language-control select{
+  border:1px solid #6f85a4;max-width:115px;
+}
+@media(max-width:780px){
+  .lp-header .site-language-control{font-size:0;gap:0}
+  .lp-header .site-language-control select{max-width:100px;padding:7px 3px;min-height:37px}
+}
+@media(max-width:660px){
+  .studio .top-actions .site-language-control{font-size:0;gap:0}
+  .studio .top-actions .site-language-control select{max-width:94px;min-width:72px;padding:5px 2px;min-height:33px}
+}
+@media(max-width:380px){
+  .lp-header .site-language-control select{max-width:80px}
+  .studio .top-actions .site-language-control select{max-width:76px}
+}
