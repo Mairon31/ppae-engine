@@ -13,6 +13,15 @@ interface PhaserTextureManagerLike {
 
 const registeredArtifacts = new WeakMap<PhaserTextureManagerLike, Map<string, GeneratedAssetArtifact>>();
 
+function haveSamePixelData(left: Uint8ClampedArray, right: Uint8ClampedArray): boolean {
+  if (left === right) return true;
+  if (left.byteLength !== right.byteLength) return false;
+  for (let i = 0; i < left.length; i++) {
+    if (left[i] !== right[i]) return false;
+  }
+  return true;
+}
+
 export interface PhaserTextureRegistrationResult {
   readonly textureKey: string;
   readonly success: boolean;
@@ -49,9 +58,9 @@ export class PhaserPPAEAdapter {
       const registered = registeredArtifacts.get(this.textureManager)?.get(textureKey);
       const sameArtifact = registered === artifact || (
         registered?.metadata.cacheKey === artifact.metadata.cacheKey
-        && registered.pixels === artifact.pixels
         && registered.metadata.texelWidth === texelWidth
         && registered.metadata.texelHeight === texelHeight
+        && haveSamePixelData(registered.pixels, artifact.pixels)
       );
       return { textureKey, success: sameArtifact };
     }

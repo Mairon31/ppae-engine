@@ -203,8 +203,12 @@ describe('PPAE runtime hardening', () => {
       .toBe(true);
     expect(successfulAdapter.registerArtifactAsPhaserCanvasTexture('ok', generated).success)
       .toBe(true);
+    const identicalPixels = { ...generated, pixels: new Uint8ClampedArray(generated.pixels) };
+    expect(successfulAdapter.registerArtifactAsPhaserCanvasTexture('ok', identicalPixels).success)
+      .toBe(true);
     expect(successfulCreateCalls).toBe(1);
     const changedPixels = { ...generated, pixels: new Uint8ClampedArray(generated.pixels) };
+    changedPixels.pixels[0] = changedPixels.pixels[0] === 255 ? 254 : 255;
     expect(successfulAdapter.registerArtifactAsPhaserCanvasTexture('ok', changedPixels).success)
       .toBe(false);
     expect(writtenPixels).toEqual(generated.pixels);
