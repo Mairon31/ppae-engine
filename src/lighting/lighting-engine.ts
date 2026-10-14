@@ -186,36 +186,47 @@ export class PixelPerfectLightingEngine {
   } {
     const shadowVector = this.resolveSolarShadowVector(hour24, isUnderground);
     const texelsPerLogical = profile.canonicalTileTexels / profile.logicalTileUnits;
+    const darkenFactor = 1 - shadowVector.shadowAlpha / 255;
     let renderedShadowPixels = 0;
 
-    const darkenFactor = 1 - shadowVector.shadowAlpha / 255;
-
+    // Rasterize a swept, tapered silhouette once per pixel/caster. Repeatedly
+    // darkening overlapping line strokes produced near-black stripes.
     for (const caster of casters) {
-      const baseScreenX = Math.round((caster.worldX - cameraWorldRect.x) * texelsPerLogical);
-      const baseScreenY = Math.round((caster.worldY - cameraWorldRect.y) * texelsPerLogical);
-      const shadowLengthPx = Math.max(
-        2,
-        Math.round(caster.heightTexels * 0.55 * shadowVector.lengthMultiplier)
-      );
-      const rx = Math.max(2, caster.baseRadiusTexels);
+      if (!Number.isFinite(caster.worldX) || !Number.isFinite(caster.worldY) ||
+          !Number.isFinite(caster.baseRadiusTexels) || !Number.isFinite(caster.heightTexels) ||
+          caster.baseRadiusTexels <= 0 || caster.heightTexels <= 0) continue;
+      const bx = Math.round((caster.worldX - cameraWorldRect.x) * texelsPerLogical);
+      const by = Math.round((caster.worldY - cameraWorldRect.y) * texelsPerLogical);
+      const length = Math.max(2, Math.round(caster.heightTexels * 0.55 *
+        shadowVector.lengthMultiplier));
+      const vx = shadowVector.dirX * length;
+      const vy = shadowVector.dirY * length;
+      const lenSq = Math.max(0.001, vx * vx + vy * vy);
+      const ex = bx + vx, ey = by + vy;
+      const spread = Math.max(2, caster.baseRadiusTexels);
+      const minX = Math.max(0, Math.floor(Math.min(bx, ex) - spread - 2));
+      const maxX = Math.min(sceneBuffer.width - 1, Math.ceil(Math.max(bx, ex) + spread + 2));
+      const minY = Math.max(0, Math.floor(Math.min(by, ey) - spread - 2));
+      const maxY = Math.min(sceneBuffer.height - 1, Math.ceil(Math.max(by, ey) + spread + 2));
 
-      for (let step = 1; step <= shadowLengthPx; step++) {
-        const t = step / shadowLengthPx;
-        const cx = Math.round(baseScreenX + shadowVector.dirX * step);
-        const cy = Math.round(baseScreenY + shadowVector.dirY * step);
-        const stepRx = Math.max(1, Math.round(rx * (1 - t * 0.45)));
-
-        for (let dx = -stepRx; dx <= stepRx; dx++) {
-          const px = cx + dx;
-          const py = cy;
-          if (!sceneBuffer.inBounds(px, py)) continue;
-
-          // Dithering Bayer 4x4 en el tercio final de la sombra (penumbra)
-          if (t > 0.68 && BAYER_4X4[py & 3][px & 3] > 0.1) continue;
-
-          const orig = sceneBuffer.getPixel(px, py);
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const rawT = ((x - bx) * vx + (y - by) * vy) / lenSq;
+          // Cap the shadow at both ends; no artificial projected rectangles.
+          if (rawT < -0.075 || rawT > 1.06) continue;
+          const t = Math.max(0, Math.min(1, rawT));
+          const nearX = bx + t * vx, nearY = by + t * vy;
+          const radial = Math.hypot(x - nearX, y - nearY);
+          const radius = spread * (1 - t * 0.4);
+          if (radial > radius) continue;
+          const edge = (radius - radial) / Math.max(1, radius * 0.35);
+          const tail = t > 0.72 ? Math.max(0.15, (1 - t) / 0.28) : 1;
+          const coverage = Math.min(1, edge) * tail;
+          // Bayer table is normalized [-0.5, +0.5]; edge coverage is [0,1].
+          if (coverage <= BAYER_4X4[y & 3][x & 3] + 0.5) continue;
+          const orig = sceneBuffer.getPixel(x, y);
           if (orig.a === 0) continue;
-          sceneBuffer.setPixel(px, py, {
+          sceneBuffer.setPixel(x, y, {
             r: Math.round(orig.r * darkenFactor),
             g: Math.round(orig.g * darkenFactor),
             b: Math.round(orig.b * darkenFactor),
@@ -225,7 +236,6 @@ export class PixelPerfectLightingEngine {
         }
       }
     }
-
     return { shadowVector, renderedShadowPixels };
   }
 

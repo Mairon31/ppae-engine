@@ -12,6 +12,10 @@ import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { pointInLogicalRect } from '../interiors/portal-system';
 
+const BAYER_FOG_4X4 = [
+  [0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]
+] as const;
+
 export const DEFAULT_WEATHER_STATES: Readonly<Record<WeatherConditionId, WeatherVisualState>> = {
   clear: {
     schemaVersion: PPAE_SCHEMA_VERSION,
@@ -312,42 +316,39 @@ export class WeatherAndWindSystem {
       }
     }
 
-    // 2. Niebla meteorológica multicapa con ondulación orgánica (sin rejilla rígida ni blur)
+    // Two real depth layers of pixel fog. Factor x/y waves so trig complexity
+    // is O(width + height), rather than evaluating sin/cos per texel.
     if (state.fogDensity > 0.05) {
       const fogColor =
-        state.condition === 'sandstorm'
-          ? hexToRgba('#d97706')
-          : state.condition === 'volcanic_ash'
-          ? hexToRgba('#64748b')
-          : hexToRgba('#cbd5e1');
-
-      const bandHeight = profile.moduleSize * 2;
-      const scrollX = Math.floor(timeSeconds * 8);
-
+        state.condition === 'sandstorm' ? hexToRgba('#d97706') :
+        state.condition === 'volcanic_ash' ? hexToRgba('#64748b') :
+        hexToRgba('#cbd5e1');
+      const farWaveX = new Float32Array(widthTexels);
+      const nearWaveX = new Float32Array(widthTexels);
+      for (let x = 0; x < widthTexels; x++) {
+        farWaveX[x] = Math.sin((x + timeSeconds * 3.5) * 0.053) +
+          Math.cos((x - timeSeconds * 1.8) * 0.027);
+        nearWaveX[x] = Math.sin((x - timeSeconds * 7.5) * 0.092) +
+          Math.cos((x + timeSeconds * 4.1) * 0.041);
+      }
       for (let y = 0; y < heightTexels; y++) {
-        const bandIndex = Math.floor(y / bandHeight);
-        const waveShift = Math.round(Math.sin(y * 0.18 + timeSeconds * 1.5) * 3);
+        const farY = Math.sin(y * 0.073 + timeSeconds * 0.4);
+        const nearY = Math.cos(y * 0.105 - timeSeconds * 0.65);
         for (let x = 0; x < widthTexels; x++) {
-          const bankWave =
-            Math.sin((x + scrollX + waveShift) * 0.12 + bandIndex * 0.9) +
-            Math.cos((y - scrollX * 0.5) * 0.15);
-          const ditherGate = ((x * 3 + y * 5) & 3) === 0;
-
-          if (ditherGate && bankWave > 0.65 - state.fogDensity * 1.2) {
-            const existing = overlayBuffer.getPixel(x, y);
-            if (existing.a === 0) {
-              const isDenseBank = bankWave > 1.15;
-              overlayBuffer.setPixel(x, y, {
-                r: fogColor.r,
-                g: fogColor.g,
-                b: fogColor.b,
-                a: Math.min(
-                  225,
-                  Math.round(state.fogDensity * (isDenseBank ? 195 : 135))
-                )
-              });
-            }
-          }
+          const farBank = farWaveX[x] + farY;
+          const nearBank = nearWaveX[x] + nearY;
+          const farCover = farBank > 0.65 - state.fogDensity * 1.15;
+          const nearCover = nearBank > 1.2 - state.fogDensity * 1.1;
+          if (!farCover && !nearCover) continue;
+          const bayer = BAYER_FOG_4X4[y & 3][x & 3];
+          if (nearCover ? bayer > Math.min(15, Math.round(state.fogDensity * 17)) :
+              bayer > Math.round(state.fogDensity * 11)) continue;
+          const existing = overlayBuffer.getPixel(x, y);
+          if (existing.a !== 0) continue; // Keep precipitation visible above fog.
+          overlayBuffer.setPixel(x, y, {
+            r: fogColor.r, g: fogColor.g, b: fogColor.b,
+            a: Math.min(220, Math.round(state.fogDensity * (nearCover ? 178 : 110)))
+          });
         }
       }
     }
@@ -363,14 +364,12 @@ export class WeatherAndWindSystem {
       const glowCol = hexToRgba('#7dd3fc', 225);
 
       for (const b of branches) {
-        overlayBuffer.drawLine(
-          b.x0,
-          b.y0,
-          b.x1,
-          b.y1,
-          b.isMainTrunk ? coreCol : glowCol,
-          b.isMainTrunk ? 2 : 1
-        );
+        if (b.isMainTrunk) {
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, glowCol, 4);
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, coreCol, 2);
+        } else {
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, glowCol, 2);
+        }
       }
       lightningBranchesCount = branches.length;
     }

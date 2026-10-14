@@ -220,17 +220,17 @@ export const CATALOG_TRANSLATIONS: Readonly<Record<string, readonly [string, str
     "Paneles pixel-perfect y barras de progreso configurables",
     "Painéis pixel-perfect e barras de progresso configuráveis"
   ],
-  "Ten emitters, gravity, and object pooling": [
-    "Diez emisores, gravedad y reutilización de objetos",
-    "Dez emissores, gravidade e reutilização de objetos"
+  "16 emitters, four particle shapes, and object pooling": [
+    "16 emisores, cuatro formas de partículas y reutilización de objetos",
+    "16 emissores, quatro formatos de partículas e reutilização de objetos"
   ],
-  "11 weather states": [
-    "11 estados meteorológicos",
-    "11 condições climáticas"
+  "11 weather states, branched lightning, and layered fog": [
+    "11 estados meteorológicos, relámpagos ramificados y niebla por capas",
+    "11 condições climáticas, relâmpagos ramificados e neblina em camadas"
   ],
-  "Daylight phases and light maps": [
-    "Fases del día y mapas de luz",
-    "Fases do dia e mapas de luz"
+  "Solar cast shadows, day phases, and light maps": [
+    "Sombras solares proyectadas, fases del día y mapas de luz",
+    "Sombras solares projetadas, fases do dia e mapas de luz"
   ],
   "Real palette ramps across biomes and seasons": [
     "Rampas de color reales por bioma y estación",
@@ -461,6 +461,12 @@ export const CATALOG_TRANSLATIONS: Readonly<Record<string, readonly [string, str
   "Grain Windmill": ["Molino de grano", "Moinho de grãos"],
   "Village Stone Well": ["Pozo de piedra", "Poço de pedra"],
   "Ancient Mossy Ruins": ["Ruinas antiguas con musgo", "Ruínas antigas com musgo"],
+  "Poison Bubbles": ["Burbujas venenosas", "Bolhas venenosas"],
+  "Frost Shards": ["Fragmentos de escarcha", "Fragmentos de gelo"],
+  "Blood Hit Droplets": ["Gotas de impacto sangriento", "Gotas de sangue do impacto"],
+  "Arcane Burst": ["Explosión arcana", "Explosão arcana"],
+  "Lava & Magma Sparks": ["Chispas de lava y magma", "Faíscas de lava e magma"],
+  "Torch Dancing Embers": ["Brasas danzantes de antorcha", "Brasas dançantes da tocha"],
   "Mask ": [
     "Máscara ",
     "Máscara "

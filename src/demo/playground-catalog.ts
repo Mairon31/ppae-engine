@@ -41,9 +41,9 @@ export const PLAYGROUND_SECTIONS = [
   { id: 'equipment', label: 'Equipment Icons', group: 'Systems', description: 'Procedural equipment materials and wear' },
   { id: 'equipment-materials', label: 'Equipment Materials', group: 'Systems', description: 'Six material tiers across tools, weapons, and armor' },
   { id: 'hud', label: 'HUD & Nine-slice', group: 'Systems', description: 'Pixel-perfect panels and parameterized progress bars' },
-  { id: 'particles', label: 'Particles & VFX', group: 'Systems', description: 'Ten emitters, gravity, and object pooling' },
-  { id: 'weather', label: 'Weather & Wind', group: 'Systems', description: '11 weather states' },
-  { id: 'lighting', label: 'Lighting', group: 'Systems', description: 'Daylight phases and light maps' },
+  { id: 'particles', label: 'Particles & VFX', group: 'Systems', description: '16 emitters, four particle shapes, and object pooling' },
+  { id: 'weather', label: 'Weather & Wind', group: 'Systems', description: '11 weather states, branched lightning, and layered fog' },
+  { id: 'lighting', label: 'Lighting', group: 'Systems', description: 'Solar cast shadows, day phases, and light maps' },
   { id: 'palettes', label: 'Engine Palettes', group: 'Art Diagnostics', description: 'Real palette ramps across biomes and seasons' },
   { id: 'resolution-profiles', label: 'Resolution Comparison', group: 'Art Diagnostics', description: 'One species rendered natively at 4, 6, 8, 16, and 32' }
 ] as const;
@@ -137,6 +137,9 @@ const LABELS: Record<string, string> = {
   corrupted_forest_treant_lord: 'Corrupted Treant Lord',
   villager_farmer: 'Farmer', blacksmith_artisan: 'Blacksmith',
   town_guard: 'Guard', wandering_mage: 'Wandering Mage',
+  poison_bubbles: 'Poison Bubbles', frost_shards: 'Frost Shards',
+  blood_hit_droplets: 'Blood Hit Droplets', arcane_burst: 'Arcane Burst',
+  lava_magma_sparks: 'Lava & Magma Sparks', torch_dancing_embers: 'Torch Dancing Embers',
   forest_ranger: 'Forest Ranger', merchant_trader: 'Merchant',
   elder_scholar: 'Elder Scholar', miner_prospector: 'Miner',
   dawn: 'Dawn', morning: 'Morning', noon: 'Noon',

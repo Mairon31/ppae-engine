@@ -419,14 +419,18 @@ export class PixelParticleEngine {
           targetBuffer.setPixel(snapX, snapY - 1, color);
           targetBuffer.setPixel(snapX, snapY + 1, color);
         } else if (p.shape === 'hollow_ring') {
-          const radius = progress > 0.5 ? 2 : 1;
-          targetBuffer.setPixel(snapX - radius, snapY, color);
-          targetBuffer.setPixel(snapX + radius, snapY, color);
-          targetBuffer.setPixel(snapX, snapY - radius, color);
-          targetBuffer.setPixel(snapX, snapY + radius, color);
+          const radius = Math.min(4, Math.max(1, p.sizeTexels + Math.floor(progress * 3) - 1));
+          // Hollow 8-point perimeter, expanding with normalized lifetime.
+          for (let dx = -radius; dx <= radius; dx++) {
+            const dy = Math.round(Math.sqrt(Math.max(0, radius * radius - dx * dx)));
+            targetBuffer.setPixel(snapX + dx, snapY - dy, color);
+            targetBuffer.setPixel(snapX + dx, snapY + dy, color);
+          }
         } else if (p.shape === 'streak_line') {
-          const tailX = snapX - Math.sign(Math.round(p.vx));
-          const tailY = snapY - Math.sign(Math.round(p.vy));
+          const length = Math.max(2, p.sizeTexels + 1);
+          const speed = Math.hypot(p.vx, p.vy) || 1;
+          const tailX = snapX - Math.round((p.vx / speed) * length);
+          const tailY = snapY - Math.round((p.vy / speed) * length);
           targetBuffer.drawLine(tailX, tailY, snapX, snapY, color, 1);
         } else {
           targetBuffer.fillRect(snapX, snapY, p.sizeTexels, p.sizeTexels, color);

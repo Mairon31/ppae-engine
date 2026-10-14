@@ -65,6 +65,7 @@ const terrain = new TerrainAutotiler();
 const liquids = new LiquidTileGenerator();
 const weather = new WeatherAndWindSystem();
 const lighting = new PixelPerfectLightingEngine(8);
+const LIGHTING_HOURS: Record<TimeOfDayPhase, number> = { dawn: 6, morning: 9, noon: 12.5, afternoon: 16, dusk: 19, night: 23, underground_dark: 12 };
 const bosses = new MultiSegmentBossRenderer();
 const compiler = new SpritesheetCompiler();
 const adaptive = new AdaptiveResolutionController();
@@ -336,8 +337,20 @@ function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected
   }
   const scene = new PixelBuffer(chunk.terrainBuffer.width, chunk.terrainBuffer.height);
   scene.data.set(chunk.terrainBuffer.data);
-  for (const prop of chunk.sortedProps) blend(scene, prop.buffer, prop.drawTexelX, prop.drawTexelY);
   const tile = p.canonicalTileTexels;
+  // Actual chunk props cast ground shadows before the opaque subject sprites.
+  const casters = chunk.sortedProps.filter(prop => prop.buffer.height >= tile)
+    .slice(0, 32).map(prop => ({
+      casterId: String(prop.tileX) + ':' + String(prop.tileY),
+      worldX: (prop.drawTexelX + prop.buffer.width * 0.5) * 16 / tile,
+      worldY: (prop.drawTexelY + prop.buffer.height - 2) * 16 / tile,
+      baseRadiusTexels: Math.max(2, Math.floor(Math.min(tile * 2, prop.buffer.width) * 0.24)),
+      heightTexels: Math.min(tile * 4, prop.buffer.height)
+    }));
+  lighting.renderDirectionalCastShadows(scene, casters,
+    { x: 0, y: 0, width: CHUNK_SIZE_TILES * 16, height: CHUNK_SIZE_TILES * 16 },
+    LIGHTING_HOURS[state.time], p, state.time === 'underground_dark');
+  for (const prop of chunk.sortedProps) blend(scene, prop.buffer, prop.drawTexelX, prop.drawTexelY);
   const village = previewId === 'world_village';
   if (village) {
     const cottage = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG.village_cottage_01, p, true, true);
@@ -521,8 +534,24 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
     }
     case 'lighting': {
       const sample = baseScene('lighting', p, tick);
-      return lighting.applyLightingToScene(sample,
-        { x: 0, y: 0, width: 8 * 16, height: 7 * 16 },
+      // Show an actual engine-generated tree and the ground shadow of that same
+      // specimen at 06:00 / 12:30 / 19:00; not a static illustration.
+      const tree = nature.generateTreeStage('oak', 'mature', p,
+        stableSubjectSeed('trees', 'oak')).buffer;
+      const tile = p.canonicalTileTexels;
+      const pivotX = Math.round(sample.width * 0.53);
+      const pivotY = Math.round(sample.height * 0.79);
+      const camera = { x: 0, y: 0, width: 8 * 16, height: 7 * 16 };
+      lighting.renderDirectionalCastShadows(sample, [{
+        casterId: 'oak_demo',
+        worldX: pivotX * 16 / tile,
+        worldY: pivotY * 16 / tile,
+        baseRadiusTexels: Math.max(2, Math.floor(tile * 0.38)),
+        heightTexels: Math.min(tree.height, tile * 4)
+      }], camera, LIGHTING_HOURS[id as TimeOfDayPhase], p,
+      id === 'underground_dark');
+      blend(sample, tree, pivotX - Math.floor(tree.width / 2), pivotY - tree.height + 2);
+      return lighting.applyLightingToScene(sample, camera,
         AMBIENT_PROFILES_BY_PHASE[id as TimeOfDayPhase], p, [], elapsed / 1000).litBuffer;
     }
     case 'palettes': {
@@ -1305,6 +1334,8 @@ function exportTechnicalJSON(): void {
       break;
     case 'lighting':
       data.ambient = AMBIENT_PROFILES_BY_PHASE[id as TimeOfDayPhase];
+      data.solarShadowVector = lighting.resolveSolarShadowVector(
+        LIGHTING_HOURS[id as TimeOfDayPhase], id === 'underground_dark');
       break;
     case 'palettes':
       data.palette = paletteManager.getPalette(id);

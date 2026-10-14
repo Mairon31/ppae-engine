@@ -384,3 +384,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Engine additions:** SolarShadowCaster/SolarShadowVector with directional Bayer shadows; LightningBoltBranch and weather lightning overlay/organic fog; four pixel-particle geometries and six new VFX presets (16 total) with existing pool/portal APIs preserved.
 - **Tests:** new `tests/ppae-weather-lighting-vfx-10.test.ts` plus existing Phase 6 regressions.
 - **Status: IMPLEMENTED; verification of this commit PENDING.** Playground exposure, internationalization, native-seed visual QA, performance and render-correctness improvements to be completed in subsequent changes.
+
+### Phase 10 — Rendering fidelity and Playground exposure
+
+- Improved directional shadow rasterization to one darkening pass per caster/pixel with a swept tapered silhouette and Bayer edge penumbra (eliminates black overdraw bands).
+- Reworked fog as two independently drifting depth waves; per-axis precomputation avoids trig per texel. Branched lightning uses halo plus sharp core. Hollow rings and motion streaks now have recognizable native-pixel geometry.
+- Existing Lighting lab now draws an actual procedurally generated oak and its computed solar shadow at each day phase. World chunk props cast ground shadows before foreground sprites. Weather and 16 VFX presets are exposed via existing live generator labs; six new catalog labels and all changed descriptions are translated EN/ES/PT-BR. Lighting JSON includes its resolved solar vector.
+- **Status: IMPLEMENTED, verify CI/Chromium and visual output on the new commit before VERIFIED.** Performance claims beyond relative algorithmic complexity remain unbenchmarked.
