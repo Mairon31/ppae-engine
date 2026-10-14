@@ -22,6 +22,7 @@ export const AVATAR_FIELDS = {
   earStyle: ['human_round','elf_pointed','fae_long'] as readonly CharacterEarStyle[],
   hornStyle: ['none','small_oni','curved_ram'] as readonly CharacterHornStyle[],
   faceMarking: ['none','freckles','war_paint','arcane_rune'] as readonly FaceMarkingStyle[],
+  scarSide: ['left','right'] as const,
   helmet: ['none','knight_helm','ranger_hood','straw_hat','crown','miner_hardhat','wizard_pointed_hat','bandana'] as readonly HelmetStyleId[],
   armor: ['cloth_tunic','leather_vest','iron_plate','mage_robe','farmer_overalls','blacksmith_apron','noble_coat'] as readonly ArmorStyleId[],
   mainHand: ['none','iron_sword','woodcutter_axe','mining_pickaxe','oak_staff','wooden_hoe','fishing_rod','smith_hammer','hunting_bow'] as readonly MainHandItemId[],
