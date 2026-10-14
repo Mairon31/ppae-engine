@@ -464,7 +464,132 @@ export type GeologicalResourceKind =
   | 'copper_vein'
   | 'iron_vein'
   | 'gold_vein'
-  | 'crystal_geode';
+  | 'crystal_geode'
+  | 'angular_boulder'
+  | 'rounded_riverstone'
+  | 'fractured_monolith'
+  | 'flat_slab'
+  | 'sunken_half_buried'
+  | 'jagged_outcrop'
+  | 'stacked_cairn'
+  | 'eroded_sandstone'
+  | 'volcanic_basalt'
+  | 'crag_cliff_boulder';
+
+export type RockLithologyId =
+  | 'granite' | 'slate' | 'sandstone' | 'basalt'
+  | 'limestone' | 'quartzite' | 'obsidian';
+
+export type GeologicalFormationGeometryClass =
+  | 'pebble_scatter'
+  | 'angular_polyhedron'
+  | 'rounded_boulder'
+  | 'split_monolith'
+  | 'layered_slab'
+  | 'sunken_embed'
+  | 'jagged_spires'
+  | 'stacked_stones'
+  | 'columnar_basalt'
+  | 'crystal_cluster_geode';
+
+export interface GeologicalPolygonVertex {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface GeologicalFacetPlane {
+  readonly facetId: string;
+  readonly vertices: readonly GeologicalPolygonVertex[];
+  readonly normalVector3D: readonly [number, number, number];
+  readonly faceLightScore: number; // [-1, 1]
+  readonly toneBand: 'shadow' | 'midtone' | 'highlight' | 'rim_accent';
+}
+
+export interface GeologicalFractureLine {
+  readonly fractureId: string;
+  readonly points: readonly GeologicalPolygonVertex[];
+  readonly widthPx: number;
+  readonly depthShadow: boolean;
+  readonly hostsMineralVein: boolean;
+}
+
+export interface MineralInclusionCluster {
+  readonly inclusionId: string;
+  readonly shape: 'embedded_vein' | 'hex_crystal_spire' | 'geode_cavity' | 'ore_nodule';
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly lengthPx: number;
+  readonly widthPx: number;
+  readonly tiltAngleRad: number;
+  readonly primaryHex: string;
+  readonly highlightHex: string;
+  readonly coreGlowHex: string;
+}
+
+export interface RockSubFragment {
+  readonly fragmentId: string;
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly radiusX: number;
+  readonly radiusY: number;
+  readonly zOrder: number;
+  readonly hullVertices: readonly GeologicalPolygonVertex[];
+  readonly facets: readonly GeologicalFacetPlane[];
+  readonly fractures: readonly GeologicalFractureLine[];
+  readonly mossCoverageRatio: number;
+  readonly strataLineSpacingPx?: number;
+}
+
+export interface GeologicalArchetypeDefinition {
+  readonly kind: GeologicalResourceKind;
+  readonly lithology: RockLithologyId;
+  readonly geometryClass: GeologicalFormationGeometryClass;
+  readonly widthModulesRange: readonly [number, number];
+  readonly heightModulesRange: readonly [number, number];
+  readonly fragmentCountRange: readonly [number, number];
+  readonly angularity: number;
+  readonly flatnessRatio: number;
+  readonly burialDepthRatio: number;
+  readonly fractureDensity: number;
+  readonly mossAffinity: number;
+  readonly hasStrataBands: boolean;
+  readonly stonePalette: {
+    readonly outlineHex: string;
+    readonly deepShadowHex: string;
+    readonly midtoneHex: string;
+    readonly highlightHex: string;
+    readonly accentHex: string;
+  };
+  readonly mineralPalette?: {
+    readonly veinShadowHex: string;
+    readonly veinMidtoneHex: string;
+    readonly veinHighlightHex: string;
+    readonly veinCoreHex: string;
+  };
+}
+
+export interface GeologicalMorphologyDescriptor {
+  readonly schemaVersion: string;
+  readonly seed: number;
+  readonly kind: GeologicalResourceKind;
+  readonly lithology: RockLithologyId;
+  readonly geometryClass: GeologicalFormationGeometryClass;
+  readonly canvasWidthModules: number;
+  readonly canvasHeightModules: number;
+  readonly canvasWidthTexels: number;
+  readonly canvasHeightTexels: number;
+  readonly pivotTexel: readonly [number, number];
+  readonly fragments: readonly RockSubFragment[];
+  readonly mineralInclusions: readonly MineralInclusionCluster[];
+  readonly metrics: {
+    readonly fragmentCount: number;
+    readonly totalFacetCount: number;
+    readonly fractureCount: number;
+    readonly inclusionCount: number;
+    readonly aspectRatio: number;
+    readonly angularityScore: number;
+  };
+}
 
 export interface WorldTileSample {
   readonly tileX: number;
