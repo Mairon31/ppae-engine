@@ -93,3 +93,11 @@ La demostración permite inspeccionar integridad, acción y fases de muerte de j
 **Evidencia inicial de la ampliación:** `npm test` y `npm run build` PASS en https://github.com/Mairon31/ppae-engine/actions/runs/38626871641. Chromium navegó las 28 categorías de esa versión y verificó edición/reroll, búsqueda, exportación y móvil: https://github.com/Mairon31/ppae-engine/actions/runs/38626866399. La versión de 30 secciones requiere confirmación en su propio HEAD, no hereda automáticamente ese estado de verificación.
 
 La cobertura de biblioteca no equivale a una galería para todas las APIs internas (caché, benchmark, LOD, Phaser, portales). Consulte la matriz para esos límites y no represente funciones que no se han probado como completamente demostradas.
+
+## Phase 9 Architecture and interiors
+
+The `#structures` lab now exposes ten real exterior definitions, including a windmill with a tapered stone tower and lattice sails, staggered masonry ruins, half-timbered facades, multi-style roofs, a barn and well. Its roof-visibility, open-door and lit-window controls operate on engine-generated buffers and preserve collision metadata in JSON exports.
+
+The `#interiors` lab exposes three real generated floorplans: cottage, blacksmith workshop and alchemy laboratory. These include furniture geometry, light nodes, collision rectangles and walkability-grid exports. The `#caves` lab renders stalactites, stalagmites and seeded rock columns with logical collisions; crystals and lava remain available. All new catalog labels are localized in English, Spanish and Brazilian Portuguese.
+
+Screenshot/metadata evidence is available in the `ppae-playground-chromium-qa` artifact for https://github.com/Mairon31/ppae-engine/actions/runs/38643851640. The sample screenshots provide targeted visual verification, not a guarantee of art quality for every profile and seed.

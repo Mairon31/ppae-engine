@@ -26,6 +26,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
+| 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -366,3 +367,13 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Inspected actual Chromium screenshots: the initial windmill looked like a house with crossed spars; ancient ruins resembled two untextured vertical fences. These are substantive aesthetic defects despite passing CI.
 - Replaced only new archetype implementations: the windmill now renders a tapered cylindrical stone tower, conical roof and four cloth lattice sails with native raster pixels; ruins now rasterize staggered masonry, stepped decay, buttress remnants, moss and rubble. Existing generic structures and portal API are preserved.
 - New phase-9 regression checks open-door invariance of roof and wall collision and transparent ruins roof. New commit requires CI, browser verification and fresh screenshot inspection before claiming visual improvements verified.
+
+### Phase 9 — Targeted technical and visual verification (14 October 2026)
+
+- **Implementation commits:** `bdf11c320f45fbf8ba832971cf66f930dbd70472` (supplied Phase 9 diff adapted to actual HEAD), `b185caf68dbfc67f8f6d64304651f458e5225901` (column collisions, cave details, real Forge/Alchemy interiors), `d00b8802e30f1207dec54126f95890a227c7ae6b` (translations, browser snapshots, packaging docs), `22354ec7be7e2a363b716f24c1a514669d79f98e` (windmill and ruin visual morphology).
+- **GitHub Actions CI on code HEAD `22354ec7`:** https://github.com/Mairon31/ppae-engine/actions/runs/38643851644 — **33 suites / 185 tests PASS**, `npm run build` PASS, `npm run check:package` PASS (51 files, 127,206 packed bytes; 476,058 unpacked bytes). No publishing to npm.
+- **Chromium browser QA on code HEAD:** https://github.com/Mairon31/ppae-engine/actions/runs/38643851640 — PASS for landing + 30 sections, controls, exports and localized mobile UI; targeted Phase-9 real screenshot evidence: `38-phase9-windmill.png`, `39-phase9-ruins.png`, `40-phase9-slate-manor.png`, `41-phase9-forge-interior.png`, `42-phase9-alchemy-interior.png`; exported `phase9-alchemy-interior.json`. The images show recognizable tower-and-sail geometry, fractured masonry silhouettes and real interior furniture; previews come from engine buffers.
+- **GitHub Pages deployment:** https://github.com/Mairon31/ppae-engine/actions/runs/38643851620 — deploy and public-asset smoke checks PASS.
+- **Compatibility:** separated wall/roof buffers; open-door roof invariance, structure logical wall/door/roof metadata, interior walkability and cave collision rectangles remain covered by old/new tests.
+- **Status:** VERIFIED for this documented code and targeted visual QA. **Not certified** across all permutations of seed, profile, age/scene, devices or art direction; device-specific frame pacing, 32×32 visual review and comparison against the referenced `image_59315b.jpg` remain pending because the reference image was not attached as an inspectable asset in this task. No changes to `master`, no PR merge and no npm publication.
+- **Next planned phase (not started):** Phase 10 — Weather, Lighting & VFX Overhaul, subject to the user-supplied phase specification.
