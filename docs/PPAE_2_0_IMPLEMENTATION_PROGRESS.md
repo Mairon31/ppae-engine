@@ -24,7 +24,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 6A — Advanced Animation System: 28 Actions | VERIFIED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
 | 6B — Species Animation Capabilities & Creature Atlas | VERIFIED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
-| 7B — Native Multi-Resolution Detail Synthesis | IMPLEMENTED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
+| 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -233,7 +233,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Anatomía por presupuesto:** niveles `eyes_only` / `eyes_and_brows` / `full_features` / `expressive_hd`; ojos con iris, pupila, esclera y brillo, nariz y boca expresiva en 16/32; sombras profundas, pliegues, costuras, dedos y mechones; compatibilidad de los ojos 4/6.
 - **Follaje:** sublóbulos/racimos con `foliageSubdivisionLevel` 1–4; tonos de interior abisal y brillos separados para 16/32. **Geología:** variaciones mineralógicas deterministas dentro de las facetas de la malla con niveles 1–4, conservando fracturas, estratos e inclusiones.
 - **Pruebas:** nuevo archivo de regresión de escala, contraste cromático/geométrico, determinismo y continuidad direccional; ejecución CI pendiente al momento del primer commit.
-- **Estado:** IMPLEMENTED hasta confirmar `npm test` y `npm run build`. Validación visual con capturas de personajes, copas y rocas en el navegador pendiente; las pruebas técnicas no acreditan equivalencia visual.
+- **Estado:** VERIFIED técnicamente. Commit de implementación `843af8564f066cc25d472666f9e41ca62ca7e4e6`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38606458485: `npm test` **26 suites / 151 pruebas aprobadas** (4 nuevas) y `npm run build` correcto (TypeScript, declaraciones, biblioteca y demo). Validación visual con capturas de personajes, copas y rocas en el navegador pendiente; las pruebas técnicas no acreditan equivalencia visual.
 - **Siguiente:** Fase 8A — familias anatómicas adicionales y escala multirresolución de criaturas y jefes.
 
 ## Convenciones de estado
