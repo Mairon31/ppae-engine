@@ -21,7 +21,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
 | 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
-| 6A — Advanced Animation System: 28 Actions | IMPLEMENTED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
+| 6A — Advanced Animation System: 28 Actions | VERIFIED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -196,7 +196,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Render:** overlays contextualizados para magia/curación, consumo, caja cargada y estela de nado; sueño con ojos cerrados y marca de colapso en pose. Se conserva la arquitectura por capas de 5A–5B y compatibilidad de anclajes.
 - **Máquina:** 28 `DEFAULT_CHARACTER_CLIPS` con cuadros, cadencias, prioridades, interrupciones, looping y eventos; `fallbackAction` admite `sprint`, `sneak` y `swimming` además de estados originales.
 - **Pruebas:** seis tests adicionales de catálogo/8 direcciones/determinismo, poses contextuales, movilidad de manos, eventos FSM, regresión legacy y spritesheets mixtos.
-- **Estado:** IMPLEMENTED, pendiente de ejecutar `npm test`, `npm run build` y auditoría visual del Animation Inspector en 8 direcciones. No se declara paridad artística basándose solo en tests.
+- **Estado:** VERIFIED técnicamente. Implementación `7183404efc760d8505b122a9dda763ddfa78fee5`; ajustes de regresión `c17c3a01bbe3ff05a686188c6954415e98f25ab5` y `7afb4d03d53b63b0e77d132e85893bb55a41cffa`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38602363584: `npm test` **23 suites / 134 pruebas aprobadas** (6 nuevas 6A); `npm run build` correcto con declaraciones, TypeScript, biblioteca y demo. Auditoría visual del Animation Inspector en 8 direcciones pendiente; no se declara paridad artística basándose solo en tests.
 - **Siguiente fase:** 6B — SpeciesAnimationCapabilityRegistry y spritesheets de criaturas.
 
 ## Convenciones de estado
