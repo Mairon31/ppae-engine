@@ -55,6 +55,10 @@ export const CROP_STAGES = ['seed', 'sprout', 'growing', 'mature', 'withered'] a
 export const MATERIAL_TIERS = ['wood', 'iron', 'gold', 'crystal'] as const;
 export const ITEM_TYPES = ['weapon_sword', 'tool_axe', 'tool_pickaxe', 'armor_chest', 'shield'] as const;
 
+export const CHARACTER_ACTIONS = Object.keys(DEFAULT_CHARACTER_CLIPS);
+export const CREATURE_ACTIONS = Object.keys(DEFAULT_CREATURE_CLIPS);
+export const EIGHT_DIRECTIONS = ['S','SE','E','NE','N','NW','W','SW'] as const;
+
 export const TREE_ARCHETYPE_OPTIONS = Object.entries(TREE_MORPHOLOGY_ARCHETYPES)
   .flatMap(([family, entries]) => entries.map(entry => family + ':' + entry.archetypeId));
 export const AUTOTILE_MASKS = Array.from({ length: 256 }, (_, i) => String(i));
@@ -73,7 +77,7 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
   geology: Object.keys(GEOLOGICAL_ARCHETYPE_CATALOG),
   terrain: Object.keys(TERRAIN_MATERIALS),
   autotiling: AUTOTILE_MASKS,
-  liquids: ['shallow_water','deep_water'],
+  liquids: ['shallow_water','deep_water','lava_magma'],
   structures: Object.keys(DEFAULT_STRUCTURE_CATALOG),
   interiors: ['cottage_interior'],
   caves: ['crystal_cavern'],
@@ -85,10 +89,6 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
   weather: Object.keys(DEFAULT_WEATHER_STATES),
   lighting: ['dawn', 'morning', 'noon', 'afternoon', 'dusk', 'night', 'underground_dark']
 };
-
-export const CHARACTER_ACTIONS = Object.keys(DEFAULT_CHARACTER_CLIPS);
-export const CREATURE_ACTIONS = Object.keys(DEFAULT_CREATURE_CLIPS);
-export const EIGHT_DIRECTIONS = ['S','SE','E','NE','N','NW','W','SW'] as const;
 
 const LABELS: Record<string, string> = {
   hero: 'Avatar original',
