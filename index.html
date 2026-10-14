@@ -12,6 +12,36 @@
   <meta name="description" content="PPAE Engine: genera pixel art procedural, sprites animados, mundos, criaturas, vegetación y VFX. Prueba sus 30 laboratorios."/>
   <title>PPAE Engine — Procedural Pixel Art Engine</title>
   <link rel="stylesheet" href="/src/demo/playground.css"/>
+  <!-- If a branch source is published instead of Vite dist/demo, fail visibly
+       with actionable repair information rather than an unstyled blank screen.
+       The compiled Pages build rewrites the module entry to /assets/*.js. -->
+  <style>
+    #ppae-publish-error{font:16px/1.6 system-ui,sans-serif;max-width:720px;margin:clamp(40px,10vh,140px) auto;padding:32px;background:#101e30;color:#e8f3e2;border:3px solid #caee89;box-shadow:10px 10px #20334b}
+    #ppae-publish-error h1{font:700 clamp(25px,5vw,40px)/1.2 system-ui,sans-serif;margin:0 0 16px}
+    #ppae-publish-error code{color:#dcffa4}
+    #ppae-publish-error a{color:#caff70}
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      if (!location.hostname.endsWith('.github.io')) return;
+      var entry=document.querySelector('script[type="module"]');
+      if (!entry || !entry.getAttribute('src')?.startsWith('/src/')) return;
+      document.body.style.cssText='margin:0;background:#0a1220;padding:20px';
+      var error=document.createElement('main');
+      error.id='ppae-publish-error';
+      var title=document.createElement('h1');
+      title.textContent='PPAE: publicación sin compilar';
+      var message=document.createElement('p');
+      message.textContent='GitHub Pages está sirviendo archivos fuente de Vite en lugar de dist/demo. Por eso los estilos, las animaciones y el motor no se cargan.';
+      var guide=document.createElement('p');
+      guide.textContent='Abre el repositorio → Settings → Pages → Build and deployment → Source → GitHub Actions. Después ejecuta Deploy demo to GitHub Pages.';
+      var link=document.createElement('a');
+      link.href='https://github.com/Mairon31/ppae-engine/settings/pages';
+      link.textContent='Abrir configuración de GitHub Pages ↗';
+      error.append(title,message,guide,link);
+      document.body.replaceChildren(error);
+    });
+  </script>
 </head>
 <body>
   <div id="landing-page" class="landing-page" hidden>
