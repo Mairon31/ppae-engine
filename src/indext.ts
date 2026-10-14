@@ -11,3 +11,7 @@ export * from './terrain/autotiler';
 export * from './terrain/liquid-renderer';
 export * from './terrain/chunk-renderer';
 export * from './vegetation/nature-generator';
+export * from './entities/character-rig';
+export * from './entities/character-generator';
+export * from './animation/state-machine';
+export * from './animation/spritesheet-compiler';
