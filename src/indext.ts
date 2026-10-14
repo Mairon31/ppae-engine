@@ -21,3 +21,6 @@ export * from './structures/structure-generator';
 export * from './structures/cave-generator';
 export * from './interiors/interior-generator';
 export * from './interiors/portal-system';
+export * from './lighting/lighting-engine';
+export * from './environment/weather-wind-system';
+export * from './vfx/particle-engine';
