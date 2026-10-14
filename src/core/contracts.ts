@@ -1138,11 +1138,29 @@ export type StructureArchetypeId =
   | 'cottage_house'
   | 'blacksmith_forge'
   | 'watch_tower'
+  | 'farm_barn'
+  | 'windmill'
+  | 'stone_well'
+  | 'ancient_ruins'
   | 'wooden_bridge'
   | 'cave_entrance';
 
-export type WallMaterialId = 'timber_frame' | 'cobblestone' | 'ashlar_brick' | 'cavern_rock';
-export type RoofStyleId = 'pitched_shingle' | 'thatched_gable' | 'stone_battlement' | 'none';
+export type WallMaterialId =
+  | 'timber_frame'
+  | 'cobblestone'
+  | 'ashlar_brick'
+  | 'weatherboard_plank'
+  | 'ruined_masonry'
+  | 'cavern_rock';
+
+export type RoofStyleId =
+  | 'pitched_shingle'
+  | 'thatched_gable'
+  | 'steep_dormer_slate'
+  | 'gambrel_barn'
+  | 'stone_battlement'
+  | 'conical_turret'
+  | 'none';
 
 export interface LogicalRect {
   readonly x: number; // En unidades lógicas de mundo (base 16 por tile)
@@ -1166,6 +1184,10 @@ export interface StructureDefinition {
   readonly wallSecondaryHex: string;
   readonly roofPrimaryHex: string;
   readonly roofShadowHex: string;
+  readonly hasDormerWindow?: boolean;
+  readonly hasWindowShutters?: boolean;
+  readonly hasFlowerBoxes?: boolean;
+  readonly facadeTimberPattern?: 'vertical_posts' | 'cross_braced' | 'arched_gables';
 }
 
 export type FurnitureKind =
@@ -1176,7 +1198,11 @@ export type FurnitureKind =
   | 'storage_chest'
   | 'furnace_hearth'
   | 'wall_torch'
-  | 'woven_rug';
+  | 'woven_rug'
+  | 'anvil_station'
+  | 'alchemy_bench'
+  | 'wooden_barrel'
+  | 'potted_plant';
 
 export interface FurniturePlacement {
   readonly id: string;
@@ -1584,3 +1610,4 @@ export interface FloraMorphologyDescriptor {
     readonly stemSpacingVariance: number;
   };
 }
+

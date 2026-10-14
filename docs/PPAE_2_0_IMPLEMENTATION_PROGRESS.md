@@ -340,3 +340,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Chromium verification:** all 30 engine labs, exports, mobile 390px, Spanish deep link `?lang=es#trees`, Portuguese switch retaining `#trees`, Portuguese landing on mobile, English reset in [GitHub Actions run 38638778956](https://github.com/Mairon31/ppae-engine/actions/runs/38638778956). The package test and browser QA are separate checks; neither substitutes for native artistic review on every device.
 
 **Future release prerequisites:** check package name and npm-scope ownership, create a controlled tagged-release workflow with provenance if wanted, review translations with native speakers, and verify that the actual publish tarball matches dry-run contents. Do not publish automatically from feature branches.
+
+## Phase 9 — Procedural Architecture & Interiors (implementation in progress)
+
+- Base HEAD inspected: `f6ad9ec3e1aecc89375318046ddabd867ed636b1` (PR #2, `feat/ppae-2-art-overhaul`). The supplied patch cited an earlier commit; hunks were applied against the actual branch without resetting newer work.
+- Initial implementation: typed material/roof/archetype extensions; exterior facade patterns, roof grammars, windmill/well/ruins catalog entries; detailed interior furniture and cave stalactites; real Playground structure catalog labels with EN/ES/PT-BR translations.
+- Regression suite: `tests/ppae-architecture-interiors-9.test.ts`. Retains existing logical collision, door and roof-occlusion return contracts.
+- **Status: IMPLEMENTED, verification PENDING for this commit.** Do not mark VERIFIED until full `npm test`, `npm run build`, `npm run check:package` and browser QA complete. Manual art-direction evaluation remains pending.

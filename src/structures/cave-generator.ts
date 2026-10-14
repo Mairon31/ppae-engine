@@ -76,6 +76,12 @@ export class CaveDungeonGenerator {
             Math.floor(tileTex * 0.4),
             wallHighlight
           );
+          // Estalactitas colgantes en el muro norte (ty === 0)
+          if (ty === 0 && tx > 0 && tx < def.widthInTiles - 1) {
+            const spikeX = bx + Math.floor(tileTex / 2);
+            buf.drawLine(spikeX, by + tileTex - 4, spikeX, by + tileTex + 3, wallCol, 3);
+            buf.drawLine(spikeX - 1, by + tileTex - 4, spikeX - 1, by + tileTex + 1, wallHighlight, 1);
+          }
         } else {
           buf.fillRect(bx, by, tileTex, tileTex, floorCol);
           if (rng.chance(0.45)) {
@@ -124,3 +130,4 @@ export class CaveDungeonGenerator {
     };
   }
 }
+

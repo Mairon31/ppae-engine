@@ -452,6 +452,12 @@ export const CATALOG_TRANSLATIONS: Readonly<Record<string, readonly [string, str
     "Escudo",
     "Escudo"
   ],
+  "Thatched Peasant Hut": ["Choza campesina de paja", "Cabana camponesa de palha"],
+  "Blue Slate Manor": ["Mansión de pizarra azul", "Solar de ardósia azul"],
+  "Timber Farm Barn": ["Granero de madera", "Celeiro de madeira"],
+  "Grain Windmill": ["Molino de grano", "Moinho de grãos"],
+  "Village Stone Well": ["Pozo de piedra", "Poço de pedra"],
+  "Ancient Mossy Ruins": ["Ruinas antiguas con musgo", "Ruínas antigas com musgo"],
   "Mask ": [
     "Máscara ",
     "Máscara "
