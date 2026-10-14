@@ -349,10 +349,15 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
   const n = seedNumber(id);
   switch (section) {
     case 'world': return worldScene(p, tick);
-    case 'characters': {
-      const clip = DEFAULT_CHARACTER_CLIPS[state.action];
-      return avatar.renderCharacterFrame(DEFAULT_HERO_APPEARANCE, DEFAULT_HERO_EQUIPMENT,
-        state.action, state.direction, tick % clip.frameCount, clip.frameCount, p).buffer;
+    case 'characters':
+    case 'character-actions': {
+      const action = section === 'character-actions' ? id as CharacterActionId : state.action;
+      const selectedAvatar = section === 'characters' ? id : state.activeAvatarId;
+      const preset = characterPreset(selectedAvatar,
+        section === 'character-actions' || selectedAvatar === state.activeAvatarId);
+      const clip = DEFAULT_CHARACTER_CLIPS[action];
+      return avatar.renderCharacterFrame(preset.appearance, preset.equipment,
+        action, state.direction, tick % clip.frameCount, clip.frameCount, p, state.avatarStatus).buffer;
     }
     case 'npcs': {
       const npc = customization.generateNpcPreset(id as NpcProfessionArchetypeId, n);
@@ -371,23 +376,32 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       const boss = id === BOSS_IDS[1] ? createCorruptedTreantBossState(n) : createDefaultColossusBossState(n);
       const current = { ...boss, phase: (state.stage.startsWith('phase_') ? state.stage : 'phase_1_dormant') as typeof boss.phase,
         frameIndex: tick % 6, direction: state.direction,
-        telegraphKind: 'radial_slam' as const, telegraphProgress: (tick % 6) / 5 };
+        telegraphKind: state.bossTelegraph, telegraphProgress: (tick % 6) / 5 };
       const rendered = bosses.renderBoss(current, p);
       blend(rendered.buffer, rendered.telegraphOverlayBuffer, 0, 0);
       return rendered.buffer;
     }
     case 'trees':
-      return nature.generateTreeStage(id as TreeSpeciesId, state.stage as TreeLifecycleStage, p, n, {
-        envState: state.weather === 'snow' ? 'snowy' : 'normal',
+    case 'tree-archetypes': {
+      const [family, archetypeId] = section === 'tree-archetypes' ? id.split(':') : [id, undefined];
+      return nature.generateTreeStage(family as TreeSpeciesId,
+        section === 'tree-archetypes' ? 'mature' : state.stage as TreeLifecycleStage, p, n, {
+        ...(archetypeId ? { archetypeId } : {}),
+        envState: state.treeEnvironment === 'normal' && state.weather === 'snow'
+          ? 'snowy' : state.treeEnvironment,
         windShiftTexels: Math.round(Math.sin(elapsed / 600) * (p.moduleSize / 4))
       }).buffer;
+    }
     case 'flora': return nature.generateSecondaryFlora(id as SecondaryFloraKind, p, n,
       Math.round(Math.sin(elapsed / 500) * p.moduleSize / 6)).buffer;
     case 'geology': return nature.generateGeologicalResource(id as GeologicalResourceKind, p, n).buffer;
-    case 'terrain': {
-      const tile = baseScene('terrain', p, tick, id);
-      return tile;
-    }
+    case 'terrain': return baseScene('terrain', p, tick, id);
+    case 'autotiling':
+      return terrain.composeAutotiledSurface(state.terrainMaterial,
+        Number(id), p, state.terrainUnderlay, n % 16);
+    case 'liquids':
+      return liquids.generateAnimatedFrame(id as 'shallow_water'|'deep_water',
+        tick % 8, 8, state.terrainMask, p);
     case 'structures': {
       const result = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p, true, true);
       const scene = new PixelBuffer(result.baseAndWallsBuffer.width, result.baseAndWallsBuffer.height);
@@ -404,11 +418,14 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       blend(soil, crop.buffer, 0, 0);
       return soil;
     }
-    case 'equipment': {
+    case 'equipment':
+    case 'equipment-materials': {
+      const [material, category] = section === 'equipment-materials' ? id.split(':') : [state.materialTier, id];
       const item: ItemEquipmentDefinition = {
         schemaVersion: PPAE_SCHEMA_VERSION, itemId: 'playground_' + id,
-        category: id as EquipmentItemCategory, tier: 'iron' as ItemMaterialTier,
-        wearState: 'pristine', durabilityMax: 100, durabilityCurrent: 100,
+        category: category as EquipmentItemCategory, tier: material as ItemMaterialTier,
+        wearState: state.wearState, durabilityMax: 100,
+        durabilityCurrent: state.wearState === 'damaged' ? 20 : state.wearState === 'worn' ? 60 : 100,
         attackOrPowerBonus: 12, defenseBonus: 5, primaryColorHex: '#cbd5e1', secondaryColorHex: '#475569'
       };
       const icon = icons.generateIcon(item, p, 28 * p.moduleSize / 4);
@@ -417,6 +434,16 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
         { r: 25, g: 34, b: 47, a: 255 }, { r: 120, g: 96, b: 59, a: 255 });
       blend(panel, icon, Math.floor((panel.width - icon.width) / 2), Math.floor((panel.height - icon.height) / 2));
       return panel;
+    }
+    case 'hud': {
+      const w = p.moduleSize * 14, h = p.moduleSize * 5;
+      if (id === 'hud_panel') return ui.renderNineSlicePanel(
+        DEFAULT_HUD_PANEL_CONFIG, w, h,
+        { r: 24, g: 37, b: 50, a: 255 }, { r: 143, g: 112, b: 67, a: 255 });
+      const colors = id === 'health_bar' ? ['#dc444b','#251c27'] :
+        id === 'mana_bar' ? ['#408ad9','#172945'] : ['#65b971','#20362b'];
+      return ui.renderProgressBar(state.progress, 100, w, p.moduleSize * 2,
+        colors[0], colors[1]);
     }
     case 'particles': {
       const s = 240;
