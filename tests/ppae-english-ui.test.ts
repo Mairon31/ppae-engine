@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PLAYGROUND_SECTIONS, formatPlaygroundLabel } from '../src/demo/playground-catalog';
+import { translatedLiteral } from '../src/demo/i18n';
 
 const sourceFile = (file: string) =>
   readFileSync(new URL('../' + file, import.meta.url), 'utf8');
@@ -13,7 +14,9 @@ describe('International PPAE landing and Playground language', () => {
     expect(html).toContain('ENDLESS');
     expect(html).toContain('ACTUAL GENERATED PIXELS.');
     expect(html).toContain('OPEN PLAYGROUND');
-    expect(html).not.toMatch(/[áéíóúñ¿¡]/i);
+    expect(html).toContain('data-language-select');
+    expect(html).toContain('<option value="es">Español</option>');
+    expect(html).toContain('<option value="pt">Português</option>');
     expect(html).not.toContain('SON PIXELS');
   });
 
@@ -28,6 +31,35 @@ describe('International PPAE landing and Playground language', () => {
     }
     expect(formatPlaygroundLabel('ancient_crystal_colossus')).toBe('Crystal Colossus');
     expect(formatPlaygroundLabel('255')).toBe('Mask 255');
+  });
+
+  it('translates real marketing, 30 catalog sections and player controls to ES/PT', () => {
+    for (const section of PLAYGROUND_SECTIONS) {
+      for (const locale of ['es','pt'] as const) {
+        expect(translatedLiteral(section.label,locale),section.id).not.toBe(section.label);
+        expect(translatedLiteral(section.description,locale),section.id).not.toBe(section.description);
+      }
+    }
+    expect(translatedLiteral('ONE ENGINE.','es')).toBe('UN MOTOR.');
+    expect(translatedLiteral('ONE ENGINE.','pt')).toBe('UM MOTOR.');
+    expect(translatedLiteral('Randomize character','es')).toBe('Aleatorizar personaje');
+    expect(translatedLiteral('Randomize character','pt')).toBe('Gerar personagem aleatório');
+    expect(translatedLiteral('LIVE GENERATION','pt')).toBe('GERAÇÃO AO VIVO');
+    expect(translatedLiteral('ONE ENGINE.','en')).toBe('ONE ENGINE.');
+  });
+
+  it('keeps README translations separate and excluded from npm', () => {
+    const readme = sourceFile('README.md');
+    expect(readme).toContain('docs/i18n/README.es.md');
+    expect(readme).toContain('docs/i18n/README.pt-BR.md');
+    expect(readme).not.toContain('<summary><strong>Español');
+    for (const file of ['docs/i18n/README.es.md','docs/i18n/README.pt-BR.md']) {
+      const translated = sourceFile(file);
+      expect(translated).toContain('PPAE Engine');
+      expect(translated).toContain('npm run build');
+      expect(translated).toContain('Spr​​itesheetCompiler'.replace(/\u200b/g,''));
+      expect(translated).toContain('README.md');
+    }
   });
 
   it('keeps developer controls, diagnostics and exports in English', () => {
