@@ -98,6 +98,15 @@ type PlaygroundState = {
   bossTelegraph: 'none' | 'radial_slam' | 'frontal_cleave' | 'cross_laser';
   progress: number;
   catalogQuery: string;
+  creatureScale: number;
+  bossAction: 'idle_float' | 'telegraph_charge' | 'crusher_slam' | 'crystal_nova' | 'hurt_stagger' | 'staged_death';
+  bossDeath: 'alive' | 'stage_1_arms_shatter' | 'stage_2_core_overload' | 'stage_3_monolith_collapse';
+  bossIntegrity: 'intact' | 'cracked' | 'destroyed';
+  structureRoof: boolean;
+  structureDoor: boolean;
+  structureWindows: boolean;
+  caveLava: boolean;
+  caveCrystals: number;
 };
 const state: PlaygroundState = {
   section: 'world', selected: 'world_overview', profile: 'micro-6x6',
@@ -111,7 +120,10 @@ const state: PlaygroundState = {
   materialTier: 'iron', wearState: 'pristine',
   terrainMask: 255, terrainMaterial: 'forest_moss', terrainUnderlay: 'meadow_grass',
   treeEnvironment: 'normal', bossTelegraph: 'radial_slam',
-  progress: 70, catalogQuery: ''
+  progress: 70, catalogQuery: '',
+  creatureScale: 1, bossAction: 'telegraph_charge', bossDeath: 'alive',
+  bossIntegrity: 'intact', structureRoof: true, structureDoor: true,
+  structureWindows: true, caveLava: true, caveCrystals: 5
 };
 
 let worldField = new DeterministicWorldField(state.seed);
@@ -379,11 +391,16 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       const clip = DEFAULT_CREATURE_CLIPS[action];
       return creatures.renderCreatureFrame(species as CreatureSpeciesId, action, state.direction,
         tick % clip.frameCount, clip.frameCount, p, n,
-        { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState }).buffer;
+        { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState,
+          sizeScaleMultiplier: state.creatureScale }).buffer;
     }
     case 'bosses': {
       const boss = id === BOSS_IDS[1] ? createCorruptedTreantBossState(n) : createDefaultColossusBossState(n);
-      const current = { ...boss, phase: (state.stage.startsWith('phase_') ? state.stage : 'phase_1_dormant') as typeof boss.phase,
+      const segments = Object.fromEntries(Object.entries(boss.segments).map(([name, segment]) =>
+        [name, { ...segment, integrity: state.bossIntegrity }])) as unknown as typeof boss.segments;
+      const current = { ...boss,
+        phase: (state.stage.startsWith('phase_') ? state.stage : 'phase_1_dormant') as typeof boss.phase,
+        action: state.bossAction, deathStage: state.bossDeath, segments,
         frameIndex: tick % 6, direction: state.direction,
         telegraphKind: state.bossTelegraph, telegraphProgress: (tick % 6) / 5 };
       const rendered = bosses.renderBoss(current, p);
@@ -419,14 +436,18 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return liquids.generateAnimatedFrame(id as 'shallow_water'|'deep_water'|'lava_magma',
         tick % 8, 8, state.terrainMask, p);
     case 'structures': {
-      const result = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p, true, true);
+      const result = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p,
+        state.structureDoor, state.structureWindows);
       const scene = new PixelBuffer(result.baseAndWallsBuffer.width, result.baseAndWallsBuffer.height);
       blend(scene, result.baseAndWallsBuffer, 0, 0);
-      blend(scene, result.roofOverlayBuffer, 0, 0);
+      if (state.structureRoof) blend(scene, result.roofOverlayBuffer, 0, 0);
       return scene;
     }
     case 'interiors': return interiors.renderInterior(DEFAULT_COTTAGE_INTERIOR, p).roomBuffer;
-    case 'caves': return caves.generateChamber({ ...DEFAULT_CRYSTAL_CAVERN, seed: n }, p).chamberBuffer;
+    case 'caves': return caves.generateChamber({
+      ...DEFAULT_CRYSTAL_CAVERN, seed: n,
+      hasLavaPool: state.caveLava, crystalCount: state.caveCrystals
+    }, p).chamberBuffer;
     case 'farming':
     case 'crop-lifecycle': {
       const [species, stage] = section === 'crop-lifecycle' ? id.split(':') : [id, state.stage];
@@ -1030,7 +1051,8 @@ function exportSheet(kind: 'png' | 'json'): void {
       ? state.selected.split(':') : [state.selected, state.age, state.health];
     const result = compiler.compileCreatureSheet(species as CreatureSpeciesId, p,
       [state.creatureAction], directions, seedNumber(),
-      { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState });
+      { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState,
+        sizeScaleMultiplier: state.creatureScale });
     if (kind === 'png') downloadUrl(encodePng(result.atlasBuffer), name + '.png');
     else downloadUrl(URL.createObjectURL(new Blob([JSON.stringify(result.metadata, null, 2)],
       { type: 'application/json' })), name + '.json');
