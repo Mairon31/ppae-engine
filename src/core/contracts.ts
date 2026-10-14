@@ -469,3 +469,107 @@ export interface CompiledSpritesheetMetadata {
   readonly frames: Readonly<Record<string, SpritesheetFrameMetadata>>;
   readonly sequenceOrder: Readonly<Record<string, readonly string[]>>;
 }
+// ============================================================================
+// PHASE 4 CONTRACTS: CREATURE ARCHETYPES, FAUNA, MONSTERS & MULTI-SEGMENT BOSS
+// ============================================================================
+
+export type CreatureFamilyId =
+  | 'quadruped'
+  | 'avian_biped'
+  | 'gelatinous_slime'
+  | 'arachnid'
+  | 'flying_winged'
+  | 'aquatic_swimmer';
+
+export type CreatureActionId =
+  | 'idle'
+  | 'move'
+  | 'rest_graze'
+  | 'attack'
+  | 'hurt'
+  | 'death';
+
+export type CreatureSpeciesId =
+  | 'dairy_cow'
+  | 'meadow_sheep'
+  | 'farm_chicken'
+  | 'timber_wolf'
+  | 'river_trout'
+  | 'emerald_slime'
+  | 'cave_spider'
+  | 'vampire_bat';
+
+export interface CreatureSpeciesProfile {
+  readonly schemaVersion: string;
+  readonly speciesId: CreatureSpeciesId;
+  readonly family: CreatureFamilyId;
+  readonly isHostile: boolean;
+  readonly widthModules: number;
+  readonly heightModules: number;
+  readonly primaryHex: string;
+  readonly shadowHex: string;
+  readonly highlightHex: string;
+  readonly secondaryHex: string; // Manchas, cresta, núcleo interno, ojos o colmillos
+  readonly accentHex: string;
+  readonly outlineHex: string;
+  readonly features: {
+    readonly hasHorns?: boolean;
+    readonly hasSpots?: boolean;
+    readonly hasUdder?: boolean;
+    readonly hasBushyTail?: boolean;
+    readonly hasPointedEars?: boolean;
+    readonly hasCombAndWattle?: boolean;
+    readonly hasTranslucentCore?: boolean;
+    readonly legPairs?: 1 | 2 | 4;
+    readonly defaultFlightAltitudeTexels?: number;
+  };
+  readonly logicalHitbox: LogicalHitbox;
+}
+
+export type BossPhaseId = 'phase_1_dormant' | 'phase_2_enraged' | 'phase_3_critical';
+
+export type BossSegmentId =
+  | 'core_monolith'
+  | 'dorsal_weakpoint_crystal'
+  | 'left_bastion_shield_arm'
+  | 'right_crusher_hammer_arm';
+
+export type BossSegmentIntegrity = 'intact' | 'cracked' | 'destroyed';
+
+export type BossActionId =
+  | 'idle_float'
+  | 'telegraph_charge'
+  | 'crusher_slam'
+  | 'crystal_nova'
+  | 'hurt_stagger'
+  | 'staged_death';
+
+export type BossDeathStage =
+  | 'alive'
+  | 'stage_1_arms_shatter'
+  | 'stage_2_core_overload'
+  | 'stage_3_monolith_collapse';
+
+export type TelegraphPatternKind = 'none' | 'radial_slam' | 'frontal_cleave' | 'cross_laser';
+
+export interface BossSegmentState {
+  readonly segmentId: BossSegmentId;
+  readonly integrity: BossSegmentIntegrity;
+  readonly isWeakPoint: boolean;
+  readonly localHitbox: LogicalHitbox;
+}
+
+export interface BossVisualState {
+  readonly schemaVersion: string;
+  readonly bossId: string;
+  readonly seed: number;
+  readonly phase: BossPhaseId;
+  readonly action: BossActionId;
+  readonly direction: Direction8;
+  readonly frameIndex: number;
+  readonly totalFrames: number;
+  readonly deathStage: BossDeathStage;
+  readonly telegraphKind: TelegraphPatternKind;
+  readonly telegraphProgress: number; // [0.0 a 1.0]
+  readonly segments: Readonly<Record<BossSegmentId, BossSegmentState>>;
+}
