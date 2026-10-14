@@ -162,11 +162,65 @@ export class CharacterAvatarGenerator {
       });
     }
 
+    // Profession packs sit behind the torso facing S and to the visible rear
+    // of the torso facing N. Profile views shift them away from the chest.
+    if (equipment.backpack && equipment.backpack !== 'none') {
+      const packColor = hexToRgba(equipment.backpackColorHex ?? '#92400e');
+      const packDark = adjustColorBrightness(packColor, -30);
+      const packHigh = adjustColorBrightness(packColor, 24);
+      const strapColor = hexToRgba('#451a03');
+      layers.push({
+        layerId: 'backpack',
+        zOrder: isFacingNorth ? 28 : 9,
+        draw: (b) => {
+          const tx = toScreenX(j.torso.x) - Math.round(fx * 2.2 * u);
+          const ty = toScreenY(j.torso.y);
+          const packW = Math.max(4, Math.round(
+            (isProfileSide ? 3.2 : equipment.backpack === 'quiver' ? 3 : 5.4) * u));
+          const packH = Math.max(4, Math.round(
+            (equipment.backpack === 'quiver' ? 6.5 : 5.2) * u));
+          const px = tx - Math.floor(packW / 2);
+          b.fillRect(px, ty, packW, packH, packDark);
+          b.fillRect(px + 1, ty, Math.max(2, packW - 2), packH - 1, packColor);
+          b.fillRect(px + 1, ty, Math.max(2, packW - 2),
+            Math.max(1, Math.round(1.3 * u)), packHigh);
+          b.drawLine(px, ty + packH - 1, px + packW - 1, ty + packH - 1, packDark);
+          if (equipment.backpack === 'miner_basket') {
+            for (let k = 0; k < Math.max(1, packW - 2); k += 2) {
+              b.drawLine(px + 1 + k, ty + 1, px + 1 + k, ty + packH - 2, packDark);
+            }
+            b.setPixel(tx - 1, ty - 1, hexToRgba('#38bdf8'));
+            b.setPixel(tx + 1, ty - 1, hexToRgba('#facc15'));
+          } else if (equipment.backpack === 'quiver') {
+            b.drawLine(tx, ty, tx + Math.round(2 * u), ty - Math.round(4 * u),
+              hexToRgba('#e2e8f0'));
+            b.setPixel(tx + Math.round(2 * u), ty - Math.round(4 * u),
+              hexToRgba('#facc15'));
+          } else if (equipment.backpack === 'herbalist_satchel') {
+            b.drawLine(px, ty + 1, px + packW - 1, ty + packH - 2, strapColor);
+            b.setPixel(tx, ty + Math.floor(packH / 2), hexToRgba('#facc15'));
+          } else {
+            b.fillRect(px + 1, ty + Math.floor(packH * .55),
+              Math.max(2, packW - 2), 1, packDark);
+            b.setPixel(tx, ty + Math.floor(packH * .55), hexToRgba('#facc15'));
+          }
+          // Straps must not override the front face; they live under the torso
+          // when the avatar faces South.
+          if (isFacingNorth) {
+            b.setPixel(toScreenX(j.shoulder_l.x), toScreenY(j.shoulder_l.y), strapColor);
+            b.setPixel(toScreenX(j.shoulder_r.x), toScreenY(j.shoulder_r.y), strapColor);
+          }
+        }
+      });
+    }
+
     // The back hair is an independent depth layer, never a foreground
     // rectangle painted after eyes and facial features.
     if (equipment.helmet === 'none' && appearance.hairStyle !== 'bald' &&
       (isFacingNorth || appearance.hairStyle === 'long_adventure' ||
-        appearance.hairStyle === 'ponytail')) {
+        appearance.hairStyle === 'ponytail' ||
+        appearance.hairStyle === 'wavy_shoulder' ||
+        appearance.hairStyle === 'braided_crown')) {
       layers.push({
         layerId: 'hair_back',
         zOrder: isFacingNorth ? j.head.zOrder + 2 : j.neck.zOrder - 2,
@@ -254,6 +308,50 @@ export class CharacterAvatarGenerator {
         b.setPixel(tx + Math.round(fx), beltY, hexToRgba('#eab308'));
         if (equipment.armor === 'mage_robe') {
           b.fillRect(tx - waist, beltY + 1, waist * 2 + 1, Math.round(3.5 * u), armorShad);
+          b.drawLine(tx, ty + 2, tx, beltY - 1, armorSec);
+        }
+
+        // Outfit geometry and trims are structurally distinct even when the
+        // primary material colors are exactly the same.
+        if (equipment.armor === 'cloth_tunic') {
+          b.drawLine(tx - waist, beltY - 1, tx - waist + 1, ty + 1, armorSec);
+          b.setPixel(tx, ty + 2, armorHigh);
+        } else if (equipment.armor === 'leather_vest') {
+          if (!isFacingNorth) {
+            b.drawLine(tx, ty + 1, tx, beltY - 1, armorSec);
+            b.drawLine(tx - chest + 1, ty + 1, tx + chest - 1,
+              beltY - 1, hexToRgba('#451a03'));
+          }
+        } else if (equipment.armor === 'iron_plate') {
+          b.fillRect(tx - chest, ty, chest * 2 + 1, 1, armorHigh);
+          b.drawLine(tx - 1, ty + 1, tx - 1, beltY - 1, hexToRgba('#f8fafc'));
+          b.drawLine(tx + chest - 1, ty + 1, tx + chest - 1,
+            beltY - 1, armorShad);
+        } else if (equipment.armor === 'farmer_overalls') {
+          b.fillRect(tx - chest, ty, chest * 2 + 1,
+            Math.max(2, Math.floor(torsoH * .3)), armorSec);
+          if (!isFacingNorth) {
+            b.drawLine(tx - Math.max(1, Math.round(2 * u)), ty,
+              tx - Math.max(1, Math.round(2 * u)), beltY, armorMain);
+            b.drawLine(tx + Math.max(1, Math.round(2 * u)), ty,
+              tx + Math.max(1, Math.round(2 * u)), beltY, armorMain);
+            b.fillRect(tx - 2, beltY - 2, 5, 2, armorHigh);
+          }
+        } else if (equipment.armor === 'blacksmith_apron') {
+          const apronW = Math.max(3, waist * 2 - 1);
+          const apronX = tx - Math.floor(apronW / 2);
+          b.fillRect(apronX, ty + 1, apronW,
+            torsoH + Math.round(1.5 * u), armorSec);
+          b.drawLine(apronX, ty + 1, apronX, ty + torsoH, armorShad);
+          b.setPixel(tx, beltY + 1, hexToRgba('#b45309'));
+        } else if (equipment.armor === 'noble_coat') {
+          b.drawLine(tx - waist, ty + 1, tx - 1, beltY, armorSec);
+          b.drawLine(tx + waist, ty + 1, tx + 1, beltY, armorSec);
+          if (!isFacingNorth) {
+            for (let py = ty + 1; py < ty + torsoH - 1; py += 2) {
+              b.setPixel(tx, py, hexToRgba('#facc15'));
+            }
+          }
         }
       }
     });
@@ -290,13 +388,45 @@ export class CharacterAvatarGenerator {
         b.setPixel(hx, hy - 1, skin);
         if (equipment.mainHand !== 'none') {
           const wx = toScreenX(j.weapon_tip.x), wy = toScreenY(j.weapon_tip.y);
-          const metal = equipment.mainHand !== 'oak_staff';
-          b.drawLine(hx, hy, wx, wy,
-            hexToRgba(metal ? '#cbd5e1' : '#92400e'), Math.max(2, Math.round(1.8 * u)));
-          b.setPixel(wx, wy, hexToRgba(metal ? '#f8fafc' : '#38bdf8'));
-          if (equipment.mainHand === 'woodcutter_axe' || equipment.mainHand === 'mining_pickaxe') {
-            b.fillRect(wx - 2, wy - 1, Math.max(2, Math.round(3.5 * u)),
-              Math.max(2, Math.round(2.5 * u)), hexToRgba('#94a3b8'));
+          // Profession-specific tool silhouettes; all pivot at the real
+          // anatomical main-hand joint (never a detached flat icon).
+          const timber = hexToRgba('#92400e');
+          const steel = hexToRgba('#cbd5e1');
+          const gleam = hexToRgba('#f8fafc');
+          if (equipment.mainHand === 'hunting_bow') {
+            const tipX = hx + Math.round(fx * 2 * u);
+            const topY = hy - Math.max(3, Math.round(4 * u));
+            const botY = hy + Math.max(3, Math.round(4 * u));
+            b.drawLine(tipX, topY, tipX + Math.round(2 * u), hy, timber);
+            b.drawLine(tipX + Math.round(2 * u), hy, tipX, botY, timber);
+            b.drawLine(tipX, topY, tipX, botY, gleam);
+            b.drawLine(hx, hy, tipX + Math.round(2 * u), hy, timber);
+          } else if (equipment.mainHand === 'fishing_rod') {
+            b.drawLine(hx, hy, wx + 2, wy - 2, hexToRgba('#a16207'));
+            b.drawLine(wx + 2, wy - 2, wx + 2, wy + 3, gleam);
+            b.setPixel(wx + 2, wy + 3, hexToRgba('#ef4444'));
+          } else {
+            const isWood = equipment.mainHand === 'oak_staff' ||
+              equipment.mainHand === 'wooden_hoe' ||
+              equipment.mainHand === 'smith_hammer';
+            b.drawLine(hx, hy, wx, wy, isWood ? timber : steel,
+              Math.max(1, Math.round((isWood ? 1.4 : 1.8) * u)));
+            b.setPixel(wx, wy, isWood ? hexToRgba('#38bdf8') : gleam);
+            if (equipment.mainHand === 'woodcutter_axe' ||
+                equipment.mainHand === 'mining_pickaxe' ||
+                equipment.mainHand === 'smith_hammer') {
+              const headColor = equipment.mainHand === 'smith_hammer'
+                ? hexToRgba('#64748b') : hexToRgba('#94a3b8');
+              b.fillRect(wx - Math.round(2 * u), wy - 1,
+                Math.max(2, Math.round(3.5 * u)),
+                Math.max(2, Math.round((equipment.mainHand === 'smith_hammer' ? 2.6 : 2.5) * u)),
+                headColor);
+              b.setPixel(wx - 1, wy - 1, gleam);
+            } else if (equipment.mainHand === 'wooden_hoe') {
+              b.drawLine(wx - Math.round(2.5 * u), wy,
+                wx + Math.round(2.5 * u), wy, steel, 2);
+              b.setPixel(wx - Math.round(2 * u), wy - 1, gleam);
+            }
           }
         }
       }
@@ -325,6 +455,18 @@ export class CharacterAvatarGenerator {
         } else if (equipment.offHand === 'lantern') {
           b.fillRect(hx - 1, hy + 1, Math.max(2, Math.round(2.2 * u)),
             Math.max(2, Math.round(3 * u)), hexToRgba('#facc15'));
+        } else if (equipment.offHand === 'spell_tome') {
+          b.fillRect(hx - 2, hy - 2, Math.max(3, Math.round(2.8 * u)),
+            Math.max(4, Math.round(3.4 * u)), hexToRgba('#7c3aed'));
+          b.drawLine(hx, hy - 1, hx, hy + 2, hexToRgba('#c4b5fd'));
+          b.setPixel(hx, hy, hexToRgba('#fde047'));
+        } else if (equipment.offHand === 'harvest_basket') {
+          const basket = hexToRgba('#b45309');
+          b.fillEllipse(hx, hy + 1, Math.round(2.4 * u),
+            Math.round(2 * u), basket);
+          b.drawLine(hx - 2, hy, hx, hy - 2, hexToRgba('#92400e'));
+          b.drawLine(hx, hy - 2, hx + 2, hy, hexToRgba('#92400e'));
+          b.setPixel(hx, hy, hexToRgba('#ef4444'));
         }
       }
     });
@@ -337,7 +479,8 @@ export class CharacterAvatarGenerator {
       draw: (b) => {
         const hx = toScreenX(j.head.x), hy = toScreenY(j.head.y);
         const headRx = Math.max(3, Math.round((isProfileSide ? 3 : 3.4) * u));
-        const headRy = Math.max(3, Math.round(3.6 * u));
+        const headRy = Math.max(3, Math.round(
+          (appearance.ageGroup === 'youth' ? 3.45 : 3.6) * u));
         // Rounded cranium, cheekbones and a progressively narrowed jaw.
         for (let dy = -headRy; dy <= headRy; dy++) {
           const half = dy > 1
@@ -351,11 +494,35 @@ export class CharacterAvatarGenerator {
           }
         }
 
+        // Fantasy cranial attributes anchored on the anatomical cranium.
+        if (appearance.earStyle === 'elf_pointed' || appearance.earStyle === 'fae_long') {
+          const reach = appearance.earStyle === 'fae_long'
+            ? Math.round(3 * u) : Math.round(2 * u);
+          b.drawLine(hx - headRx, hy, hx - headRx - reach, hy - 2, skinHigh);
+          b.drawLine(hx + headRx, hy, hx + headRx + reach, hy - 2, skin);
+        }
+        if (appearance.hornStyle === 'small_oni') {
+          const horn = hexToRgba('#e2e8f0');
+          b.drawLine(hx - headRx + 1, hy - headRy + 1,
+            hx - headRx, hy - headRy - Math.round(2 * u), horn);
+          b.drawLine(hx + headRx - 1, hy - headRy + 1,
+            hx + headRx, hy - headRy - Math.round(2 * u), horn);
+        } else if (appearance.hornStyle === 'curved_ram') {
+          const horn = hexToRgba('#cbd5e1');
+          for (const side of [-1, 1]) {
+            b.drawLine(hx + side * (headRx - 1), hy - headRy + 2,
+              hx + side * (headRx + 2), hy - headRy, horn);
+            b.drawLine(hx + side * (headRx + 2), hy - headRy,
+              hx + side * (headRx + 1), hy - headRy - Math.round(2 * u), horn);
+          }
+        }
+
         if (!isFacingNorth) {
           const eyeShiftX = Math.round(fx * 1.4 * u);
           const eyeY = hy; // S-facing eyes remain at the established eye anchor.
           const expression = appearance.expression ?? 'neutral';
-          const brow = hairShad;
+          const brow = appearance.ageGroup === 'elder'
+            ? hexToRgba('#cbd5e1') : hairShad;
           if (isProfileSide) {
             const eyeX = hx + eyeShiftX;
             b.setPixel(eyeX, eyeY - 1, brow);
@@ -385,6 +552,25 @@ export class CharacterAvatarGenerator {
             if (expression === 'surprised') {
               b.setPixel(hx + eyeShiftX, eyeY + Math.round(3 * u), hairShad);
             }
+          }
+          // Marks are deliberately below/above the eye line, never on the pupils.
+          if (appearance.faceMarking === 'freckles') {
+            const freckle = hexToRgba('#a66d3f');
+            b.setPixel(hx - headRx + 1, eyeY + 2, freckle);
+            b.setPixel(hx + headRx - 1, eyeY + 2, freckle);
+          } else if (appearance.faceMarking === 'war_paint') {
+            const pigment = hexToRgba('#dc2626');
+            b.drawLine(hx - headRx + 1, eyeY + 2,
+              hx - headRx + 2, eyeY + 3, pigment);
+            b.drawLine(hx + headRx - 1, eyeY + 2,
+              hx + headRx - 2, eyeY + 3, pigment);
+          } else if (appearance.faceMarking === 'arcane_rune') {
+            b.setPixel(hx + eyeShiftX, hy - headRy + 2, hexToRgba('#38bdf8'));
+          }
+          if (appearance.ageGroup === 'elder') {
+            const wrinkle = skinShad;
+            b.setPixel(hx - headRx + 1, eyeY + 2, wrinkle);
+            b.setPixel(hx + headRx - 1, eyeY + 2, wrinkle);
           }
           // Anatomical scar follows the visible cheek in each facing direction.
           if (appearance.hasFacialScar) {
@@ -447,6 +633,25 @@ export class CharacterAvatarGenerator {
             b.setPixel(hx, cy - 2, gold);
             b.setPixel(hx + headRx - 1, cy - 1, gold);
             b.setPixel(hx, cy, hexToRgba('#ef4444'));
+          } else if (equipment.helmet === 'miner_hardhat') {
+            b.fillEllipse(hx, hy - Math.round(1.5 * u),
+              headRx + 1, Math.round(2.2 * u), helm);
+            b.drawLine(hx - headRx - 1, hy - 2, hx + headRx + 1, hy - 2, helmDark, 2);
+            b.fillRect(hx - 1, hy - headRy, 3, 2, hexToRgba('#facc15'));
+            b.setPixel(hx, hy - headRy, hexToRgba('#e0f2fe'));
+          } else if (equipment.helmet === 'wizard_pointed_hat') {
+            const brimRx = headRx + Math.max(2, Math.round(2 * u));
+            const brimY = hy - Math.round(1.5 * u);
+            b.fillRect(hx - brimRx, brimY, brimRx * 2 + 1, 2, helmDark);
+            b.drawLine(hx - headRx + 1, brimY - 1,
+              hx + 1, brimY - Math.round(4.5 * u), helm, Math.max(2, Math.round(2 * u)));
+            b.setPixel(hx, brimY - Math.round(3 * u), helmHigh);
+          } else if (equipment.helmet === 'bandana') {
+            b.fillRect(hx - headRx, hy - headRy + 1, headRx * 2 + 1,
+              Math.max(2, Math.round(1.6 * u)), helm);
+            b.fillRect(hx - headRx, hy - headRy + 1, headRx * 2 + 1, 1, helmHigh);
+            b.drawLine(hx + headRx, hy - headRy + 2,
+              hx + headRx + 2, hy - headRy + 4, helmDark);
           } else {
             // Ranger hood with side drapes and face opening.
             b.fillEllipse(hx, hy - Math.round(1.2 * u),
@@ -459,8 +664,23 @@ export class CharacterAvatarGenerator {
           if (appearance.hairStyle === 'mohawk') {
             b.fillRect(hx - 1, crownY - 2, 3, headRy + 1, hair);
             b.setPixel(hx, crownY - 2, hairHigh);
+          } else if (appearance.hairStyle === 'curly_afro') {
+            b.fillEllipse(hx, crownY + 1, headRx + 1,
+              Math.max(2, Math.round(2.6 * u)), hairShad);
+            for (let offset = -headRx; offset <= headRx; offset += 2) {
+              b.setPixel(hx + offset, crownY - (Math.abs(offset) % 3), hairHigh);
+            }
+            b.fillEllipse(hx, crownY + 1, headRx,
+              Math.max(2, Math.round(1.8 * u)), hair);
+          } else if (appearance.hairStyle === 'braided_crown') {
+            b.fillEllipse(hx, crownY + 1, headRx,
+              Math.max(2, Math.round(1.6 * u)), hairShad);
+            for (let offset = -headRx + 1; offset <= headRx - 1; offset += 2) {
+              b.setPixel(hx + offset, crownY, (offset & 2) ? hairHigh : hair);
+            }
           } else {
-            const hairDepth = Math.max(1, Math.round(1.4 * u));
+            const hairDepth = Math.max(1, Math.round(
+              (appearance.hairStyle === 'wavy_shoulder' ? 2.2 : 1.4) * u));
             for (let dy = -1; dy <= hairDepth; dy++) {
               const span = dy === -1 ? headRx - 1 : headRx;
               for (let dx = -span; dx <= span; dx++) {

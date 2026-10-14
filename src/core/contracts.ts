@@ -668,14 +668,29 @@ export type CharacterActionId =
   | 'death';
 
 export type BodyBuildType = 'slim' | 'standard' | 'sturdy';
-export type HairStyleId = 'short_crop' | 'long_adventure' | 'ponytail' | 'mohawk' | 'bald';
+export type HairStyleId =
+  | 'short_crop' | 'long_adventure' | 'ponytail' | 'mohawk'
+  | 'wavy_shoulder' | 'braided_crown' | 'curly_afro' | 'bald';
 export type BeardStyleId = 'none' | 'stubble' | 'full_beard' | 'mustache';
-export type HelmetStyleId = 'none' | 'knight_helm' | 'ranger_hood' | 'straw_hat' | 'crown';
-export type ArmorStyleId = 'cloth_tunic' | 'leather_vest' | 'iron_plate' | 'mage_robe';
-export type MainHandItemId = 'none' | 'iron_sword' | 'woodcutter_axe' | 'mining_pickaxe' | 'oak_staff';
-export type OffHandItemId = 'none' | 'wooden_shield' | 'knight_kite_shield' | 'lantern';
+export type HelmetStyleId =
+  | 'none' | 'knight_helm' | 'ranger_hood' | 'straw_hat' | 'crown'
+  | 'miner_hardhat' | 'wizard_pointed_hat' | 'bandana';
+export type ArmorStyleId =
+  | 'cloth_tunic' | 'leather_vest' | 'iron_plate' | 'mage_robe'
+  | 'farmer_overalls' | 'blacksmith_apron' | 'noble_coat';
+export type MainHandItemId =
+  | 'none' | 'iron_sword' | 'woodcutter_axe' | 'mining_pickaxe' | 'oak_staff'
+  | 'wooden_hoe' | 'fishing_rod' | 'smith_hammer' | 'hunting_bow';
+export type OffHandItemId =
+  | 'none' | 'wooden_shield' | 'knight_kite_shield' | 'lantern'
+  | 'spell_tome' | 'harvest_basket';
 export type VisualStatusEffect = 'none' | 'hurt_flash' | 'poisoned' | 'frozen' | 'burning';
 export type FacialExpressionId = 'neutral' | 'determined' | 'happy' | 'surprised' | 'blink';
+export type CharacterAgeGroup = 'youth' | 'adult' | 'elder';
+export type CharacterEarStyle = 'human_round' | 'elf_pointed' | 'fae_long';
+export type CharacterHornStyle = 'none' | 'small_oni' | 'curved_ram';
+export type FaceMarkingStyle = 'none' | 'freckles' | 'war_paint' | 'arcane_rune';
+export type BackpackStyleId = 'none' | 'travel_pack' | 'miner_basket' | 'herbalist_satchel' | 'quiver';
 
 export interface EntityAppearance {
   readonly schemaVersion: string;
@@ -693,6 +708,10 @@ export interface EntityAppearance {
   readonly hasFacialScar: boolean;
   readonly scarSide: 'left' | 'right'; // Asimetría anatómica real
   readonly expression?: FacialExpressionId;
+  readonly ageGroup?: CharacterAgeGroup;
+  readonly earStyle?: CharacterEarStyle;
+  readonly hornStyle?: CharacterHornStyle;
+  readonly faceMarking?: FaceMarkingStyle;
 }
 
 export interface EquipmentLoadout {
@@ -707,6 +726,28 @@ export interface EquipmentLoadout {
   readonly glovesColorHex: string;
   readonly mainHand: MainHandItemId; // Siempre equipado en la mano derecha anatómica
   readonly offHand: OffHandItemId;   // Siempre equipado en la mano izquierda anatómica
+  readonly backpack?: BackpackStyleId;
+  readonly backpackColorHex?: string;
+}
+
+export type NpcProfessionArchetypeId =
+  | 'villager_farmer' | 'blacksmith_artisan' | 'town_guard' | 'wandering_mage'
+  | 'forest_ranger' | 'merchant_trader' | 'elder_scholar' | 'miner_prospector';
+
+export interface CharacterDirectionContinuityMetrics {
+  readonly direction: Direction8;
+  readonly bodyOpaquePixelCount: number;
+  readonly connectedComponentCount: number;
+  readonly largestComponentRatio: number;
+  readonly headConnectedToTorso: boolean;
+  readonly feetAnchoredToGround: boolean;
+}
+
+export interface CharacterAnatomicalAuditReport {
+  readonly entityId: string;
+  readonly action: CharacterActionId;
+  readonly passedAllDirections: boolean;
+  readonly directionMetrics: Readonly<Record<Direction8, CharacterDirectionContinuityMetrics>>;
 }
 
 export type AnatomicalJointId =

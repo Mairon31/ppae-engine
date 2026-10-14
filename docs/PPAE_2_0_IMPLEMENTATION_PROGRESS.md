@@ -20,7 +20,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
-| 5B — Character Customization and NPC Anatomy QA | PENDING | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
+| 5B — Character Customization and NPC Anatomy QA | IMPLEMENTED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -173,6 +173,18 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas:** siete nuevas regresiones 5A de rig 16×8×7, escorzo, ojos/nariz, barba y parpadeo, cascos, anclajes y compilación determinista de spritesheets; ejecutar `npm test` y `npm run build` de todos los módulos.
 - **Límite:** los tests de píxeles y la compilación no acreditan automáticamente fidelidad estética frente a las capturas de usuario. Inspección visual con `npm run dev` sigue pendiente.
 - **Siguiente bloque:** 5B — Sistema avanzado de personalización de personajes/NPC y auditoría de continuidad anatómica.
+
+## Fase 5B — 14 de octubre de 2026
+
+- **Origen:** lote Gemini sobre base desactualizada `217f76b393cda5b9755119a67f8b56d854df4520`, adaptado al HEAD real `cae1882e7bac9ba8df980b0e51fdcb91a035ea25`, rama `feat/ppae-2-art-overhaul`, PR #2 existente.
+- **Alcance:** `src/core/contracts.ts`, `src/entities/character-generator.ts`, nuevo `src/entities/character-customization.ts`, `src/index.ts`, nuevas `tests/ppae-character-customization-5b.test.ts`.
+- **Contratos:** expansiones retrocompatibles de peinados, cascos, armaduras, manos y escudos; campos opcionales de edad, orejas, cuernos, marcas faciales y mochilas; contratos de profesión y métricas geométricas.
+- **Renderizado:** siete tipos de ropa con detalles de geometría distintos, cuatro mochilas con ordenamiento de profundidad, tres nuevos cascos, tres estilos de cabello, variantes faciales y herramientas de oficio. Conserva el tratamiento de `hair_back` independiente de 5A y los anclajes de `SpritesheetCompiler`.
+- **NPC:** presets deterministas para ocho profesiones: granjero, herrero, guardia, mago, explorador, mercader, anciano estudioso y minero.
+- **Auditoría:** BFS con conectividad de 8 vecinos sobre alfa >= 200 y componentes etiquetadas, excluyendo sombra de contacto; verifica cabeza/cuello/torso y ambos pies sobre la componente principal, proporción principal y apoyo del pie en ocho direcciones. La continuidad medida es pixel-topológica (no una certificación visual de estilo).
+- **Cobertura:** seis grupos de regresiones: continuidad héroe, NPC deterministas, vestimenta, mochila/facial, variantes fantásticas y spritesheets/anclajes.
+- **Estado:** IMPLEMENTED; falta confirmar `npm test`, `npm run build` mediante GitHub Actions y revisar visualmente las ocho vistas de cada oficio.
+- **Próximo bloque:** 6A — Advanced Animation System y catálogo ampliado de acciones.
 
 ## Convenciones de estado
 
