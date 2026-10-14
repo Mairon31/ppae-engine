@@ -662,10 +662,13 @@ function emitPlaygroundVfx(
   seed: number, bursts: number, countPerBurst: number, spanX: number, spanY: number
 ): void {
   for (let i = 0; i < bursts; i++) {
-    const h = fnv1aHash32(id + ':' + seed + ':' + i);
-    const px = x + Math.round(((h & 1023) / 1023 - .5) * spanX);
-    const py = y + Math.round((((h >>> 10) & 1023) / 1023 - .5) * spanY);
-    pool.emitBurst(id, px, py, h, countPerBurst);
+    // Hashing sequential indices once produces correlated high bits (all emitters
+    // align on the same Y row). Use independent, salted deterministic streams.
+    const hx = fnv1aHash32('vfx-x:' + id + ':' + seed + ':' + i);
+    const hy = fnv1aHash32('vfx-y:' + id + ':' + seed + ':' + i);
+    const px = x + Math.round((hx / 4294967295 - .5) * spanX);
+    const py = y + Math.round((hy / 4294967295 - .5) * spanY);
+    pool.emitBurst(id, px, py, hx ^ hy, countPerBurst);
   }
 }
 function resetParticles(): void {
