@@ -3,7 +3,7 @@ import {
   CharacterAvatarGenerator, CREATURE_SPECIES_CATALOG, CreatureGenerator,
   DEFAULT_CHARACTER_CLIPS, DEFAULT_STYLE_PROFILES, EquipmentGenerator,
   FarmingAndCropGenerator, LiquidTileGenerator, MATERIAL_TIER_PALETTES,
-  NatureGenerator, PixelNineSliceLibrary, SpritesheetCompiler,
+  NatureGenerator, PixelNineSliceLibrary, SpritesheetCompiler, PaletteManager,
   TerrainAutotiler, TERRAIN_MATERIALS
 } from '../src/index';
 import { AVATAR_FIELDS, AVATAR_VARIANTS, generateAvatarPreset } from '../src/demo/avatar-lab';
@@ -17,7 +17,7 @@ describe('PPAE Playground advanced laboratory coverage', () => {
   const p = DEFAULT_STYLE_PROFILES['micro-4x4'];
 
   it('indexes real engine variants without static mockup assets', () => {
-    expect(PLAYGROUND_SECTIONS).toHaveLength(28);
+    expect(PLAYGROUND_SECTIONS).toHaveLength(30);
     expect(AVATAR_VARIANTS).toHaveLength(32);
     expect(PLAYGROUND_OPTIONS.characters).toEqual(AVATAR_VARIANTS);
     expect(PLAYGROUND_OPTIONS['character-actions']).toHaveLength(28);
@@ -28,6 +28,8 @@ describe('PPAE Playground advanced laboratory coverage', () => {
     expect(TERRAIN_VARIANTS).toHaveLength(Object.keys(TERRAIN_MATERIALS).length * 16);
     expect(TREE_ARCHETYPE_OPTIONS.length).toBeGreaterThan(12);
     expect(AUTOTILE_MASKS).toHaveLength(256);
+    expect(PLAYGROUND_OPTIONS.palettes).toEqual(new PaletteManager().listPalettes().map(p => p.id));
+    expect(PLAYGROUND_OPTIONS['resolution-profiles']).toContain('detailed-32x32');
     for (const section of PLAYGROUND_SECTIONS)
       expect(PLAYGROUND_OPTIONS[section.id].length).toBeGreaterThan(0);
   });
@@ -76,6 +78,11 @@ describe('PPAE Playground advanced laboratory coverage', () => {
 
   it('renders the additional systems through their actual generator APIs', () => {
     const tree = new NatureGenerator().generateTreeStage('oak','ancient',p,314159);
+    const highRes = new NatureGenerator().generateTreeStage(
+      'oak','mature',DEFAULT_STYLE_PROFILES['standard-16x16'],314159);
+    expect(highRes.buffer.width).toBeGreaterThan(tree.buffer.width);
+    const palette = new PaletteManager().getPalette('meadow-summer');
+    expect(palette.ramps.foliage.midtone.a).toBeGreaterThan(0);
     const terrain = new TerrainAutotiler();
     const tiles = terrain.generateSeamlessBaseTile('forest_moss',p,15);
     const border = terrain.composeAutotiledSurface('dirt_soil',85,p,'meadow_grass',8);
