@@ -540,4 +540,5 @@ export const STUDIO_TRANSLATIONS: Readonly<Record<string, readonly [string, stri
     " FPS (visor)",
     " FPS (prévia)"
   ]
+  "Back to home": ["Volver al inicio", "Voltar ao início"],
 };
