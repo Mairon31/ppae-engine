@@ -35,7 +35,7 @@ try {
     return {background:style.backgroundColor, font:getComputedStyle(title).fontFamily,
       title:title?.textContent, width:node.getBoundingClientRect().width};
   });
-  if (!landingVisual.title?.includes('INFINITOS') || !landingVisual.font.includes('Pixelify Sans'))
+  if (!landingVisual.title?.includes('ENDLESS') || !landingVisual.font.includes('Pixelify Sans'))
     throw new Error('Product landing typography or hero headline did not load: '+JSON.stringify(landingVisual));
   if (await page.locator('#landing-page .lp-showcase-card').count() !== 4)
     throw new Error('Product landing is missing generated engine showcases');
@@ -120,7 +120,7 @@ try {
   }
 
   await page.locator('#profile-select').selectOption('micro-6x6');
-  await nav.filter({ hasText: 'Bestiario' }).click();
+  await nav.filter({ hasText: 'Bestiary' }).click();
   await page.locator('#age-select').selectOption('juvenile');
   await page.locator('#health-select').selectOption('wounded');
   await page.locator('#direction-select').selectOption('SW');
@@ -129,7 +129,7 @@ try {
 
   // Actual avatar editor: interactive rig/equipment/color customization, seeded
   // randomizer, and a downloadable source definition from the edited state.
-  await nav.filter({ hasText: 'Creador de personajes' }).click();
+  await nav.filter({ hasText: 'Character Creator' }).click();
   if (await page.locator('#play-toggle').getAttribute('aria-pressed') === 'true')
     await page.locator('#play-toggle').click();
   await page.locator('#avatar-helmet').selectOption('none');
@@ -153,17 +153,17 @@ try {
   await page.screenshot({ path: join(output, '31-avatar-customizer.png'), fullPage: true });
   console.log('AVATAR LAB OK: edited attributes, reroll, definition JSON');
 
-  await nav.filter({ hasText: 'Diversidad de NPCs' }).click();
+  await nav.filter({ hasText: 'NPC Diversity' }).click();
   await page.locator('#catalog-search').fill('town_guard');
-  await page.waitForFunction(() => document.querySelector('#gallery-range')?.textContent?.includes('de 8'));
+  await page.waitForFunction(() => document.querySelector('#gallery-range')?.textContent?.includes('of 8'));
   if (await page.locator('.asset-card').count() !== 6) throw new Error('Filtered NPC gallery count mismatch');
   await page.locator('#catalog-search').fill('');
-  await nav.filter({ hasText: 'Autotiling 8 vecinos' }).click();
+  await nav.filter({ hasText: '8-Neighbor Autotiling' }).click();
   await page.locator('#catalog-search').fill('255');
   if (await page.locator('.asset-card').count() !== 1) throw new Error('Mask search failed');
   await page.locator('#catalog-search').fill('');
 
-  await nav.filter({ hasText: 'Variantes de criaturas' }).click();
+  await nav.filter({ hasText: 'Creature Variants' }).click();
   await page.locator('.asset-card').nth(1).click();
   const [variantExport] = await Promise.all([
     page.waitForEvent('download'), page.locator('#download-json').click()
@@ -173,7 +173,7 @@ try {
   await page.screenshot({ path: join(output, '32-creature-variants.png'), fullPage: true });
   console.log('EXTENDED CATALOG OK: NPC filter, canonical masks, variant atlas');
   
-  await nav.filter({ hasText: 'Ciclos de árboles' }).click();
+  await nav.filter({ hasText: 'Tree Lifecycles' }).click();
   const firstTree = await page.locator('.asset-card strong').first().innerText();
   await page.locator('#gallery-next').click();
   const nextTree = await page.locator('.asset-card strong').first().innerText();
@@ -197,7 +197,7 @@ try {
   if (!payload.morphology?.skeleton || !payload.pivotTexel ||
       payload.section !== 'tree-lifecycle')
     throw new Error('Engine tree JSON did not expose actual morphology and pivot');
-  await nav.filter({ hasText: 'Paletas del motor' }).click();
+  await nav.filter({ hasText: 'Engine Palettes' }).click();
   const [paletteFile] = await Promise.all([
     page.waitForEvent('download'), page.locator('#download-json').click()
   ]);
@@ -205,7 +205,7 @@ try {
   await paletteFile.saveAs(palettePath);
   if (!JSON.parse(readFileSync(palettePath,'utf8')).palette?.ramps?.foliage)
     throw new Error('Palette section did not export actual registered palette ramps');
-  await nav.filter({ hasText: 'Comparador multirresolución' }).click();
+  await nav.filter({ hasText: 'Resolution Comparison' }).click();
   await page.waitForFunction(() => [...document.querySelectorAll('.asset-thumb canvas')]
     .every(canvas => canvas.getContext('2d').getImageData(0,0,1,1).data[3] === 255),
     null, { timeout: 30000 });
@@ -232,7 +232,7 @@ try {
   await page.locator('#toggle-sidebar').click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'true')
     throw new Error('Mobile navigation did not open');
-  await nav.filter({ hasText: 'Partículas' }).click();
+  await nav.filter({ hasText: 'Particles & VFX' }).click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'false')
     throw new Error('Mobile navigation did not close on selection');
   await page.waitForFunction(() => document.querySelector('#stage-action')?.textContent?.startsWith('PARTICLES /'), null, { timeout: 30000 });
