@@ -1,170 +1,234 @@
 import {
-  CoordinateSystem,
+  CharacterAvatarGenerator,
+  CHUNK_SIZE_TILES,
+  ChunkWorldRenderer,
+  CropGrowthStage,
+  CropSpeciesId,
+  DEFAULT_HERO_APPEARANCE,
+  DEFAULT_HERO_EQUIPMENT,
   DEFAULT_STYLE_PROFILES,
-  GeneratedAssetArtifact,
+  DeterministicWorldField,
+  EquipmentGenerator,
+  FarmingAndCropGenerator,
   GranularityProfileId,
-  PPAEEngine,
-  rgbaToHex
+  InventoryIconGenerator,
+  ItemEquipmentDefinition,
+  ItemMaterialTier,
+  ItemWearState,
+  PixelBuffer,
+  PixelNineSliceLibrary,
+  PPAE_SCHEMA_VERSION,
+  StructureGenerator
 } from '../index';
-
-const engine = new PPAEEngine();
 
 const seedInput = document.getElementById('seed-input') as HTMLInputElement;
 const profileSelect = document.getElementById('profile-select') as HTMLSelectElement;
-const paletteSelect = document.getElementById('palette-select') as HTMLSelectElement;
-const stateSelect = document.getElementById('state-select') as HTMLSelectElement;
 const scaleSelect = document.getElementById('scale-select') as HTMLSelectElement;
-const debugCheckbox = document.getElementById('debug-pivots') as HTMLInputElement;
-const randomBtn = document.getElementById('random-seed-btn') as HTMLButtonElement;
-const cardsContainer = document.getElementById('cards-container') as HTMLDivElement;
 const telemetryBox = document.getElementById('telemetry') as HTMLDivElement;
 const worldStage = document.getElementById('world-stage') as HTMLCanvasElement;
+const cardsContainer = document.getElementById('cards-container') as HTMLDivElement;
 
-function renderArtifactToCanvas(
-  artifact: GeneratedAssetArtifact,
-  scale: number,
-  showDebug: boolean,
-  bgHex: string
-): HTMLCanvasElement {
-  const { texelWidth, texelHeight, pivotTexel } = artifact.metadata;
-  const canvas = document.createElement('canvas');
-  canvas.width = texelWidth * scale;
-  canvas.height = texelHeight * scale;
+const worldField = new DeterministicWorldField(seedInput.value.trim() || 'PixelProject-2026');
+const chunkRenderer = new ChunkWorldRenderer(worldField);
+const structureGen = new StructureGenerator();
+const avatarGen = new CharacterAvatarGenerator();
+const equipmentGen = new EquipmentGenerator();
+const iconGen = new InventoryIconGenerator();
+const farmingGen = new FarmingAndCropGenerator();
+const nineSliceLib = new PixelNineSliceLibrary();
 
-  const ctx = canvas.getContext('2d')!;
-  ctx.imageSmoothingEnabled = false;
+let selectedTier: ItemMaterialTier = 'iron';
+let selectedWear: ItemWearState = 'pristine';
+let selectedCrop: CropSpeciesId = 'wheat';
+let cropStage: CropGrowthStage = 'mature';
 
-  ctx.fillStyle = bgHex;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Dibujar texels con escalado entero exacto
-  for (let y = 0; y < texelHeight; y++) {
-    for (let x = 0; x < texelWidth; x++) {
-      const idx = (y * texelWidth + x) * 4;
-      const a = artifact.pixels[idx + 3];
+function drawPixelBufferToCtx(
+  ctx: CanvasRenderingContext2D,
+  buf: PixelBuffer,
+  destX: number,
+  destY: number,
+  scale: number
+): void {
+  for (let y = 0; y < buf.height; y++) {
+    for (let x = 0; x < buf.width; x++) {
+      const idx = (y * buf.width + x) * 4;
+      const a = buf.data[idx + 3];
       if (a === 0) continue;
-      ctx.fillStyle = `rgba(${artifact.pixels[idx]},${artifact.pixels[idx + 1]},${artifact.pixels[idx + 2]},${a / 255})`;
-      ctx.fillRect(x * scale, y * scale, scale, scale);
+      ctx.fillStyle = `rgba(${buf.data[idx]},${buf.data[idx + 1]},${buf.data[idx + 2]},${a / 255})`;
+      ctx.fillRect(destX + x * scale, destY + y * scale, scale, scale);
     }
   }
-
-  if (showDebug) {
-    // Punto de pivote de apoyo (Rojo)
-    const [px, py] = pivotTexel;
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(px * scale - 2, py * scale - 2, 5, 5);
-  }
-
-  return canvas;
 }
 
-function updateView(): void {
-  const seed = seedInput.value.trim() || 'PixelProject-2026';
+function copyBufferOver(target: PixelBuffer, src: PixelBuffer, offsetX: number, offsetY: number): void {
+  for (let y = 0; y < src.height; y++) {
+    for (let x = 0; x < src.width; x++) {
+      const c = src.getPixel(x, y);
+      if (c.a > 0) {
+        target.setPixel(offsetX + x, offsetY + y, c);
+      }
+    }
+  }
+}
+
+function setupPhase7InspectorUI(): void {
+  cardsContainer.innerHTML = '';
+  const panel = document.createElement('div');
+  panel.className = 'asset-card';
+  panel.style.gridColumn = '1 / -1';
+  panel.style.alignItems = 'flex-start';
+
+  panel.innerHTML = `
+    <strong>Fase 7 — Herramientas, Armas, Íconos de Inventario, Granjas y HUD Nine-Slice</strong>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+      <span>Material Tier:</span>
+      <button data-tier="wood">Madera</button>
+      <button data-tier="iron">Hierro</button>
+      <button data-tier="gold">Oro</button>
+      <button data-tier="crystal">Cristal</button>
+      <span>Desgaste:</span>
+      <button data-wear="pristine">Pristino</button>
+      <button data-wear="worn">Desgastado</button>
+      <button data-wear="damaged">Dañado</button>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+      <span>Cultivo / Etapa:</span>
+      <button data-crop="wheat">Trigo</button>
+      <button data-crop="tomato">Tomate</button>
+      <button data-crop="pumpkin">Calabaza</button>
+      <button data-stage="seed">Semilla</button>
+      <button data-stage="growing">Creciendo</button>
+      <button data-stage="mature">Maduro</button>
+      <button data-stage="withered">Marchito</button>
+    </div>
+  `;
+  cardsContainer.appendChild(panel);
+
+  panel.querySelectorAll<HTMLButtonElement>('button[data-tier]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedTier = btn.dataset.tier as ItemMaterialTier;
+      renderPhase7Scene();
+    });
+  });
+
+  panel.querySelectorAll<HTMLButtonElement>('button[data-wear]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedWear = btn.dataset.wear as ItemWearState;
+      renderPhase7Scene();
+    });
+  });
+
+  panel.querySelectorAll<HTMLButtonElement>('button[data-crop]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedCrop = btn.dataset.crop as CropSpeciesId;
+      renderPhase7Scene();
+    });
+  });
+
+  panel.querySelectorAll<HTMLButtonElement>('button[data-stage]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      cropStage = btn.dataset.stage as CropGrowthStage;
+      renderPhase7Scene();
+    });
+  });
+}
+
+function renderPhase7Scene(): void {
   const profileId = profileSelect.value as GranularityProfileId;
   const profile = DEFAULT_STYLE_PROFILES[profileId];
-  const palette = engine.paletteManager.getPalette(paletteSelect.value);
-  const stateTag = stateSelect.value as 'intact' | 'damaged' | 'snowy' | 'wind_sway';
-  const scale = parseInt(scaleSelect.value, 10);
-  const showDebug = debugCheckbox.checked;
-  const bgHex = rgbaToHex(palette.backgroundReference);
+  const scale = Math.min(3, Math.max(2, parseInt(scaleSelect.value, 10) - 1));
 
-  cardsContainer.innerHTML = '';
-  const definitions = engine.listAssetDefinitions();
-  const generatedMap = new Map<string, GeneratedAssetArtifact>();
+  const chunkTexels = CHUNK_SIZE_TILES * profile.canonicalTileTexels;
+  const sceneWidthTexels = 2 * chunkTexels;
+  const sceneHeightTexels = chunkTexels;
+  const compositeScene = new PixelBuffer(sceneWidthTexels, sceneHeightTexels);
 
-  for (const def of definitions) {
-    const artifact = engine.generateAsset({
-      worldSeed: seed,
-      assetDefinition: def,
-      styleProfile: profile,
-      palette,
-      variantIndex: 0,
-      stateTag
-    });
-    generatedMap.set(def.id, artifact);
-
-    const card = document.createElement('div');
-    card.className = 'asset-card';
-
-    const previewCanvas = renderArtifactToCanvas(artifact, scale, showDebug, bgHex);
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.innerHTML = `
-      <strong>${def.id}</strong><br/>
-      Resolución: ${artifact.metadata.innerWidth}×${artifact.metadata.innerHeight} px (Módulos ${profile.moduleSize}×${profile.moduleSize})<br/>
-      Colores únicos: ${artifact.metadata.uniqueColorCount} / ${palette.maxColorsPerAsset}<br/>
-      Contraste Bioma: ${artifact.metadata.contrastRatioAgainstBiome}:1<br/>
-      Semilla: 0x${artifact.metadata.resolvedSeed.toString(16)} (${artifact.metadata.generationTimeMs} ms)
-    `;
-
-    card.appendChild(previewCanvas);
-    card.appendChild(meta);
-    cardsContainer.appendChild(card);
+  // 1. Terreno base
+  for (let cx = 0; cx < 2; cx++) {
+    const chunk = chunkRenderer.renderChunk(cx, 0, profile, 0, 4);
+    copyBufferOver(compositeScene, chunk.terrainBuffer, cx * chunkTexels, 0);
   }
 
-  // Renderizar escenario de prueba con Y-sorting en coordenadas lógicas 16x16
-  const sCtx = worldStage.getContext('2d')!;
-  sCtx.imageSmoothingEnabled = false;
-  sCtx.fillStyle = bgHex;
-  sCtx.fillRect(0, 0, worldStage.width, worldStage.height);
+  // 2. Parcela de granja (tierra labrada + cultivo seleccionado)
+  const soilTile = farmingGen.renderTilledSoilTile(true, profile);
+  const cropArtifact = farmingGen.renderCropStage(selectedCrop, cropStage, true, profile);
+  copyBufferOver(compositeScene, soilTile, 120, 80);
+  copyBufferOver(compositeScene, cropArtifact.buffer, 120, 80);
 
-  const coordSys = new CoordinateSystem(profile);
-  const sceneEntities = [
-    { id: 'oak_tree_mature', worldX: 48, worldY: 36, variant: 0 },
-    { id: 'pine_tree_tall', worldX: 112, worldY: 30, variant: 1 },
-    { id: 'crystal_ore_node', worldX: 80, worldY: 48, variant: 2 },
-    { id: 'berry_bush_wild', worldX: 56, worldY: 54, variant: 3 },
-    { id: 'oak_tree_mature', worldX: 148, worldY: 52, variant: 4 },
-    { id: 'crystal_ore_node', worldX: 185, worldY: 42, variant: 5 }
-  ];
+  // 3. Avatar y Cabaña
+  const cottageArt = structureGen.generateStructure(
+    DEFAULT_STRUCTURE_CATALOG.village_cottage_01,
+    profile,
+    true,
+    false
+  );
+  copyBufferOver(compositeScene, cottageArt.baseAndWallsBuffer, 16, 10);
+  copyBufferOver(compositeScene, cottageArt.roofOverlayBuffer, 16, 10);
 
-  const projected = sceneEntities
-    .map((ent) => {
-      const def = engine.getAssetDefinition(ent.id);
-      const art = engine.generateAsset({
-        worldSeed: seed,
-        assetDefinition: def,
-        styleProfile: profile,
-        palette,
-        variantIndex: ent.variant,
-        stateTag
-      });
-      const proj = coordSys.projectWorldToViewport(
-        { worldX: ent.worldX, worldY: ent.worldY },
-        0,
-        0,
-        2
-      );
-      return { ent, art, proj };
-    })
-    .sort((a, b) => a.proj.depthSortKey - b.proj.depthSortKey);
+  const heroFrame = avatarGen.renderCharacterFrame(
+    DEFAULT_HERO_APPEARANCE,
+    DEFAULT_HERO_EQUIPMENT,
+    'idle',
+    'S',
+    0,
+    4,
+    profile
+  );
+  copyBufferOver(compositeScene, heroFrame.buffer, 145, 78);
 
-  for (const item of projected) {
-    const { art, proj } = item;
-    const spriteCanvas = renderArtifactToCanvas(art, proj.integerScale, showDebug, 'rgba(0,0,0,0)');
-    const drawX = proj.screenX - art.metadata.pivotTexel[0] * proj.integerScale;
-    const drawY = proj.screenY - art.metadata.pivotTexel[1] * proj.integerScale;
-    sCtx.drawImage(spriteCanvas, drawX, drawY);
-  }
+  // 4. Panel HUD con Nine-Slice y ranuras de inventario con íconos diagonales de alta legibilidad
+  const hudPanel = nineSliceLib.renderNineSlicePanel(
+    {
+      schemaVersion: PPAE_SCHEMA_VERSION,
+      frameId: 'hud_panel_wood',
+      sourceWidthTexels: 24,
+      sourceHeightTexels: 24,
+      cornerSizePx: 6
+    },
+    160,
+    48,
+    { r: 24, g: 32, b: 48, a: 220 },
+    { r: 115, g: 63, b: 18, a: 255 }
+  );
 
-  const tel = engine.getTelemetry();
+  const testItemDef: ItemEquipmentDefinition = {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    itemId: 'test_sword',
+    category: 'weapon_sword',
+    tier: selectedTier,
+    wearState: selectedWear,
+    durabilityMax: 100,
+    durabilityCurrent: selectedWear === 'damaged' ? 22 : 100,
+    attackOrPowerBonus: 15,
+    defenseBonus: 0,
+    primaryColorHex: '#ffffff',
+    secondaryColorHex: '#000000'
+  };
+
+  const diagIcon = iconGen.generateIcon(testItemDef, profile, 20);
+  const hpBar = nineSliceLib.renderProgressBar(78, 100, 64, 8, '#22c55e', '#1e293b');
+
+  // Copiar HUD sobre la escena de prueba
+  copyBufferOver(compositeScene, hudPanel, 12, 12);
+  copyBufferOver(compositeScene, diagIcon, 20, 20);
+  copyBufferOver(compositeScene, hpBar, 48, 22);
+
+  worldStage.width = sceneWidthTexels * scale;
+  worldStage.height = sceneHeightTexels * scale;
+  const ctx = worldStage.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+
+  drawPixelBufferToCtx(ctx, compositeScene, 0, 0, scale);
+
   telemetryBox.innerHTML = `
-    <strong>Telemetría de Caché y Motor</strong><br/>
-    Generados únicos: ${tel.totalGeneratedCount}<br/>
-    Cache Hits / Misses: ${tel.cacheHits} / ${tel.cacheMisses} (${(tel.cacheHitRate * 100).toFixed(1)}%)<br/>
-    Memoria en Caché: ${(tel.memoryUsedBytes / 1024).toFixed(2)} KB<br/>
-    P50 / P95 / P99: ${tel.genTimeP50Ms} / ${tel.genTimeP95Ms} / ${tel.genTimeP99Ms} ms
+    <strong>Telemetría Fase 7 — Items, Cultivos y HUD Nine-Slice</strong><br/>
+    Item Activo: <strong>${selectedTier.toUpperCase()} Sword</strong> (${selectedWear})<br/>
+    Cultivo Activo: <strong>${selectedCrop.toUpperCase()}</strong> (${cropStage})<br/>
+    Nine-Slice HUD: Renderizado sin distorsión de esquinas<br/>
+    Ícono Diagonal: Compilación $45^\circ$ optimizada para slot
   `;
 }
 
-[seedInput, profileSelect, paletteSelect, stateSelect, scaleSelect, debugCheckbox].forEach((el) =>
-  el.addEventListener('input', updateView)
-);
-
-randomBtn.addEventListener('click', () => {
-  seedInput.value = `Seed-${Math.floor(Date.now() % 100000)}`;
-  updateView();
-});
-
-updateView();
+setupPhase7InspectorUI();
+[profileSelect, scaleSelect].forEach((el) => el.addEventListener('input', renderPhase7Scene));
+renderPhase7Scene();
