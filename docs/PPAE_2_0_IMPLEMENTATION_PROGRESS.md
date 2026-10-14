@@ -20,7 +20,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
-| 5B — Character Customization and NPC Anatomy QA | IMPLEMENTED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
+| 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -183,7 +183,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **NPC:** presets deterministas para ocho profesiones: granjero, herrero, guardia, mago, explorador, mercader, anciano estudioso y minero.
 - **Auditoría:** BFS con conectividad de 8 vecinos sobre alfa >= 200 y componentes etiquetadas, excluyendo sombra de contacto; verifica cabeza/cuello/torso y ambos pies sobre la componente principal, proporción principal y apoyo del pie en ocho direcciones. La continuidad medida es pixel-topológica (no una certificación visual de estilo).
 - **Cobertura:** seis grupos de regresiones: continuidad héroe, NPC deterministas, vestimenta, mochila/facial, variantes fantásticas y spritesheets/anclajes.
-- **Estado:** IMPLEMENTED; falta confirmar `npm test`, `npm run build` mediante GitHub Actions y revisar visualmente las ocho vistas de cada oficio.
+- **Estado:** VERIFIED técnicamente. Commit de implementación `1b7a8bd63d4646696e7386cd19d9c3686c43ef5c`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38600924526: `npm test` **22 suites / 128 tests** (6 nuevos 5B) y `npm run build` íntegro (TypeScript, declaraciones, biblioteca y demo) exitosos. Sigue pendiente inspeccionar visualmente las ocho vistas de cada oficio.
 - **Próximo bloque:** 6A — Advanced Animation System y catálogo ampliado de acciones.
 
 ## Convenciones de estado
