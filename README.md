@@ -162,6 +162,7 @@ Open the local Vite URL shown in your terminal (normally `http://localhost:5173/
 npm run typecheck       # Strict TypeScript checks
 npm test                # Unit and regression tests
 npm run build           # ESM library + declarations + demo
+npm run check:package   # Inspect exactly what npm users would download
 npm run preview         # Preview the compiled Pages build
 ```
 
@@ -171,7 +172,7 @@ The full build produces:
 - `dist/` — package TypeScript declarations.
 - `dist/demo/` — Vite-built standalone Playground for GitHub Pages.
 
-**Distribution note:** the package is named `@pixelproject/ppae` (currently `0.2.0-alpha.1`) in `package.json`. This README does **not** assume the package has been published to npm. Build this repository and install or link the local package in your game project.
+**Distribution note:** the package is named `@pixelproject/ppae` (currently `0.2.0-alpha.1`) in `package.json`. Publishing has not been performed. The npm tarball contains only the compiled engine, public TypeScript declarations, README, license and package metadata; the product landing, Playground, tests and technical documentation stay in GitHub. CI verifies this with `npm pack --dry-run`. See the [npm distribution guide](docs/NPM_DISTRIBUTION.md). Build this repository and install or link the local package in your game project.
 
 ## Use the engine in TypeScript
 
