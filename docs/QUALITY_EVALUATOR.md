@@ -50,3 +50,7 @@ npm run check:package
 ```
 
 CI includes the quality suite automatically. No npm publishing is triggered by these commands.
+
+## Phase 12 live inspection
+
+Open `#quality-inspector` in the Playground to compare real sprites across five native resolutions and inspect the ten locked references. `#integrated-scene` exposes live hero/tree/geode reports for composed worlds. The inspector emits quality reports and hashes in JSON while preserving the Phase 11 API and baseline signatures.

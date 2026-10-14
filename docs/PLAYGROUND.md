@@ -111,3 +111,13 @@ The `#weather` laboratory renders `WeatherAndWindSystem` overlays for all 11 wea
 All added catalog labels and section descriptions have English/Spanish/Brazilian Portuguese entries. Existing seed, profile, native PNG and metadata JSON workflows are retained. Browser screenshots `43-phase10-dawn-shadow.png` through `48-phase10-poison-rings.png`, with JSON metadata and all 30 labs, can be found in the `ppae-playground-chromium-qa` artifact from https://github.com/Mairon31/ppae-engine/actions/runs/38645914913.
 
 The visual samples and automated QA demonstrate those selected settings only; full device/resolution/seed combinations and calibrated scene-level performance remain future work.
+
+## Phase 12 — production scene and live visual quality inspector
+
+The Playground now has **32 active, generator-backed labs**. Two new Art Diagnostics labs appear after the original Resolution Comparison: `#integrated-scene` and `#quality-inspector`. Both use the existing responsive, multilingual routing and nearest-neighbor renderer.
+
+**Production Scene Inspector** composes `PPAEInteractiveShowcaseController.renderWorldSceneFrame` using real terrain/chunks, foot-Y-sorted world props, entities, natural assets, structures, solar lighting, weather, VFX and quality analysis. Select world, boss, interior or cave previews. Global controls manage world seed, native/adaptive profile, hero action/direction, weather and zoom. New options select solar hour (0–24), NPC, creature, boss, structure, VFX, doors and roof cutaway. Live metrics include resolved resolution, cast shadows, precipitation/shelter, lightning, particles, 9-dimension detail summary and hero/tree/geode scores. Native PNG and JSON are exported from real buffers and metadata.
+
+**Art Quality Inspector** produces five real native profile variants (4×4, 6×6, 8×8, 16×16, 32×32) for hero, oak and geode, displaying each quality score and defects. The Golden Seed Registry view lists all ten locked references with hashes. JSON export records profile results and RGBA fingerprints.
+
+All new text is English-first with Spanish and Brazilian Portuguese translations; the original 30 labs and route IDs remain unchanged. The Chromium QA script captures screens `49-phase12-production-scene.png` through `53-phase12-mobile-quality-pt.png` with the JSON exports when that workflow succeeds.

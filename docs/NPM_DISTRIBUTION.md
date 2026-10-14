@@ -54,3 +54,7 @@ Consider moving the landing/Playground to their own repository **only when** the
 5. Publish from a trusted version/tag only after maintainer approval.
 
 The current `@pixelproject/ppae` name and `0.2.0-alpha.1` version are metadata in the repository. **No npm publication is claimed or performed by this process.**
+
+## Phase 12 scene API
+
+`PPAEEngine.renderProductionScene(config)` and `PPAEEngine.compareProductionProfiles(kind, seed)` lazily construct the scene inspector only when called. Standalone asset generation remains unaffected. The 32-lab Playground, landing page, docs and browser QA source files remain outside the npm package because `package.json#files` is an allowlist. No publication to npm is performed by validation.

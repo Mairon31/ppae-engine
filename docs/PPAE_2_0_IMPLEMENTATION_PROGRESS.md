@@ -29,6 +29,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
 | 10 — Weather, Lighting & VFX Overhaul | VERIFIED | Sombras solares direccionales, relámpagos ramificados, bancos de niebla orgánicos, 16 emisores y cuatro formas de partícula; QA de navegador dirigida |
 | 11 — Procedural Art Quality Evaluator | VERIFIED | 10 referencias con huellas RGBA fijas, QA de siluetas, luz/materiales, ruido, paletas y costuras; 200 tests y Browser QA en el commit de código |
+| 12 — Interactive Showcase, Visual Inspector & Production Integration | IMPLEMENTED — CI/QA PENDING | Render compuesto con Y-sorting, sombras reales, fachada PPAEEngine, 32 laboratorios, inspección 4/6/8/16/32, telemetría y golden registry |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -482,3 +483,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Removed dead `blitOpaque` method after switching to alpha-safe composite, addressing TS6133 strict build failure. The browser's thumbnail rendering is bounded to the micro-4x4 generator for quality galleries while the main viewer shows all five actual tiers. Adaptive resolution remains delegated to the showcase controller for full-size render calls.
 
 - Browser QA's previous ES deep-link test hard-coded the former 30-section count despite 32 working labs; updated the expected count to 32 and added a Portuguese mobile quality-inspector deep link/render assertion. Existing 30 sections remain in the same order, so legacy navigation indices are stable.
+
+### Phase 12 — Documentation and internationalization
+
+- README EN/ES/PT-BR and Playground/coverage/quality/npm guides describe the two new real labs, complete scene telemetry, native profile comparisons and production façade.
+- Browser QA now verifies 32 sections, editable hour, roof, building, live metrics, actual JSON and golden hashes; previous Phase 9–10 screenshots remain in the workflow. Corrected the legacy ES 30-section assertion.
+- Code CI on `8d7c25c9adb345553e3f9f0d7408c6fa85c08610` passed, but this docs HEAD and updated Chromium assertions still require final verification; no npm publication or PR merge.

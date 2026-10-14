@@ -80,3 +80,10 @@ Estas capacidades están presentes en la biblioteca y no deben anunciarse como v
 ## Phase 11 diagnostics
 
 The exported `ProceduralArtQualityEvaluator` is currently library/CI-only: `evaluateSpriteQuality`, `auditTileSeamlessness`, `auditAllBaseTerrainMaterials` and `runGoldenSeedBenchmarkSuite` consume real `PixelBuffer` outputs and produce quantitative reports. The Playground has no quality-inspector lab in Phase 11; one is planned in Phase 12, and the existing lab coverage and exports are unchanged.
+
+## Phase 12 inspector labs
+
+| Laboratory | Real API | Exposed behavior |
+| --- | --- | --- |
+| `integrated-scene` | `PPAEInteractiveShowcaseController.renderWorldSceneFrame`, `PPAEEngine.renderProductionScene`, real chunk/nature/character/boss/weather/light/quality engines | Live composed world and boss/interior/cave previews, seed/profile/solar/roof/entity controls, full telemetry, native PNG and JSON |
+| `quality-inspector` | `renderMultiResolutionComparisonStrip`, `runGoldenSeedBenchmarkSuite`, `hashPixelBuffer` | Five native profile comparisons, quality scores, ten locked reference results and fingerprints |

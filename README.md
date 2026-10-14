@@ -72,7 +72,7 @@ SCREENSHOT SHOWCASE — TO BE ADDED MANUALLY.
 
 The Playground lets you change **seed, resolution, direction, action, lifecycle stage, creature age and health, zoom, playback speed, time of day, and weather**, plus editable avatar anatomy, hairstyle, clothing, skin/hair/armor colors, accessories, and status effects. Export **native sprite PNG, viewport screenshots, PNG spritesheets, structured JSON atlases, or per-system metadata**. Browse every section with search and pagination.
 
-[Product landing and Pages deployment →](docs/SITE_LANDING_AND_PAGES.md) · [Playground guide →](docs/PLAYGROUND.md) · [Complete 30-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
+[Product landing and Pages deployment →](docs/SITE_LANDING_AND_PAGES.md) · [Playground guide →](docs/PLAYGROUND.md) · [Complete 32-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
 
 ## What can PPAE generate?
 
@@ -87,6 +87,7 @@ The Playground lets you change **seed, resolution, direction, action, lifecycle 
 | **VFX & atmosphere** | 16 particle-emitter presets with four native pixel geometries, wind, branched lightning, layered fog, time-of-day solar shadows, and quantized lightmaps. |
 | **UI & equipment** | Procedurally generated equipment icons, inventory/HUD primitives, and nine-slice interface panels. |
 | **Art quality diagnostics** | Quantitative silhouette and palette checks, directional lighting/noise heuristics, tile-seam audits and a versioned 10-specimen reference registry with RGBA fingerprints. |
+| **Production scene and visual inspector** | Lazy production-engine scene composition, Y-sorted world objects, solar lighting, roof cutaway, live telemetry and five native-resolution quality comparisons; 32 working Playground labs. |
 
 These systems exist in the current development branch. Visual polish, runtime performance, and feature coverage continue to evolve during alpha development.
 
@@ -284,11 +285,11 @@ The `PhaserPPAEAdapter` provides a canvas-texture registration path for generate
 
 ## Current status & roadmap
 
-PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 11**; new work builds on top of these systems rather than starting a replacement engine.
+PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 12**; new work builds on top of these systems rather than starting a replacement engine.
 
 | Area | Status |
 | :--- | :--- |
-| Procedural generation systems through Phase 11 | Implemented with automated tests |
+| Procedural generation systems through Phase 12 | Implemented with automated tests |
 | Architecture / interiors / caves | Ten structure definitions, three explorable interior layouts, seeded cave formations and separate roof occlusion buffers |
 | Browser-based interactive Playground | Available |
 | Library, type declarations and demo build | Available |
