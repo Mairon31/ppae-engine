@@ -1311,6 +1311,22 @@ export interface AmbientLightProfile {
   readonly shadowLengthMultiplier: number;
 }
 
+export interface SolarShadowVector {
+  readonly phase: TimeOfDayPhase;
+  readonly dirX: number; // Proyección horizontal de la sombra (-1.5 Oeste a +1.5 Este)
+  readonly dirY: number; // Proyección vertical de la sombra
+  readonly lengthMultiplier: number;
+  readonly shadowAlpha: number; // [0 a 160]
+}
+
+export interface SolarShadowCaster {
+  readonly casterId: string;
+  readonly worldX: number; // En unidades lógicas (base 16 por tile)
+  readonly worldY: number;
+  readonly baseRadiusTexels: number;
+  readonly heightTexels: number;
+}
+
 export type WeatherConditionId =
   | 'clear'
   | 'sunny'
@@ -1342,6 +1358,14 @@ export interface WindVectorSample {
   readonly canopyPixelShiftY: number;
 }
 
+export interface LightningBoltBranch {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+  readonly isMainTrunk: boolean;
+}
+
 export type VFXPresetId =
   | 'campfire_flames'
   | 'ember_smoke'
@@ -1352,7 +1376,19 @@ export type VFXPresetId =
   | 'water_ripple'
   | 'combat_hit_sparks'
   | 'healing_aura'
-  | 'forest_fireflies';
+  | 'forest_fireflies'
+  | 'poison_bubbles'
+  | 'frost_shards'
+  | 'blood_hit_droplets'
+  | 'arcane_burst'
+  | 'lava_magma_sparks'
+  | 'torch_dancing_embers';
+
+export type ParticleShapeKind =
+  | 'pixel_square'
+  | 'streak_line'
+  | 'cross_spark'
+  | 'hollow_ring';
 
 export interface ParticleEmitterDefinition {
   readonly schemaVersion: string;
@@ -1367,6 +1403,7 @@ export interface ParticleEmitterDefinition {
   readonly sizeTexels: 1 | 2 | 3;
   readonly colorRampHex: readonly [string, string, string]; // Inicio -> Medio -> Final
   readonly collidesWithFloor: boolean;
+  readonly particleShape?: ParticleShapeKind;
 }
 // ============================================================================
 // PHASE 7 CONTRACTS: EQUIPMENT TIERS, INVENTORY ICONS, FARMING & NINE-SLICE HUD

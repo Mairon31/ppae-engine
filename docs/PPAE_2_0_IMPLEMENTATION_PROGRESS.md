@@ -377,3 +377,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Compatibility:** separated wall/roof buffers; open-door roof invariance, structure logical wall/door/roof metadata, interior walkability and cave collision rectangles remain covered by old/new tests.
 - **Status:** VERIFIED for this documented code and targeted visual QA. **Not certified** across all permutations of seed, profile, age/scene, devices or art direction; device-specific frame pacing, 32×32 visual review and comparison against the referenced `image_59315b.jpg` remain pending because the reference image was not attached as an inspectable asset in this task. No changes to `master`, no PR merge and no npm publication.
 - **Next planned phase (not started):** Phase 10 — Weather, Lighting & VFX Overhaul, subject to the user-supplied phase specification.
+
+## Phase 10 — Weather, Lighting & VFX Overhaul (implementation started)
+
+- **Base HEAD:** `156aa9ece2438de703615b18f91cdf71440475d9` checked on `feat/ppae-2-art-overhaul`, PR #2. The supplied patches referenced a historical commit and have been applied by matching actual source hunks, without resetting Phase 9.
+- **Engine additions:** SolarShadowCaster/SolarShadowVector with directional Bayer shadows; LightningBoltBranch and weather lightning overlay/organic fog; four pixel-particle geometries and six new VFX presets (16 total) with existing pool/portal APIs preserved.
+- **Tests:** new `tests/ppae-weather-lighting-vfx-10.test.ts` plus existing Phase 6 regressions.
+- **Status: IMPLEMENTED; verification of this commit PENDING.** Playground exposure, internationalization, native-seed visual QA, performance and render-correctness improvements to be completed in subsequent changes.

@@ -1,5 +1,6 @@
 import {
   ArtStyleProfile,
+  LightningBoltBranch,
   LogicalRect,
   PPAE_SCHEMA_VERSION,
   WeatherConditionId,
@@ -173,6 +174,55 @@ export class WeatherAndWindSystem {
   }
 
   /**
+   * Genera la geometría quebrada de un relámpago ramificado pixel-art de forma determinista.
+   */
+  public generateLightningBolt(
+    widthTexels: number,
+    heightTexels: number,
+    seed: number
+  ): LightningBoltBranch[] {
+    const rng = new SeededRNG(seed ^ 0x9e3779b9);
+    const branches: LightningBoltBranch[] = [];
+
+    let curX = rng.nextInt(Math.floor(widthTexels * 0.2), Math.floor(widthTexels * 0.8));
+    let curY = 0;
+    const segments = 6;
+    const stepY = Math.max(4, Math.floor((heightTexels * 0.78) / segments));
+
+    for (let i = 0; i < segments; i++) {
+      const nextX = Math.max(4, Math.min(widthTexels - 5, curX + rng.nextInt(-8, 8)));
+      const nextY = Math.min(heightTexels - 2, curY + stepY);
+
+      branches.push({
+        x0: curX,
+        y0: curY,
+        x1: nextX,
+        y1: nextY,
+        isMainTrunk: true
+      });
+
+      // Ramificaciones secundarias laterales
+      if (i >= 1 && i <= segments - 2 && rng.chance(0.65)) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const forkX = Math.max(2, Math.min(widthTexels - 3, nextX + side * rng.nextInt(5, 11)));
+        const forkY = Math.min(heightTexels - 2, nextY + Math.floor(stepY * 0.8));
+        branches.push({
+          x0: nextX,
+          y0: nextY,
+          x1: forkX,
+          y1: forkY,
+          isMainTrunk: false
+        });
+      }
+
+      curX = nextX;
+      curY = nextY;
+    }
+
+    return branches;
+  }
+
+  /**
    * Renderiza la capa atmosférica (lluvia con ángulo de viento, salpicaduras, nieve, ceniza y niebla por bandas)
    * respetando las zonas techadas `shelteredRectsLogical`.
    */
@@ -189,10 +239,16 @@ export class WeatherAndWindSystem {
     overlayBuffer: PixelBuffer;
     spawnedDropsCount: number;
     suppressedByRoofCount: number;
+    lightningBranchesCount: number;
   } {
     const overlayBuffer = new PixelBuffer(widthTexels, heightTexels);
     if (isIndoorSpace) {
-      return { overlayBuffer, spawnedDropsCount: 0, suppressedByRoofCount: 0 };
+      return {
+        overlayBuffer,
+        spawnedDropsCount: 0,
+        suppressedByRoofCount: 0,
+        lightningBranchesCount: 0
+      };
     }
 
     const state = this.currentState;
@@ -202,6 +258,7 @@ export class WeatherAndWindSystem {
 
     let spawnedDropsCount = 0;
     let suppressedByRoofCount = 0;
+    let lightningBranchesCount = 0;
 
     // 1. Precipitación (Lluvia, Llovizna, Tormenta, Nieve, Ventisca, Ceniza)
     const isRaining =
@@ -255,11 +312,13 @@ export class WeatherAndWindSystem {
       }
     }
 
-    // 2. Niebla meteorológica por bandas discretas de píxeles (sin blur suave)
+    // 2. Niebla meteorológica multicapa con ondulación orgánica (sin rejilla rígida ni blur)
     if (state.fogDensity > 0.05) {
       const fogColor =
         state.condition === 'sandstorm'
           ? hexToRgba('#d97706')
+          : state.condition === 'volcanic_ash'
+          ? hexToRgba('#64748b')
           : hexToRgba('#cbd5e1');
 
       const bandHeight = profile.moduleSize * 2;
@@ -267,16 +326,25 @@ export class WeatherAndWindSystem {
 
       for (let y = 0; y < heightTexels; y++) {
         const bandIndex = Math.floor(y / bandHeight);
+        const waveShift = Math.round(Math.sin(y * 0.18 + timeSeconds * 1.5) * 3);
         for (let x = 0; x < widthTexels; x++) {
-          const pattern = ((x + scrollX + bandIndex * 7) & 3) === 0;
-          if (pattern && (y % 2 === 0 || state.fogDensity > 0.6)) {
+          const bankWave =
+            Math.sin((x + scrollX + waveShift) * 0.12 + bandIndex * 0.9) +
+            Math.cos((y - scrollX * 0.5) * 0.15);
+          const ditherGate = ((x * 3 + y * 5) & 3) === 0;
+
+          if (ditherGate && bankWave > 0.65 - state.fogDensity * 1.2) {
             const existing = overlayBuffer.getPixel(x, y);
             if (existing.a === 0) {
+              const isDenseBank = bankWave > 1.15;
               overlayBuffer.setPixel(x, y, {
                 r: fogColor.r,
                 g: fogColor.g,
                 b: fogColor.b,
-                a: Math.min(220, Math.round(state.fogDensity * 180))
+                a: Math.min(
+                  225,
+                  Math.round(state.fogDensity * (isDenseBank ? 195 : 135))
+                )
               });
             }
           }
@@ -284,10 +352,34 @@ export class WeatherAndWindSystem {
       }
     }
 
+    // 3. Relámpagos ramificados en tormenta eléctrica
+    if (state.condition === 'thunderstorm' && state.lightningFlashIntensity > 0.3) {
+      const branches = this.generateLightningBolt(
+        widthTexels,
+        heightTexels,
+        seed ^ Math.floor(timeSeconds * 5)
+      );
+      const coreCol = hexToRgba('#ffffff', 255);
+      const glowCol = hexToRgba('#7dd3fc', 225);
+
+      for (const b of branches) {
+        overlayBuffer.drawLine(
+          b.x0,
+          b.y0,
+          b.x1,
+          b.y1,
+          b.isMainTrunk ? coreCol : glowCol,
+          b.isMainTrunk ? 2 : 1
+        );
+      }
+      lightningBranchesCount = branches.length;
+    }
+
     return {
       overlayBuffer,
       spawnedDropsCount,
-      suppressedByRoofCount
+      suppressedByRoofCount,
+      lightningBranchesCount
     };
   }
 }

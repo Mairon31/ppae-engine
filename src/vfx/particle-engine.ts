@@ -1,6 +1,7 @@
 import {
   ArtStyleProfile,
   ParticleEmitterDefinition,
+  ParticleShapeKind,
   PPAE_SCHEMA_VERSION,
   RGBAColor,
   VFXPresetId,
@@ -93,7 +94,8 @@ export const VFX_EMITTER_PRESETS: Readonly<Record<VFXPresetId, ParticleEmitterDe
     windInfluence: 0.2,
     sizeTexels: 1,
     colorRampHex: ['#e0f2fe', '#7dd3fc', '#0284c7'],
-    collidesWithFloor: true
+    collidesWithFloor: true,
+    particleShape: 'streak_line'
   },
   water_ripple: {
     schemaVersion: PPAE_SCHEMA_VERSION,
@@ -105,9 +107,10 @@ export const VFX_EMITTER_PRESETS: Readonly<Record<VFXPresetId, ParticleEmitterDe
     maxSpeedTexelsPerSec: 5,
     gravityTexelsPerSec2: 0,
     windInfluence: 0.05,
-    sizeTexels: 1,
+    sizeTexels: 2,
     colorRampHex: ['#e0f2fe', '#38bdf8', '#0369a1'],
-    collidesWithFloor: false
+    collidesWithFloor: false,
+    particleShape: 'hollow_ring'
   },
   combat_hit_sparks: {
     schemaVersion: PPAE_SCHEMA_VERSION,
@@ -121,7 +124,8 @@ export const VFX_EMITTER_PRESETS: Readonly<Record<VFXPresetId, ParticleEmitterDe
     windInfluence: 0.05,
     sizeTexels: 2,
     colorRampHex: ['#ffffff', '#facc15', '#ef4444'],
-    collidesWithFloor: false
+    collidesWithFloor: false,
+    particleShape: 'cross_spark'
   },
   healing_aura: {
     schemaVersion: PPAE_SCHEMA_VERSION,
@@ -135,7 +139,8 @@ export const VFX_EMITTER_PRESETS: Readonly<Record<VFXPresetId, ParticleEmitterDe
     windInfluence: 0.1,
     sizeTexels: 2,
     colorRampHex: ['#bbf7d0', '#4ade80', '#16a34a'],
-    collidesWithFloor: false
+    collidesWithFloor: false,
+    particleShape: 'cross_spark'
   },
   forest_fireflies: {
     schemaVersion: PPAE_SCHEMA_VERSION,
@@ -150,12 +155,103 @@ export const VFX_EMITTER_PRESETS: Readonly<Record<VFXPresetId, ParticleEmitterDe
     sizeTexels: 1,
     colorRampHex: ['#fef08a', '#a3e635', '#65a30d'],
     collidesWithFloor: false
+  },
+  poison_bubbles: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'poison_bubbles',
+    spawnCount: 9,
+    minLifetimeMs: 420,
+    maxLifetimeMs: 850,
+    minSpeedTexelsPerSec: 5,
+    maxSpeedTexelsPerSec: 12,
+    gravityTexelsPerSec2: -12,
+    windInfluence: 0.2,
+    sizeTexels: 2,
+    colorRampHex: ['#d9f99d', '#4ade80', '#15803d'],
+    collidesWithFloor: false,
+    particleShape: 'hollow_ring'
+  },
+  frost_shards: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'frost_shards',
+    spawnCount: 12,
+    minLifetimeMs: 260,
+    maxLifetimeMs: 540,
+    minSpeedTexelsPerSec: 14,
+    maxSpeedTexelsPerSec: 30,
+    gravityTexelsPerSec2: 22,
+    windInfluence: 0.15,
+    sizeTexels: 2,
+    colorRampHex: ['#ffffff', '#7dd3fc', '#0284c7'],
+    collidesWithFloor: true,
+    particleShape: 'cross_spark'
+  },
+  blood_hit_droplets: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'blood_hit_droplets',
+    spawnCount: 10,
+    minLifetimeMs: 220,
+    maxLifetimeMs: 460,
+    minSpeedTexelsPerSec: 16,
+    maxSpeedTexelsPerSec: 32,
+    gravityTexelsPerSec2: 52,
+    windInfluence: 0.05,
+    sizeTexels: 2,
+    colorRampHex: ['#f87171', '#dc2626', '#7f1d1d'],
+    collidesWithFloor: true,
+    particleShape: 'pixel_square'
+  },
+  arcane_burst: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'arcane_burst',
+    spawnCount: 14,
+    minLifetimeMs: 300,
+    maxLifetimeMs: 650,
+    minSpeedTexelsPerSec: 18,
+    maxSpeedTexelsPerSec: 38,
+    gravityTexelsPerSec2: -4,
+    windInfluence: 0.1,
+    sizeTexels: 2,
+    colorRampHex: ['#f5d0fe', '#c084fc', '#6b21a8'],
+    collidesWithFloor: false,
+    particleShape: 'cross_spark'
+  },
+  lava_magma_sparks: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'lava_magma_sparks',
+    spawnCount: 11,
+    minLifetimeMs: 320,
+    maxLifetimeMs: 700,
+    minSpeedTexelsPerSec: 15,
+    maxSpeedTexelsPerSec: 34,
+    gravityTexelsPerSec2: 36,
+    windInfluence: 0.25,
+    sizeTexels: 2,
+    colorRampHex: ['#fef08a', '#f97316', '#7c2d12'],
+    collidesWithFloor: true,
+    particleShape: 'streak_line'
+  },
+  torch_dancing_embers: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    presetId: 'torch_dancing_embers',
+    spawnCount: 6,
+    minLifetimeMs: 400,
+    maxLifetimeMs: 820,
+    minSpeedTexelsPerSec: 6,
+    maxSpeedTexelsPerSec: 14,
+    gravityTexelsPerSec2: -16,
+    windInfluence: 0.5,
+    sizeTexels: 1,
+    colorRampHex: ['#fef9c3', '#fb923c', '#9a3412'],
+    collidesWithFloor: false,
+    particleShape: 'pixel_square'
   }
 };
 
 interface ParticleSlot {
   active: boolean;
   presetId: VFXPresetId;
+  shape: ParticleShapeKind;
   x: number;
   y: number;
   vx: number;
@@ -193,6 +289,7 @@ export class PixelParticleEngine {
     this.pool = Array.from({ length: maxPoolCapacity }, () => ({
       active: false,
       presetId: 'campfire_flames',
+      shape: 'pixel_square',
       x: 0,
       y: 0,
       vx: 0,
@@ -246,6 +343,7 @@ export class PixelParticleEngine {
 
       slot.active = true;
       slot.presetId = presetId;
+      slot.shape = def.particleShape ?? 'pixel_square';
       slot.x = originTexelX + rng.nextInt(-2, 2);
       slot.y = originTexelY + rng.nextInt(-2, 1);
       slot.vx = Math.cos(angle) * speed;
@@ -314,7 +412,25 @@ export class PixelParticleEngine {
       const snapY = Math.round(p.y);
 
       if (snapX >= 0 && snapX < targetBuffer.width && snapY >= 0 && snapY < targetBuffer.height) {
-        targetBuffer.fillRect(snapX, snapY, p.sizeTexels, p.sizeTexels, color);
+        if (p.shape === 'cross_spark' && p.sizeTexels >= 2) {
+          targetBuffer.setPixel(snapX, snapY, p.colors[0]);
+          targetBuffer.setPixel(snapX - 1, snapY, color);
+          targetBuffer.setPixel(snapX + 1, snapY, color);
+          targetBuffer.setPixel(snapX, snapY - 1, color);
+          targetBuffer.setPixel(snapX, snapY + 1, color);
+        } else if (p.shape === 'hollow_ring') {
+          const radius = progress > 0.5 ? 2 : 1;
+          targetBuffer.setPixel(snapX - radius, snapY, color);
+          targetBuffer.setPixel(snapX + radius, snapY, color);
+          targetBuffer.setPixel(snapX, snapY - radius, color);
+          targetBuffer.setPixel(snapX, snapY + radius, color);
+        } else if (p.shape === 'streak_line') {
+          const tailX = snapX - Math.sign(Math.round(p.vx));
+          const tailY = snapY - Math.sign(Math.round(p.vy));
+          targetBuffer.drawLine(tailX, tailY, snapX, snapY, color, 1);
+        } else {
+          targetBuffer.fillRect(snapX, snapY, p.sizeTexels, p.sizeTexels, color);
+        }
         drawnCount++;
       }
     }

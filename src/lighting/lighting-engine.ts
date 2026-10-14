@@ -4,6 +4,8 @@ import {
   LightSourceDefinition,
   LogicalRect,
   RGBAColor,
+  SolarShadowCaster,
+  SolarShadowVector,
   TimeOfDayPhase
 } from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
@@ -114,6 +116,117 @@ export class PixelPerfectLightingEngine {
     if (h >= 15 && h < 18) return AMBIENT_PROFILES_BY_PHASE.afternoon;
     if (h >= 18 && h < 20.5) return AMBIENT_PROFILES_BY_PHASE.dusk;
     return AMBIENT_PROFILES_BY_PHASE.night;
+  }
+
+  /**
+   * Calcula el vector de dirección, longitud y opacidad de las sombras proyectadas
+   * por el sol o la luna según la hora del día [0.0 a 24.0).
+   */
+  public resolveSolarShadowVector(hour24: number, isUnderground = false): SolarShadowVector {
+    const ambient = this.resolveAmbientProfileFromHour(hour24, isUnderground);
+    if (isUnderground) {
+      return {
+        phase: ambient.phase,
+        dirX: 0,
+        dirY: -0.25,
+        lengthMultiplier: ambient.shadowLengthMultiplier,
+        shadowAlpha: 55
+      };
+    }
+
+    const h = ((hour24 % 24) + 24) % 24;
+    // Entre las 06:00 y las 20:00 el sol recorre de Este a Oeste:
+    // 06:00 -> sombra proyectada al Oeste (dirX = -1.25)
+    // 13:00 -> sombra corta hacia el Norte (dirX = 0.0)
+    // 20:00 -> sombra proyectada al Este (dirX = +1.35)
+    if (h >= 5 && h <= 20.5) {
+      const dayProgress = (h - 5) / 15.5; // [0.0 a 1.0]
+      const dirX = Number(((dayProgress - 0.5) * 2.4).toFixed(3));
+      const dirY = Number((-0.35 - (1 - Math.abs(dayProgress - 0.5) * 2) * 0.25).toFixed(3));
+      const shadowAlpha =
+        ambient.phase === 'noon'
+          ? 115
+          : ambient.phase === 'dawn' || ambient.phase === 'dusk'
+          ? 95
+          : 105;
+
+      return {
+        phase: ambient.phase,
+        dirX,
+        dirY,
+        lengthMultiplier: ambient.shadowLengthMultiplier,
+        shadowAlpha
+      };
+    }
+
+    // Noche: sombra lunar tenue ligeramente inclinada
+    return {
+      phase: ambient.phase,
+      dirX: -0.35,
+      dirY: -0.3,
+      lengthMultiplier: ambient.shadowLengthMultiplier,
+      shadowAlpha: 65
+    };
+  }
+
+  /**
+   * Proyecta sombras direccionales pixel-art sobre el buffer de escena para una lista de
+   * entidades/árboles/estructuras (`casters`), utilizando dithering Bayer en la penumbra.
+   */
+  public renderDirectionalCastShadows(
+    sceneBuffer: PixelBuffer,
+    casters: readonly SolarShadowCaster[],
+    cameraWorldRect: LogicalRect,
+    hour24: number,
+    profile: ArtStyleProfile,
+    isUnderground = false
+  ): {
+    readonly shadowVector: SolarShadowVector;
+    readonly renderedShadowPixels: number;
+  } {
+    const shadowVector = this.resolveSolarShadowVector(hour24, isUnderground);
+    const texelsPerLogical = profile.canonicalTileTexels / profile.logicalTileUnits;
+    let renderedShadowPixels = 0;
+
+    const darkenFactor = 1 - shadowVector.shadowAlpha / 255;
+
+    for (const caster of casters) {
+      const baseScreenX = Math.round((caster.worldX - cameraWorldRect.x) * texelsPerLogical);
+      const baseScreenY = Math.round((caster.worldY - cameraWorldRect.y) * texelsPerLogical);
+      const shadowLengthPx = Math.max(
+        2,
+        Math.round(caster.heightTexels * 0.55 * shadowVector.lengthMultiplier)
+      );
+      const rx = Math.max(2, caster.baseRadiusTexels);
+
+      for (let step = 1; step <= shadowLengthPx; step++) {
+        const t = step / shadowLengthPx;
+        const cx = Math.round(baseScreenX + shadowVector.dirX * step);
+        const cy = Math.round(baseScreenY + shadowVector.dirY * step);
+        const stepRx = Math.max(1, Math.round(rx * (1 - t * 0.45)));
+
+        for (let dx = -stepRx; dx <= stepRx; dx++) {
+          const px = cx + dx;
+          const py = cy;
+          if (!sceneBuffer.inBounds(px, py)) continue;
+
+          // Dithering Bayer 4x4 en el tercio final de la sombra (penumbra)
+          if (t > 0.68 && BAYER_4X4[py & 3][px & 3] > 0.1) continue;
+
+          const orig = sceneBuffer.getPixel(px, py);
+          if (orig.a === 0) continue;
+          sceneBuffer.setPixel(px, py, {
+            r: Math.round(orig.r * darkenFactor),
+            g: Math.round(orig.g * darkenFactor),
+            b: Math.round(orig.b * darkenFactor),
+            a: orig.a
+          });
+          renderedShadowPixels++;
+        }
+      }
+    }
+
+    return { shadowVector, renderedShadowPixels };
   }
 
   /**
