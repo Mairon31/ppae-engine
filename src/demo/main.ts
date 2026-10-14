@@ -16,7 +16,8 @@ import {
   StructureGenerator, TerrainAutotiler, TerrainMaterialId, TimeOfDayPhase,
   TreeLifecycleStage, TreeSpeciesId, VFXPresetId, WeatherAndWindSystem,
   WeatherConditionId, VisualStatusEffect, EntityAppearance, EquipmentLoadout,
-  MATERIAL_TIER_PALETTES, createCorruptedTreantBossState, createDefaultColossusBossState
+  MATERIAL_TIER_PALETTES, CANONICAL_47_AUTOTILE_MASKS, TERRAIN_MATERIALS,
+  createCorruptedTreantBossState, createDefaultColossusBossState
 } from '../index';
 import {
   BOSS_IDS, CHARACTER_ACTIONS, CROP_STAGES, CREATURE_ACTIONS,
@@ -428,6 +429,7 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
         durabilityCurrent: state.wearState === 'damaged' ? 20 : state.wearState === 'worn' ? 60 : 100,
         attackOrPowerBonus: 12, defenseBonus: 5, primaryColorHex: '#cbd5e1', secondaryColorHex: '#475569'
       };
+      if (section === 'equipment-materials') return equipmentGenerator.renderEquipmentItem(item, p);
       const icon = icons.generateIcon(item, p, 28 * p.moduleSize / 4);
       const panel = ui.renderNineSlicePanel(DEFAULT_HUD_PANEL_CONFIG,
         76 * p.moduleSize / 4, 58 * p.moduleSize / 4,
@@ -578,11 +580,18 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
     toThumbnail(canvas, renderSubject(section, id, p, 0));
   }
 }
+function filteredItems(section: PlaygroundSectionId): readonly string[] {
+  const all = PLAYGROUND_OPTIONS[section];
+  if (!state.catalogQuery.trim()) return all;
+  const text = state.catalogQuery.trim().toLocaleLowerCase();
+  return all.filter(id => id.toLowerCase().includes(text) ||
+    formatPlaygroundLabel(id).toLocaleLowerCase().includes(text));
+}
 function renderCards(): void {
   const generation = ++galleryGeneration;
   const section = state.section;
   const pending: Array<{ id: string; key: string; canvas: HTMLCanvasElement; thumb: HTMLElement }> = [];
-  const items = PLAYGROUND_OPTIONS[state.section];
+  const items = filteredItems(state.section);
   const start = state.page * PAGE_SIZE;
   const visible = items.slice(start, start + PAGE_SIZE);
   const wrap = byId('cards-container');
@@ -609,8 +618,17 @@ function renderCards(): void {
     const key = thumbnailKey(section, id);
     if (!restoreThumbnail(key, canvas)) pending.push({ id, key, canvas, thumb });
   });
-  byId('gallery-range').textContent = (start + 1) + '–' +
-    Math.min(items.length, start + PAGE_SIZE) + ' de ' + items.length;
+  byId('gallery-range').textContent = items.length ?
+    (start + 1) + '–' + Math.min(items.length, start + PAGE_SIZE) + ' de ' + items.length :
+    '0 resultados';
+  byId('catalog-summary').textContent = PLAYGROUND_OPTIONS[section].length +
+    ' muestras de este sistema';
+  if (items.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'catalog-empty';
+    empty.textContent = 'Sin resultados para este filtro.';
+    wrap.appendChild(empty);
+  }
   (byId('gallery-prev') as HTMLButtonElement).disabled = state.page === 0;
   (byId('gallery-next') as HTMLButtonElement).disabled = start + PAGE_SIZE >= items.length;
   // Generate a single real engine thumbnail per animation frame; cancel stale pages.
@@ -643,7 +661,7 @@ function options(select: HTMLSelectElement, values: readonly string[], selected:
   if (values.includes(selected)) select.value = selected;
 }
 function refreshControlVisibility(): void {
-  const character = ['characters', 'npcs', 'world'].includes(state.section);
+  const character = ['characters','character-actions','npcs','world'].includes(state.section);
   const creature = state.section === 'creatures';
   const animated = character || creature;
   const actionSelect = byId<HTMLSelectElement>('action-select');
@@ -660,18 +678,25 @@ function refreshControlVisibility(): void {
   byId<HTMLSelectElement>('age-select').disabled = !creature;
   byId<HTMLSelectElement>('health-select').disabled = !creature;
   byId<HTMLSelectElement>('direction-select').disabled = !['characters', 'npcs', 'creatures', 'bosses','world'].includes(state.section);
-  const downloadable = state.section === 'characters' || state.section === 'npcs' || creature;
+  const downloadable = state.section === 'characters' || state.section === 'character-actions' || state.section === 'npcs' || creature;
   (byId('download-atlas') as HTMLButtonElement).disabled = !downloadable;
   (byId('download-json') as HTMLButtonElement).disabled = !downloadable;
 }
 function selectItem(id: string): void {
   if (!PLAYGROUND_OPTIONS[state.section].includes(id)) return;
   state.selected = id;
+  if (state.section === 'characters') {
+    state.activeAvatarId = id;
+    state.avatarAppearance = {};
+    state.avatarEquipment = {};
+  }
+  if (state.section === 'character-actions') state.action = id as CharacterActionId;
   state.frame = 0;
   elapsed = 0;
   particleMode = '';
   if (state.section === 'particles') resetParticles();
   refreshControlVisibility();
+  renderLabControls();
   renderCards();
   renderPreviewPending = true;
 }
@@ -688,7 +713,7 @@ function renderNav(): void {
     }
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'nav-link' + (state.section === section.id ? ' active' : '');
-    const glyph = document.createElement('span'); glyph.className = 'nav-glyph'; glyph.textContent = glyphs[idx];
+    const glyph = document.createElement('span'); glyph.className = 'nav-glyph'; glyph.textContent = glyphs[idx % glyphs.length];
     const label = document.createElement('span'); label.textContent = section.label;
     btn.append(glyph, label);
     btn.addEventListener('click', () => selectSection(section.id));
@@ -697,6 +722,9 @@ function renderNav(): void {
 }
 function selectSection(section: PlaygroundSectionId): void {
   state.section = section; state.selected = PLAYGROUND_OPTIONS[section][0];
+  if (section === 'character-actions') state.action = 'idle';
+  state.catalogQuery = '';
+  byId<HTMLInputElement>('catalog-search').value = '';
   state.page = 0; state.frame = 0; elapsed = 0;
   state.stage = section === 'trees' || section === 'farming' ? 'mature' :
     section === 'bosses' ? 'phase_2_enraged' : 'intact';
@@ -711,7 +739,7 @@ function selectSection(section: PlaygroundSectionId): void {
   document.querySelector('.studio')?.classList.remove('nav-open');
   (byId('toggle-sidebar') as HTMLButtonElement).setAttribute('aria-expanded','false');
   if (section === 'particles') resetParticles();
-  refreshControlVisibility(); renderNav(); renderCards(); renderPreviewPending = true;
+  refreshControlVisibility(); renderLabControls(); renderNav(); renderCards(); renderPreviewPending = true;
 }
 /**
  * Spread real engine bursts across the demo viewport. PixelParticleEngine's
@@ -770,7 +798,7 @@ function downloadUrl(url: string, filename: string): void {
   document.body.appendChild(link); link.click(); link.remove();
 }
 function exportSheet(kind: 'png' | 'json'): void {
-  if (!['characters','npcs','creatures'].includes(state.section)) return;
+  if (!['characters','character-actions','npcs','creatures'].includes(state.section)) return;
   const p = profile();
   const directions = ALL_DIRECTIONS_8;
   const selectedAction = state.section === 'creatures' ? state.creatureAction : state.action;
@@ -784,7 +812,7 @@ function exportSheet(kind: 'png' | 'json'): void {
   } else {
     const npc = state.section === 'npcs' ?
       customization.generateNpcPreset(state.selected as NpcProfessionArchetypeId, seedNumber()) :
-      { appearance: DEFAULT_HERO_APPEARANCE, equipment: DEFAULT_HERO_EQUIPMENT };
+      currentCharacter();
     const result = compiler.compileCharacterSheet(npc.appearance, npc.equipment, p,
       [state.action], directions);
     if (kind === 'png') downloadUrl(encodePng(result.atlasBuffer), name + '.png');
@@ -884,13 +912,17 @@ function connectControls(): void {
     if (state.page > 0) { state.page--; renderCards(); }
   });
   byId('gallery-next').addEventListener('click', () => {
-    if ((state.page + 1) * PAGE_SIZE < PLAYGROUND_OPTIONS[state.section].length) {
+    if ((state.page + 1) * PAGE_SIZE < filteredItems(state.section).length) {
       state.page++; renderCards();
     }
   });
   byId('download-png').addEventListener('click', () => {
     const filename = 'ppae-' + state.section + '-' + state.selected + '-' + profile().id + '.png';
     downloadUrl(stage.toDataURL('image/png'), filename);
+  });
+  byId<HTMLInputElement>('catalog-search').addEventListener('input', event => {
+    state.catalogQuery = (event.currentTarget as HTMLInputElement).value;
+    state.page = 0; renderCards();
   });
   byId('download-atlas').addEventListener('click', () => exportSheet('png'));
   byId('download-json').addEventListener('click', () => exportSheet('json'));
