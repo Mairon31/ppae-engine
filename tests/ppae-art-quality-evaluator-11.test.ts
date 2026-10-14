@@ -15,12 +15,14 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     expect(APPROVED_GOLDEN_SEED_REGISTRY.length).toBeGreaterThanOrEqual(9);
     const results = evaluator.runGoldenSeedBenchmarkSuite();
 
+    const failures: string[] = [];
     for (const { entry, report } of results) {
       console.info('PHASE11_REFERENCE', JSON.stringify({ id: entry.benchmarkId, score: report.overallScore, minimum: entry.minExpectedScore, defects: report.defects, metrics: report.metrics }));
-      expect(report.passed).toBe(true);
-      expect(report.overallScore).toBeGreaterThanOrEqual(entry.minExpectedScore);
-      expect(report.defects).toEqual([]);
+      if (!report.passed || report.overallScore < entry.minExpectedScore || report.defects.length) {
+        failures.push(entry.benchmarkId + ': ' + report.overallScore + ' ' + report.defects.join(','));
+      }
     }
+    expect(failures).toEqual([]);
   });
 
   it('detects excessive bilateral symmetry (lollipop defect) and orphan noise pixels on synthetic bad sprites', () => {

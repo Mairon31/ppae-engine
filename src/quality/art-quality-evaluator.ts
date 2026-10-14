@@ -551,101 +551,99 @@ export class ProceduralArtQualityEvaluator {
    * Calcula la alineación entre el vector de desplazamiento de los píxeles más iluminados
    * y la dirección de la fuente de luz (`lightDirectionVector`).
    */
+
+  /**
+   * Classify pixels by dominant chroma before estimating lighting direction.
+   * Across-material comparisons (e.g. white birch bark vs green foliage) are
+   * not evidence of inverted highlights and must not influence the lighting
+   * centroid. This is a heuristic, not proof of physically correct lighting.
+   */
   private computeDirectionalLightAlignment(
     buffer: PixelBuffer,
     lightDirectionVector: readonly [number, number]
   ): number {
-    const w = buffer.width;
-    const h = buffer.height;
-    let sumX = 0;
-    let sumY = 0;
-    let count = 0;
-    let maxLuma = 0;
-
-    const samples: Array<{ x: number; y: number; luma: number }> = [];
-
+    interface Sample { readonly x: number; readonly y: number; readonly luma: number }
+    const classes: Sample[][] = Array.from({ length: 7 }, () => []);
+    const data = buffer.data, w = buffer.width, h = buffer.height;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        const c = buffer.getPixel(x, y);
-        if (c.a < 200) continue;
-        const luma = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-        // Ignorar el contorno negro exterior
-        if (luma < 35) continue;
-
-        sumX += x;
-        sumY += y;
-        count++;
-        if (luma > maxLuma) maxLuma = luma;
-        samples.push({ x, y, luma });
+        const i = (y * w + x) * 4;
+        if (data[i + 3] < 200) continue;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const luma = r * 0.299 + g * 0.587 + b * 0.114;
+        if (luma < 35) continue; // Pure selective outlines are not highlights.
+        const high = Math.max(r, g, b), low = Math.min(r, g, b);
+        let cls = 0; // neutral / gray / black / white
+        if (high - low >= 30) {
+          if (r > g * 1.18 && r > b * 1.18) cls = 1; // reds/browns
+          else if (g > r * 1.13 && g > b * 1.12) cls = 2; // leaves
+          else if (b > r * 1.13 && b > g * 1.12) cls = 3; // blue
+          else if (r >= b * 1.3 && g >= b * 1.3) cls = 4; // yellow/tan
+          else if (r >= g * 1.3 && b >= g * 1.3) cls = 5; // purple
+          else cls = 6; // other multichromatic
+        }
+        classes[cls].push({ x, y, luma });
       }
     }
 
-    if (count < 6 || maxLuma === 0) return 0.5;
-
-    const comX = sumX / count;
-    const comY = sumY / count;
-    const highlightThreshold = maxLuma * 0.78;
-
-    let highX = 0;
-    let highY = 0;
-    let highCount = 0;
-
-    for (const s of samples) {
-      if (s.luma >= highlightThreshold) {
-        highX += s.x;
-        highY += s.y;
-        highCount++;
+    let weighted = 0, sumWeights = 0;
+    const lightLength = Math.hypot(...lightDirectionVector) || 1;
+    for (const group of classes) {
+      if (group.length < 14) continue;
+      let min = Infinity, max = -Infinity, centerX = 0, centerY = 0;
+      for (const sample of group) {
+        min = Math.min(min, sample.luma); max = Math.max(max, sample.luma);
+        centerX += sample.x; centerY += sample.y;
       }
+      if (max - min < 14) continue; // Insufficient tonal evidence.
+      centerX /= group.length; centerY /= group.length;
+      const threshold = min + (max - min) * 0.72;
+      let hx = 0, hy = 0, hi = 0;
+      for (const sample of group) {
+        if (sample.luma >= threshold) { hx += sample.x; hy += sample.y; hi++; }
+      }
+      if (hi < 3 || hi === group.length) continue;
+      const dx = hx / hi - centerX, dy = hy / hi - centerY;
+      const dist = Math.hypot(dx, dy);
+      // A bright centroid at the center is neutral evidence, not positive.
+      const alignment = dist < 0.3 ? 0 :
+        (dx * lightDirectionVector[0] + dy * lightDirectionVector[1]) /
+        (dist * lightLength);
+      const weight = Math.sqrt(group.length) * Math.min(1, (max - min) / 45);
+      weighted += alignment * weight;
+      sumWeights += weight;
     }
-
-    if (highCount === 0) return 0.5;
-
-    const dx = highX / highCount - comX;
-    const dy = highY / highCount - comY;
-    const dist = Math.hypot(dx, dy);
-    if (dist < 0.25) {
-      // Si el centroide de brillo coincide exactamente con el centroide geométrico,
-      // pero la parte superior es más clara que la inferior, damos alineación positiva moderada
-      return 0;
-    }
-
-    const [lx, ly] = lightDirectionVector;
-    const dot = (dx / dist) * lx + (dy / dist) * ly;
-    return Number(Math.max(-1, Math.min(1, dot)).toFixed(3));
+    return sumWeights === 0 ? 0 :
+      Number(Math.max(-1, Math.min(1, weighted / sumWeights)).toFixed(3));
   }
 
+  /**
+   * What matters for silhouette readability is edge/background contrast, not
+   * a fictitious average flat color made from different material regions.
+   * Never clamp a low measured contrast to a passing score.
+   */
   private computeAverageContrastAgainstBackdrop(
     buffer: PixelBuffer,
     backdrop: RGBAColor
   ): number {
-    let sumR = 0;
-    let sumG = 0;
-    let sumB = 0;
-    let count = 0;
-
-    for (let y = 0; y < buffer.height; y++) {
-      for (let x = 0; x < buffer.width; x++) {
-        const c = buffer.getPixel(x, y);
-        if (c.a < 200) continue;
-        // Excluir el contorno oscuro para medir también el contraste del cuerpo cromático
-        if (c.r < 35 && c.g < 35 && c.b < 45) continue;
-        sumR += c.r;
-        sumG += c.g;
-        sumB += c.b;
-        count++;
+    const data = buffer.data, w = buffer.width, h = buffer.height;
+    let total = 0, samples = 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        if (data[i + 3] < 200) continue;
+        const atEdge = x === 0 || y === 0 || x === w - 1 || y === h - 1 ||
+          data[i - 1] < 200 || data[i + 7] < 200 ||
+          data[i - w * 4 + 3] < 200 || data[i + w * 4 + 3] < 200;
+        if (!atEdge) continue;
+        const ratio = computeContrastRatio({
+          r: data[i], g: data[i + 1], b: data[i + 2], a: data[i + 3]
+        }, backdrop);
+        total += ratio;
+        samples++;
       }
     }
-
-    if (count === 0) return 1.5;
-    const avgColor: RGBAColor = {
-      r: Math.round(sumR / count),
-      g: Math.round(sumG / count),
-      b: Math.round(sumB / count),
-      a: 255
-    };
-    // Si tiene contorno oscuro selectivo, el contraste de silueta está garantizado >= 2.1
-    const rawContrast = computeContrastRatio(avgColor, backdrop);
-    return Number(rawContrast.toFixed(2));
+    return samples === 0 ? 1 : Number((total / samples).toFixed(2));
   }
 
   private colorManhattanDistance(a: RGBAColor, b: RGBAColor): number {
