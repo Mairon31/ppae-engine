@@ -110,7 +110,7 @@ function profile(): ArtStyleProfile {
   if (state.profile !== 'adaptive-auto') return DEFAULT_STYLE_PROFILES[state.profile];
   return adaptive.selectOptimalProfile({
     category: state.section === 'characters' || state.section === 'npcs' ? 'character' :
-      state.section === 'trees' ? 'tree' : state.section === 'bosses' ? 'boss' : 'terrain',
+      state.section === 'trees' ? 'tree' : state.section === 'bosses' ? 'creature' : 'terrain',
     cameraZoom: state.zoom, screenPixelRatio: window.devicePixelRatio || 1,
     viewportHeightPx: window.innerHeight, distanceFromCameraTiles: 4,
     visualImportance: state.section === 'characters' || state.section === 'bosses' ? 'hero_focal' : 'standard',
