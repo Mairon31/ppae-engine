@@ -1648,3 +1648,59 @@ export interface FloraMorphologyDescriptor {
   };
 }
 
+// ============================================================================
+// PHASE 11 CONTRACTS: PROCEDURAL ART QUALITY EVALUATOR & GOLDEN SEED REGISTRY
+// ============================================================================
+
+export type ArtQualityDefectCode =
+  | 'EMPTY_SILHOUETTE'
+  | 'EXCESSIVE_BILATERAL_SYMMETRY'
+  | 'PALETTE_BUDGET_EXCEEDED'
+  | 'LOW_CONTRAST_RATIO'
+  | 'DISCONNECTED_COMPONENTS'
+  | 'PILLOW_SHADING_DETECTED'
+  | 'ORPHAN_NOISE_PIXELS'
+  | 'TILE_BOUNDARY_SEAM';
+
+export interface ArtQualityMetrics {
+  readonly opaquePixelCount: number;
+  readonly uniqueColorCount: number;
+  readonly maxAllowedColors: number;
+  readonly bilateralSymmetryRatio: number;
+  readonly connectedComponentCount: number;
+  readonly largestComponentRatio: number;
+  readonly orphanPixelRatio: number;
+  readonly directionalLightAlignment: number; // [-1.0 opuesto a la luz, +1.0 alineado con la luz]
+  readonly contrastRatioAgainstBackdrop: number;
+}
+
+export interface ArtQualityEvaluationReport {
+  readonly schemaVersion: string;
+  readonly assetId: string;
+  readonly category: AssetCategory;
+  readonly profileId: GranularityProfileId;
+  readonly overallScore: number; // [0 a 100]
+  readonly passed: boolean;
+  readonly defects: readonly ArtQualityDefectCode[];
+  readonly metrics: ArtQualityMetrics;
+}
+
+export interface TileSeamlessnessAuditReport {
+  readonly materialId: TerrainMaterialId;
+  readonly profileId: GranularityProfileId;
+  readonly horizontalBoundaryDelta: number;
+  readonly verticalBoundaryDelta: number;
+  readonly internalAverageDelta: number;
+  readonly seamRatio: number;
+  readonly isSeamless: boolean;
+}
+
+export interface GoldenSeedBenchmarkEntry {
+  readonly benchmarkId: string;
+  readonly category: AssetCategory;
+  readonly subType: string;
+  readonly seed: number;
+  readonly profileId: GranularityProfileId;
+  readonly minExpectedScore: number;
+  readonly requireAsymmetry: boolean;
+}

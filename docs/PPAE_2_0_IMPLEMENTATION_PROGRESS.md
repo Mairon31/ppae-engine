@@ -417,3 +417,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Performance:** fog trigonometry now scales with horizontal resolution rather than total pixel count, while the final loop remains O(width×height). No instrumented before/after benchmark or multi-device frame profile was collected; do not claim performance gain in milliseconds.
 - **State:** **VERIFIED** for tested code, Chromium workflows and targeted screenshot QA. Remaining optional QA: exhaustive native 4/6/8/16/32 visual fixtures, art review across seeds, device profiling, larger-scene sun occlusion. No changes to master, no PR merge and no npm release.
 - **Next:** Phase 11 — Procedural Art Quality Evaluator (user-supplied specification required before beginning).
+
+## Phase 11 — Procedural Art Quality Evaluator (implementation in progress)
+
+- Baseline HEAD `6073d5ab9b4a60a614d339d48af10cbc37bfcf0e`; original pasted diff referenced an earlier commit. Existing `AssetCategory` is `tree | mineral_rock | bush_flora | character | creature | structure`, so the proposed `mineral/flora/prop` names were mapped to established public contracts rather than breaking TypeScript.
+- Added quality metrics, palette/contrast/directional illumination, orphan pixels, connected-components and toroidal tile auditing, plus nine deterministic reference specimens in `APPROVED_GOLDEN_SEED_REGISTRY`.
+- New regression suite `tests/ppae-art-quality-evaluator-11.test.ts`. **Status: implemented; CI result pending.** Approval thresholds are provisional until actual scores and visual-review gates are verified, not assumed.

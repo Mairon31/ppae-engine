@@ -43,3 +43,4 @@ export * from './runtime/atlas-packer';
 export * from './runtime/lod-culling';
 export * from './integration/phaser-adapter';
 export * from './benchmarks/performance-benchmark';
+export * from './quality/art-quality-evaluator';
