@@ -24,7 +24,23 @@ try {
   if (!loaded) throw new Error('Vite preview never served compiled /ppae-engine/ assets');
   const nav = page.locator('#section-nav .nav-link');
   const total = await nav.count();
-  if (total < 17) throw new Error('Only ' + total + ' navigation sections; expected at least 17');
+  if (total < 17) {
+    await page.screenshot({ path: join(output, '00-diagnostic.png'), fullPage: true });
+    const pageHtml = (await page.content()).slice(0, 3000);
+    const failed = errors.join(' | ');
+    const navigation = await page.evaluate(() => ({
+      location: location.href,
+      title: document.title,
+      ready: document.readyState,
+      sectionNav: !!document.getElementById('section-nav'),
+      scriptUrls: [...document.querySelectorAll('script')].map(el => el.src),
+      previewText: document.getElementById('engine-live')?.textContent,
+      mainText: document.body.innerText.slice(0, 800)
+    }));
+    throw new Error('Only ' + total + ' navigation sections; expected 17. ' +
+      'diagnostic=' + JSON.stringify(navigation) + '; browser errors=' + failed +
+      '; HTML=' + pageHtml);
+  }
 
   for (let index = 0; index < total; index++) {
     await nav.nth(index).click();
