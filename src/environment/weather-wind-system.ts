@@ -1,5 +1,6 @@
 import {
   ArtStyleProfile,
+  LightningBoltBranch,
   LogicalRect,
   PPAE_SCHEMA_VERSION,
   WeatherConditionId,
@@ -10,6 +11,10 @@ import { SeededRNG } from '../core/deterministic';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { pointInLogicalRect } from '../interiors/portal-system';
+
+const BAYER_FOG_4X4 = [
+  [0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]
+] as const;
 
 export const DEFAULT_WEATHER_STATES: Readonly<Record<WeatherConditionId, WeatherVisualState>> = {
   clear: {
@@ -173,6 +178,55 @@ export class WeatherAndWindSystem {
   }
 
   /**
+   * Genera la geometría quebrada de un relámpago ramificado pixel-art de forma determinista.
+   */
+  public generateLightningBolt(
+    widthTexels: number,
+    heightTexels: number,
+    seed: number
+  ): LightningBoltBranch[] {
+    const rng = new SeededRNG(seed ^ 0x9e3779b9);
+    const branches: LightningBoltBranch[] = [];
+
+    let curX = rng.nextInt(Math.floor(widthTexels * 0.2), Math.floor(widthTexels * 0.8));
+    let curY = 0;
+    const segments = 6;
+    const stepY = Math.max(4, Math.floor((heightTexels * 0.78) / segments));
+
+    for (let i = 0; i < segments; i++) {
+      const nextX = Math.max(4, Math.min(widthTexels - 5, curX + rng.nextInt(-8, 8)));
+      const nextY = Math.min(heightTexels - 2, curY + stepY);
+
+      branches.push({
+        x0: curX,
+        y0: curY,
+        x1: nextX,
+        y1: nextY,
+        isMainTrunk: true
+      });
+
+      // Ramificaciones secundarias laterales
+      if (i >= 1 && i <= segments - 2 && rng.chance(0.65)) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const forkX = Math.max(2, Math.min(widthTexels - 3, nextX + side * rng.nextInt(5, 11)));
+        const forkY = Math.min(heightTexels - 2, nextY + Math.floor(stepY * 0.8));
+        branches.push({
+          x0: nextX,
+          y0: nextY,
+          x1: forkX,
+          y1: forkY,
+          isMainTrunk: false
+        });
+      }
+
+      curX = nextX;
+      curY = nextY;
+    }
+
+    return branches;
+  }
+
+  /**
    * Renderiza la capa atmosférica (lluvia con ángulo de viento, salpicaduras, nieve, ceniza y niebla por bandas)
    * respetando las zonas techadas `shelteredRectsLogical`.
    */
@@ -189,10 +243,16 @@ export class WeatherAndWindSystem {
     overlayBuffer: PixelBuffer;
     spawnedDropsCount: number;
     suppressedByRoofCount: number;
+    lightningBranchesCount: number;
   } {
     const overlayBuffer = new PixelBuffer(widthTexels, heightTexels);
     if (isIndoorSpace) {
-      return { overlayBuffer, spawnedDropsCount: 0, suppressedByRoofCount: 0 };
+      return {
+        overlayBuffer,
+        spawnedDropsCount: 0,
+        suppressedByRoofCount: 0,
+        lightningBranchesCount: 0
+      };
     }
 
     const state = this.currentState;
@@ -202,6 +262,7 @@ export class WeatherAndWindSystem {
 
     let spawnedDropsCount = 0;
     let suppressedByRoofCount = 0;
+    let lightningBranchesCount = 0;
 
     // 1. Precipitación (Lluvia, Llovizna, Tormenta, Nieve, Ventisca, Ceniza)
     const isRaining =
@@ -255,39 +316,80 @@ export class WeatherAndWindSystem {
       }
     }
 
-    // 2. Niebla meteorológica por bandas discretas de píxeles (sin blur suave)
+    // Two independently drifting, stratified fog banks. Generate each bank's
+    // curved centerline and thickness per x; this costs O(width) trig calls,
+    // not O(width * height). Bayer dithering softens ONLY the pixelated banks'
+    // feathered edges, rather than turning the whole screen into a dot grid.
     if (state.fogDensity > 0.05) {
-      const fogColor =
-        state.condition === 'sandstorm'
-          ? hexToRgba('#d97706')
-          : hexToRgba('#cbd5e1');
-
-      const bandHeight = profile.moduleSize * 2;
-      const scrollX = Math.floor(timeSeconds * 8);
-
+      const fogColor = state.condition === 'sandstorm' ? hexToRgba('#d97706') :
+        state.condition === 'volcanic_ash' ? hexToRgba('#64748b') :
+        hexToRgba('#cbd5e1');
+      const farCenter = new Float32Array(widthTexels);
+      const nearCenter = new Float32Array(widthTexels);
+      const farThickness = new Float32Array(widthTexels);
+      const nearThickness = new Float32Array(widthTexels);
+      const farDrift = timeSeconds * 3.4;
+      const nearDrift = timeSeconds * 7.2;
+      for (let x = 0; x < widthTexels; x++) {
+        farCenter[x] = heightTexels * 0.29 +
+          Math.sin((x + farDrift) * 0.038) * heightTexels * 0.075 +
+          Math.sin((x - farDrift * 0.6) * 0.11) * heightTexels * 0.025;
+        nearCenter[x] = heightTexels * 0.73 +
+          Math.sin((x - nearDrift) * 0.027) * heightTexels * 0.085 +
+          Math.cos((x + nearDrift * 0.5) * 0.093) * heightTexels * 0.03;
+        farThickness[x] = heightTexels * (0.08 + state.fogDensity * 0.115) +
+          Math.cos((x + farDrift) * 0.047) * heightTexels * 0.012;
+        nearThickness[x] = heightTexels * (0.09 + state.fogDensity * 0.135) +
+          Math.sin((x - nearDrift) * 0.041) * heightTexels * 0.017;
+      }
       for (let y = 0; y < heightTexels; y++) {
-        const bandIndex = Math.floor(y / bandHeight);
         for (let x = 0; x < widthTexels; x++) {
-          const pattern = ((x + scrollX + bandIndex * 7) & 3) === 0;
-          if (pattern && (y % 2 === 0 || state.fogDensity > 0.6)) {
-            const existing = overlayBuffer.getPixel(x, y);
-            if (existing.a === 0) {
-              overlayBuffer.setPixel(x, y, {
-                r: fogColor.r,
-                g: fogColor.g,
-                b: fogColor.b,
-                a: Math.min(220, Math.round(state.fogDensity * 180))
-              });
-            }
-          }
+          const farDistance = Math.abs(y - farCenter[x]);
+          const nearDistance = Math.abs(y - nearCenter[x]);
+          const farWeight = Math.max(0, Math.min(1, (farThickness[x] - farDistance) /
+            Math.max(2, farThickness[x] * 0.33)));
+          const nearWeight = Math.max(0, Math.min(1, (nearThickness[x] - nearDistance) /
+            Math.max(2, nearThickness[x] * 0.38)));
+          const isNear = nearWeight * 1.2 >= farWeight;
+          const feather = isNear ? nearWeight : farWeight;
+          if (feather <= 0) continue;
+          if (feather < 1 && feather < (BAYER_FOG_4X4[y & 3][x & 3] + 0.5) / 16) continue;
+          if (overlayBuffer.getPixel(x, y).a !== 0) continue;
+          overlayBuffer.setPixel(x, y, {
+            r: fogColor.r, g: fogColor.g, b: fogColor.b,
+            a: Math.min(215, Math.round(state.fogDensity * (isNear ? 174 : 110) *
+              (0.78 + feather * 0.22)))
+          });
         }
       }
+    }
+
+    // 3. Relámpagos ramificados en tormenta eléctrica
+    if (state.condition === 'thunderstorm' && state.lightningFlashIntensity > 0.3) {
+      const branches = this.generateLightningBolt(
+        widthTexels,
+        heightTexels,
+        seed ^ Math.floor(timeSeconds * 5)
+      );
+      const coreCol = hexToRgba('#ffffff', 255);
+      const glowCol = hexToRgba('#7dd3fc', 225);
+
+      for (const b of branches) {
+        if (b.isMainTrunk) {
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, glowCol, 4);
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, coreCol, 2);
+        } else {
+          overlayBuffer.drawLine(b.x0, b.y0, b.x1, b.y1, glowCol, 2);
+        }
+      }
+      lightningBranchesCount = branches.length;
     }
 
     return {
       overlayBuffer,
       spawnedDropsCount,
-      suppressedByRoofCount
+      suppressedByRoofCount,
+      lightningBranchesCount
     };
   }
 }

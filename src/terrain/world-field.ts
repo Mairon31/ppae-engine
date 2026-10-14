@@ -1,13 +1,17 @@
 import {
   AutotileMask8,
   BiomeId,
+  GeologicalResourceKind,
   PPAE_SCHEMA_VERSION,
   TerrainMaterialDefinition,
   TerrainMaterialId,
   TreeLifecycleStage,
+  TreeSpeciesId,
   WorldTileSample
 } from '../core/contracts';
 import { fnv1aHash32 } from '../core/deterministic';
+import { FloraMorphologyResolver } from '../vegetation/flora-morphology';
+import { TreeDiversityController } from '../vegetation/tree-diversity-controller';
 
 export const TERRAIN_MATERIALS: Readonly<Record<TerrainMaterialId, TerrainMaterialDefinition>> = {
   deep_water: {
@@ -168,6 +172,8 @@ export interface TileOverrideRecord {
 export class DeterministicWorldField {
   private readonly seedNum: number;
   private readonly overrides = new Map<string, TileOverrideRecord>();
+  private readonly treeDiversity = new TreeDiversityController();
+  private readonly floraResolver = new FloraMorphologyResolver();
 
   constructor(public readonly worldSeed: string | number) {
     this.seedNum = typeof worldSeed === 'number' ? worldSeed >>> 0 : fnv1aHash32(String(worldSeed));
@@ -327,46 +333,69 @@ export class DeterministicWorldField {
     mask: AutotileMask8;
     transitionNeighborMaterial?: TerrainMaterialId;
   } {
-    const centerPriority = TERRAIN_MATERIALS[centerMaterial].layerPriority;
-    let transitionNeighborMaterial: TerrainMaterialId | undefined;
-    let highestLowerPriority = -1;
+    // Road connectivity uses only neighboring road tiles. Road shoulders must
+    // resolve against the dominant surrounding *land* rather than layerPriority:
+    // grass (50) would otherwise never be the underlay of dirt_soil (40).
+    if (centerMaterial === 'dirt_soil') {
+      const neighbors: readonly [number, number][] = [
+        [0, -1], [1, 0], [0, 1], [-1, 0],
+        [1, -1], [1, 1], [-1, 1], [-1, -1]
+      ];
+      const materials = neighbors.map(([dx,dy])=>
+        this.sampleMaterialOnly(tileX+dx,tileY+dy).material);
+      const n=materials[0]==='dirt_soil';
+      const e=materials[1]==='dirt_soil';
+      const s=materials[2]==='dirt_soil';
+      const w=materials[3]==='dirt_soil';
+      const mask =
+        (n?1:0) | (n&&e&&materials[4]==='dirt_soil'?2:0) |
+        (e?4:0) | (s&&e&&materials[5]==='dirt_soil'?8:0) |
+        (s?16:0) | (s&&w&&materials[6]==='dirt_soil'?32:0) |
+        (w?64:0) | (n&&w&&materials[7]==='dirt_soil'?128:0);
 
-    const isSameOrHigherGroup = (dx: number, dy: number): boolean => {
-      const neighbor = this.sampleMaterialOnly(tileX + dx, tileY + dy).material;
-      if (neighbor === centerMaterial) return true;
-      // Agua profunda y somera comparten continuidad de familia líquida
-      if (centerMaterial === 'shallow_water' && neighbor === 'deep_water') return true;
+      // Cardinal surroundings receive a higher weight. Ties are broken by
+      // terrain priority and a stable material ID so chunk order is irrelevant.
+      const weights = new Map<TerrainMaterialId, number>();
+      for (let i=0;i<materials.length;i++) {
+        const mat=materials[i];
+        if (mat==='dirt_soil' || TERRAIN_MATERIALS[mat].isLiquid)continue;
+        weights.set(mat,(weights.get(mat)??0)+(i<4?2:1));
+      }
+      const dominant=[...weights].sort((a,b)=>
+        b[1]-a[1] ||
+        TERRAIN_MATERIALS[b[0]].layerPriority-TERRAIN_MATERIALS[a[0]].layerPriority ||
+        a[0].localeCompare(b[0]))[0]?.[0];
+      return {mask,transitionNeighborMaterial:dominant ?? 'meadow_grass'};
+    }
 
-      const nPrio = TERRAIN_MATERIALS[neighbor].layerPriority;
-      if (nPrio < centerPriority && nPrio > highestLowerPriority) {
-        highestLowerPriority = nPrio;
-        transitionNeighborMaterial = neighbor;
+    // Preserve the original 47-state corner-gated behavior for nonroad tiles.
+    const centerPriority=TERRAIN_MATERIALS[centerMaterial].layerPriority;
+    let transitionNeighborMaterial:TerrainMaterialId|undefined;
+    let highestLowerPriority=-1;
+    const isSameOrHigherGroup=(dx:number,dy:number):boolean=>{
+      const neighbor=this.sampleMaterialOnly(tileX+dx,tileY+dy).material;
+      if(neighbor===centerMaterial)return true;
+      if(centerMaterial==='shallow_water'&&neighbor==='deep_water')return true;
+      const priority=TERRAIN_MATERIALS[neighbor].layerPriority;
+      if(priority<centerPriority&&priority>highestLowerPriority){
+        highestLowerPriority=priority;
+        transitionNeighborMaterial=neighbor;
       }
       return false;
     };
-
-    const n = isSameOrHigherGroup(0, -1);
-    const e = isSameOrHigherGroup(1, 0);
-    const s = isSameOrHigherGroup(0, 1);
-    const w = isSameOrHigherGroup(-1, 0);
-
-    // Diagonal Corner Gating: la esquina diagonal sólo cuenta si ambos cardinales adyacentes están presentes
-    const ne = n && e && isSameOrHigherGroup(1, -1);
-    const se = s && e && isSameOrHigherGroup(1, 1);
-    const sw = s && w && isSameOrHigherGroup(-1, 1);
-    const nw = n && w && isSameOrHigherGroup(-1, -1);
-
-    const mask =
-      (n ? 1 : 0) |
-      (ne ? 2 : 0) |
-      (e ? 4 : 0) |
-      (se ? 8 : 0) |
-      (s ? 16 : 0) |
-      (sw ? 32 : 0) |
-      (w ? 64 : 0) |
-      (nw ? 128 : 0);
-
-    return { mask, transitionNeighborMaterial };
+    const n=isSameOrHigherGroup(0,-1);
+    const e=isSameOrHigherGroup(1,0);
+    const s=isSameOrHigherGroup(0,1);
+    const w=isSameOrHigherGroup(-1,0);
+    const ne=n&&e&&isSameOrHigherGroup(1,-1);
+    const se=s&&e&&isSameOrHigherGroup(1,1);
+    const sw=s&&w&&isSameOrHigherGroup(-1,1);
+    const nw=n&&w&&isSameOrHigherGroup(-1,-1);
+    return {
+      mask:(n?1:0)|(ne?2:0)|(e?4:0)|(se?8:0)|
+        (s?16:0)|(sw?32:0)|(w?64:0)|(nw?128:0),
+      transitionNeighborMaterial
+    };
   }
 
   /**
@@ -387,41 +416,86 @@ export class DeterministicWorldField {
     // Sólo colocar árboles, flora o rocas en tiles terrestres interiores (mask === 255 evita bordes de costa)
     if (!matDef.isLiquid && mask === 255 && override?.treeStageOverride !== 'removed') {
       const spawnRoll = this.latticeHash(tileX, tileY, 901);
+      const speciesRoll = this.latticeHash(tileX, tileY, 937);
+      const stageRoll = this.latticeHash(tileX, tileY, 971);
       const variantSeed = fnv1aHash32(`${this.seedNum}::prop::${tileX},${tileY}`);
 
-      if (base.material === 'rock_cliff' && spawnRoll < 0.22) {
-        const subType = spawnRoll < 0.06 ? 'crystal_geode' : spawnRoll < 0.14 ? 'iron_vein' : 'mossy_boulder';
+      if (base.material === 'rock_cliff' && spawnRoll < 0.24) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
         propSpawn = { kind: 'mineral', subType, variantSeed };
       } else if (
         (base.material === 'meadow_grass' || base.material === 'forest_moss' || base.material === 'snow_frost') &&
         spawnRoll < (base.biome === 'forest' ? 0.16 : 0.08)
       ) {
-        const species =
-          base.biome === 'tundra' ? 'pine' : base.biome === 'forest' && spawnRoll < 0.08 ? 'pine' : 'oak';
-        const defaultStage: TreeLifecycleStage =
-          spawnRoll < 0.02 ? 'sapling' : spawnRoll < 0.03 ? 'stump' : 'mature';
+        const nearWater = this.isNearWater(tileX, tileY, base.moisture);
+        const species = this.selectEcologicalTreeSpecies(
+          base.biome, base.moisture, base.temperature, speciesRoll, nearWater
+        );
+        const defaultStage = this.selectEcologicalTreeStage(stageRoll);
+        const stratified = this.treeDiversity.resolveSpatiallyStratifiedTreeVariant(
+          this.seedNum, tileX, tileY, species
+        );
         propSpawn = {
           kind: 'tree',
           subType: species,
           stage: override?.treeStageOverride ?? defaultStage,
-          variantSeed
+          variantSeed: stratified.variantSeed,
+          archetypeId: stratified.archetypeId
         };
       } else if (base.material === 'sand_beach' && spawnRoll < 0.04) {
+        const coastalSpecies: TreeSpeciesId =
+          base.moisture > 0.65 && speciesRoll < 0.35 ? 'mangrove' : 'palm';
+        const stratified = this.treeDiversity.resolveSpatiallyStratifiedTreeVariant(
+          this.seedNum, tileX, tileY, coastalSpecies
+        );
         propSpawn = {
           kind: 'tree',
-          subType: 'palm',
-          stage: override?.treeStageOverride ?? 'mature',
-          variantSeed
+          subType: coastalSpecies,
+          stage: override?.treeStageOverride ?? this.selectEcologicalTreeStage(stageRoll),
+          variantSeed: stratified.variantSeed,
+          archetypeId: stratified.archetypeId
         };
       } else if (base.material === 'desert_dune' && spawnRoll < 0.06) {
-        propSpawn = { kind: 'flora', subType: 'desert_cactus', variantSeed };
+        const flora = this.floraResolver.selectEcologicalFloraKind(
+          this.seedNum, tileX, tileY, base.biome, base.material,
+          base.moisture, base.temperature, false
+        );
+        propSpawn = { kind: 'flora', subType: flora.kind, variantSeed: flora.variantSeed };
       } else if (
-        (base.material === 'meadow_grass' || base.material === 'forest_moss') &&
-        spawnRoll >= 0.2 &&
+        (base.material === 'desert_dune' || base.material === 'sand_beach') &&
+        spawnRoll >= 0.06 && spawnRoll < 0.14
+      ) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
+        propSpawn = { kind: 'mineral', subType, variantSeed };
+      } else if (
+        (base.material === 'meadow_grass' ||
+          base.material === 'forest_moss' ||
+          base.material === 'sand_beach' ||
+          base.material === 'snow_frost') &&
+        spawnRoll >= 0.18 &&
         spawnRoll < 0.34
       ) {
-        const subType = spawnRoll < 0.25 ? 'wild_flower' : spawnRoll < 0.3 ? 'tall_grass' : 'mushroom_cluster';
-        propSpawn = { kind: 'flora', subType, variantSeed };
+        const isNearWaterShore =
+          base.material === 'sand_beach' ||
+          this.isNearWater(tileX, tileY, base.moisture);
+        const flora = this.floraResolver.selectEcologicalFloraKind(
+          this.seedNum, tileX, tileY, base.biome, base.material,
+          base.moisture, base.temperature, isNearWaterShore
+        );
+        propSpawn = { kind: 'flora', subType: flora.kind, variantSeed: flora.variantSeed };
+      } else if (
+        (base.material === 'meadow_grass' || base.material === 'forest_moss' ||
+          base.material === 'snow_frost') &&
+        spawnRoll >= 0.34 && spawnRoll < 0.42
+      ) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
+        propSpawn = { kind: 'mineral', subType, variantSeed };
       }
     }
 
@@ -438,4 +512,108 @@ export class DeterministicWorldField {
       propSpawn
     };
   }
+  /** Approximate riparian proximity at fixed offsets without chunk state. */
+  private isNearWater(tileX: number, tileY: number, moisture: number): boolean {
+    if (moisture < 0.58) return false;
+    for (const [dx, dy] of [[0, -2], [2, 0], [0, 2], [-2, 0]]) {
+      const material = this.sampleMaterialOnly(tileX + dx, tileY + dy).material;
+      if (material === 'shallow_water' || material === 'deep_water') return true;
+    }
+    return false;
+  }
+
+  /** Habitat-weighted families. Roll is independent of spawn and stage rolls. */
+  private selectEcologicalTreeSpecies(
+    biome: BiomeId,
+    moisture: number,
+    temperature: number,
+    speciesRoll: number,
+    nearWater: boolean
+  ): TreeSpeciesId {
+    if (biome === 'corrupted') return speciesRoll < 0.8 ? 'corrupted_thorn' : 'dead_tree';
+    if (biome === 'volcanic') return speciesRoll < 0.65 ? 'dead_tree' : 'corrupted_thorn';
+    if (biome === 'tundra') {
+      if (speciesRoll < 0.12) return 'dead_tree';
+      if (speciesRoll < 0.4) return 'birch';
+      return 'pine';
+    }
+    if (biome === 'forest') {
+      // Rare fantasy or blighted individuals never dominate otherwise healthy habitat.
+      if (speciesRoll > 0.992) return 'fantasy_lumin';
+      if (speciesRoll > 0.982 && moisture < 0.7) return 'corrupted_thorn';
+      if (nearWater && moisture > 0.65 && speciesRoll < 0.35) {
+        return temperature > 0.61 ? 'mangrove' : 'willow';
+      }
+      if (temperature > 0.65 && moisture > 0.60 && speciesRoll < 0.48) {
+        return speciesRoll < 0.26 ? 'tropical' : 'bamboo';
+      }
+      if (speciesRoll < 0.25) return 'pine';
+      if (speciesRoll < 0.49) return 'birch';
+      if (speciesRoll < 0.55) return 'dead_tree';
+      if (speciesRoll < 0.68) return 'fruit_tree';
+      return 'oak';
+    }
+    if (biome === 'desert') return speciesRoll > 0.8 ? 'dead_tree' : 'palm';
+    if (nearWater && moisture > 0.64 && speciesRoll < 0.28) return 'willow';
+    if (speciesRoll > 0.995 && moisture > 0.62) return 'fantasy_lumin';
+    if (speciesRoll < 0.23) return 'fruit_tree';
+    if (speciesRoll < 0.51) return 'birch';
+    if (speciesRoll < 0.61 && temperature < 0.4) return 'pine';
+    return 'oak';
+  }
+
+  /** Age and damage are independent of tree species and spawn placement. */
+  private selectEcologicalTreeStage(stageRoll: number): TreeLifecycleStage {
+    if (stageRoll < 0.008) return 'seed';
+    if (stageRoll < 0.04) return 'sprout';
+    if (stageRoll < 0.12) return 'sapling';
+    if (stageRoll < 0.24) return 'young';
+    if (stageRoll < 0.4) return 'immature';
+    if (stageRoll < 0.76) return 'mature';
+    if (stageRoll < 0.88) return 'ancient';
+    if (stageRoll < 0.93) return 'damaged';
+    if (stageRoll < 0.96) return 'dead';
+    if (stageRoll < 0.985) return 'stump';
+    return 'fallen_log';
+  }
+
+  /**
+   * Coordinates + environment determine 17 geological formations in O(1).
+   * No mutable global state; independent from chunk traversal and tree selection.
+   */
+  private selectGeologicalFormation(
+    biome: BiomeId, material: TerrainMaterialId, moisture: number,
+    roll: number, tileX: number, tileY: number
+  ): GeologicalResourceKind {
+    const spatial = Math.abs(tileX * 5 + tileY * 7 + Math.floor(roll * 19));
+    if (material === 'sand_beach') {
+      const coastal: readonly GeologicalResourceKind[] = [
+        'rounded_riverstone', 'surface_pebbles', 'sunken_half_buried', 'flat_slab'
+      ];
+      return coastal[spatial % coastal.length];
+    }
+    if (biome === 'desert' || material === 'desert_dune') {
+      const desert: readonly GeologicalResourceKind[] = [
+        'eroded_sandstone', 'flat_slab', 'jagged_outcrop', 'copper_vein', 'gold_vein'
+      ];
+      return desert[spatial % desert.length];
+    }
+    if (material === 'rock_cliff') {
+      const cliffs: readonly GeologicalResourceKind[] =
+        biome === 'volcanic'
+          ? ['volcanic_basalt', 'jagged_outcrop', 'fractured_monolith',
+             'crag_cliff_boulder', 'crystal_geode']
+          : ['crag_cliff_boulder', 'fractured_monolith', 'jagged_outcrop',
+             'angular_boulder', 'coal_deposit', 'copper_vein', 'iron_vein',
+             'gold_vein', 'crystal_geode', 'volcanic_basalt'];
+      return cliffs[spatial % cliffs.length];
+    }
+    const fieldRocks: readonly GeologicalResourceKind[] = moisture > .55
+      ? ['mossy_boulder', 'sunken_half_buried', 'surface_pebbles',
+         'rounded_riverstone', 'stacked_cairn']
+      : ['angular_boulder', 'flat_slab', 'surface_pebbles',
+         'sunken_half_buried', 'stacked_cairn'];
+    return fieldRocks[spatial % fieldRocks.length];
+  }
+
 }

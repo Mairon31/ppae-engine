@@ -66,6 +66,15 @@ export function createDefaultColossusBossState(seed = 2026): BossVisualState {
 }
 
 /**
+ * Segundo arquetipo. Reutiliza los contratos de destrucción por segmento,
+ * pero su silueta combina tronco, cornamenta de ramas y garras radicales.
+ */
+export function createCorruptedTreantBossState(seed = 2026): BossVisualState {
+  const base = createDefaultColossusBossState(seed);
+  return { ...base, bossId: 'corrupted_forest_treant_lord' };
+}
+
+/**
  * Renderizador de Jefes Multisegmento:
  * - Cada segmento se articula y destruye de forma independiente.
  * - La paleta de energía cambia dinámicamente según la fase (`phase_1`, `phase_2`, `phase_3`).
@@ -79,7 +88,8 @@ export class MultiSegmentBossRenderer {
     const buf = new PixelBuffer(width, height);
     const telegraphBuf = new PixelBuffer(width, height);
 
-    const u = mod === 6 ? 1.5 : 1.0;
+    const u = mod / 4;
+    const isTreantLord = state.bossId === 'corrupted_forest_treant_lord';
     const pivotX = Math.floor(width / 2);
     const pivotY = height - Math.round(6 * u);
 
@@ -91,10 +101,10 @@ export class MultiSegmentBossRenderer {
         : Math.round(Math.sin(phaseAngle * speedFactor) * 2.5 * u);
 
     // Paleta cromática de energía reactiva a la fase del jefe
-    const energyColors = this.resolvePhaseColors(state.phase);
-    const stoneDark = hexToRgba('#1e293b');
-    const stoneMid = hexToRgba('#334155');
-    const stoneHigh = hexToRgba('#64748b');
+    const energyColors = this.resolvePhaseColors(state.phase, isTreantLord);
+    const stoneDark = hexToRgba(isTreantLord ? '#26150e' : '#1e293b');
+    const stoneMid = hexToRgba(isTreantLord ? '#4d2b1b' : '#334155');
+    const stoneHigh = hexToRgba(isTreantLord ? '#784730' : '#64748b');
     const outlineCol = hexToRgba('#090d16');
 
     // 1. Renderizar indicador telegráfico de ataque en la capa de suelo (si está activo)
@@ -201,6 +211,12 @@ export class MultiSegmentBossRenderer {
       energyColors.mid
     );
 
+    if (isTreantLord) {
+      this.drawTreantAnatomy(buf, state, coreCenterX, coreCenterY,
+        coreRx, coreRy, leftArmX, leftArmY, rightArmX, rightArmY,
+        pivotY, u, stoneDark, stoneMid, stoneHigh, energyColors.glow);
+    }
+
     buf.applySelectiveOutline(outlineCol);
 
     // Contar segmentos intactos y exponer punto débil cuando al menos un brazo cae o está en fase 2/3
@@ -251,6 +267,71 @@ export class MultiSegmentBossRenderer {
         }
       }
     };
+  }
+
+  /**
+   * Corrupted Treant silhouette: bark striations, twisted boughs, thorn tips
+   * and split root claws. Respect segment health so destroyed arms remain absent.
+   */
+  private drawTreantAnatomy(
+    buf: PixelBuffer, state: BossVisualState,
+    cx: number, cy: number, rx: number, ry: number,
+    leftX: number, leftY: number, rightX: number, rightY: number,
+    groundY: number, u: number,
+    barkDark: ReturnType<typeof hexToRgba>,
+    barkMid: ReturnType<typeof hexToRgba>,
+    barkHigh: ReturnType<typeof hexToRgba>,
+    corruptedLight: ReturnType<typeof hexToRgba>
+  ): void {
+    const th = Math.max(1, Math.round(1.2 * u));
+    // Roots remain attached to the standing core and fork toward the ground.
+    if (state.deathStage !== 'stage_3_monolith_collapse') {
+      for (const side of [-1, 1]) {
+        const x0 = cx + side * Math.round(rx * .4);
+        const x1 = cx + side * Math.round(8 * u);
+        const y0 = cy + Math.round(7 * u);
+        const y1 = groundY - Math.round(2 * u);
+        buf.drawLine(x0, y0, x1, y1, barkMid, Math.max(2, Math.round(2 * u)));
+        buf.drawLine(x1, y1, x1 + side * Math.round(5 * u), groundY, barkDark, th);
+        buf.drawLine(x1, y1, x1 - side * Math.round(2 * u), groundY, barkHigh, th);
+      }
+      // A split-vine crest, deliberately unlike the Colossus crystal needle.
+      for (const side of [-1, 1]) {
+        const rootX = cx + side * Math.round(4 * u);
+        const baseY = cy - Math.round(7 * u);
+        const forkX = cx + side * Math.round(12 * u);
+        const forkY = cy - ry - Math.round(5 * u);
+        buf.drawLine(rootX, baseY, forkX, forkY, barkDark, Math.max(1, Math.round(1.8 * u)));
+        buf.drawLine(forkX, forkY, forkX + side * Math.round(3 * u),
+          forkY - Math.round(4 * u), barkMid, th);
+        buf.drawLine(forkX, forkY, forkX - side * Math.round(2 * u),
+          forkY - Math.round(5 * u), barkHigh, th);
+      }
+    }
+    // Creased bark follows the monolith and exposes the purple core.
+    for (let strip = -2; strip <= 2; strip++) {
+      const x = cx + strip * Math.round(2 * u);
+      buf.drawLine(x, cy - Math.round(7 * u),
+        x + Math.round(Math.sin(strip * 2) * u),
+        cy + Math.round(6 * u), strip % 2 ? barkDark : barkHigh, th);
+    }
+    buf.fillEllipse(cx, cy, Math.max(1, Math.round(2.2 * u)),
+      Math.max(1, Math.round(2 * u)), corruptedLight);
+    // When arms survive, branch thorns and hooked claws are attached to them.
+    for (const [id, ax, ay, side] of [
+      ['left_bastion_shield_arm', leftX, leftY, -1],
+      ['right_crusher_hammer_arm', rightX, rightY, 1]
+    ] as const) {
+      if (state.segments[id].integrity === 'destroyed') continue;
+      if (state.deathStage !== 'alive') continue;
+      const upperY = ay - Math.round(5 * u);
+      buf.drawLine(ax, upperY, ax + side * Math.round(4 * u),
+        upperY - Math.round(4 * u), barkHigh, th);
+      buf.drawLine(ax, ay + Math.round(4 * u), ax + side * Math.round(3 * u),
+        ay + Math.round(8 * u), barkDark, th);
+      buf.drawLine(ax, ay + Math.round(4 * u), ax - side * Math.round(2 * u),
+        ay + Math.round(8 * u), barkDark, th);
+    }
   }
 
   private drawBossArmSegment(
@@ -328,7 +409,16 @@ export class MultiSegmentBossRenderer {
     }
   }
 
-  private resolvePhaseColors(phase: BossPhaseId) {
+  private resolvePhaseColors(phase: BossPhaseId, isTreantLord = false) {
+    if (isTreantLord) {
+      if (phase === 'phase_1_dormant') {
+        return { mid: hexToRgba('#7e22ce'), glow: hexToRgba('#c084fc'), core: hexToRgba('#f3e8ff') };
+      }
+      if (phase === 'phase_2_enraged') {
+        return { mid: hexToRgba('#a21caf'), glow: hexToRgba('#f0abfc'), core: hexToRgba('#fdf4ff') };
+      }
+      return { mid: hexToRgba('#be123c'), glow: hexToRgba('#fb7185'), core: hexToRgba('#ffe4e6') };
+    }
     switch (phase) {
       case 'phase_1_dormant':
         return {

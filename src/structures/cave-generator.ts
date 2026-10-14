@@ -76,12 +76,68 @@ export class CaveDungeonGenerator {
             Math.floor(tileTex * 0.4),
             wallHighlight
           );
+          for (let band = 1; band <= 2; band++) {
+            const yy = by + Math.floor((band * tileTex) / 3);
+            buf.drawLine(bx + ((tx + band) % 3), yy, bx + tileTex - 3, yy, floorSpeck, 1);
+          }
+          // Estalactitas colgantes en el muro norte (ty === 0)
+          if (ty === 0 && tx > 0 && tx < def.widthInTiles - 1) {
+            const spikeX = bx + Math.floor(tileTex / 2);
+            buf.drawLine(spikeX, by + tileTex - 4, spikeX, by + tileTex + 3, wallCol, 3);
+            buf.drawLine(spikeX - 1, by + tileTex - 4, spikeX - 1, by + tileTex + 1, wallHighlight, 1);
+          }
         } else {
           buf.fillRect(bx, by, tileTex, tileTex, floorCol);
           if (rng.chance(0.45)) {
             buf.fillRect(bx + 4, by + 4, 2, 2, floorSpeck);
           }
         }
+      }
+    }
+
+
+    // Deterministic load-bearing rock columns. Occupied logical cells remain collidable.
+    const occupiedColumns = new Set<string>();
+    const interiorArea = Math.max(0, (def.widthInTiles - 2) * (def.heightInTiles - 2));
+    const desiredColumns = Math.min(3, Math.floor(interiorArea / 16));
+    for (let attempts = 0; attempts < interiorArea * 5 && occupiedColumns.size < desiredColumns; attempts++) {
+      const tx = rng.nextInt(1, def.widthInTiles - 2);
+      const ty = rng.nextInt(1, def.heightInTiles - 2);
+      const key = tx + ':' + ty;
+      if (occupiedColumns.has(key) ||
+          (tx === def.exitStairsTileX && ty === def.exitStairsTileY) ||
+          (def.hasLavaPool && tx >= 5 && tx <= 7 && ty >= 1 && ty <= 3)) continue;
+      occupiedColumns.add(key);
+      const px = tx * tileTex;
+      const py = ty * tileTex;
+      const coreW = Math.max(4, Math.floor(tileTex * 0.34));
+      const left = px + Math.floor((tileTex - coreW) / 2);
+      buf.fillRect(left, py + 2, coreW, tileTex - 4, wallHighlight);
+      buf.fillRect(left, py + 2, Math.max(1, Math.floor(coreW * 0.27)), tileTex - 4, floorSpeck);
+      buf.fillRect(left - 2, py + 1, coreW + 4, Math.max(2, Math.floor(tileTex * 0.12)), floorSpeck);
+      buf.fillRect(left - 2, py + tileTex - 4, coreW + 4, 3, floorSpeck);
+      for (let y = py + 6; y < py + tileTex - 4; y += Math.max(4, profile.moduleSize)) {
+        buf.drawLine(left + 1, y, left + Math.floor(coreW * 0.5), y + 2, wallCol, 1);
+      }
+      collisionRects.push({ x: tx * 16, y: ty * 16, width: 16, height: 16 });
+    }
+
+    // Stepped natural stalagmites are purely visual and do not occupy a whole walkability cell.
+    const stalagmites = Math.min(5, Math.floor(interiorArea / 7));
+    for (let i = 0; i < stalagmites; i++) {
+      const tx = rng.nextInt(1, def.widthInTiles - 2);
+      const ty = rng.nextInt(1, def.heightInTiles - 2);
+      if (occupiedColumns.has(tx + ':' + ty) ||
+          (tx === def.exitStairsTileX && ty === def.exitStairsTileY) ||
+          (def.hasLavaPool && tx >= 5 && tx <= 7 && ty >= 1 && ty <= 3)) continue;
+      const cx = tx * tileTex + Math.floor(tileTex / 2);
+      const base = (ty + 1) * tileTex - 3;
+      const height = Math.max(6, Math.floor(tileTex * 0.58));
+      const radius = Math.max(2, Math.floor(tileTex * 0.18));
+      for (let step = 0; step < height; step++) {
+        const span = Math.max(1, Math.floor((step / height) * radius));
+        const y = base - height + step;
+        buf.fillRect(cx - span, y, span * 2 + 1, 1, (step % 4 === 0) ? floorSpeck : wallHighlight);
       }
     }
 
@@ -99,7 +155,8 @@ export class CaveDungeonGenerator {
     for (let i = 0; i < def.crystalCount; i++) {
       const tx = rng.nextInt(1, def.widthInTiles - 2);
       const ty = rng.nextInt(1, def.heightInTiles - 3);
-      if (tx === def.exitStairsTileX && ty === def.exitStairsTileY) continue;
+      if ((tx === def.exitStairsTileX && ty === def.exitStairsTileY) ||
+          occupiedColumns.has(tx + ':' + ty)) continue;
 
       const cx = tx * tileTex + Math.floor(tileTex / 2);
       const cy = ty * tileTex + Math.floor(tileTex / 2);
@@ -124,3 +181,4 @@ export class CaveDungeonGenerator {
     };
   }
 }
+

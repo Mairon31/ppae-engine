@@ -1,0 +1,227 @@
+
+/* PPAE Studio v2 — pixel-first visual design without changing engine internals. */
+.studio{
+ --accent:#caff70;--accent2:#a89dff;--accent3:#79e7dd;--warning:#ffbc72;
+ --line:#394660;--bg:#0c1020;--panel:#151d30;--subtle:#a7b5c9;
+ color:#edf4ed;background:var(--bg);
+ font-family:"Pixelify Sans",system-ui,sans-serif;
+}
+.studio, .studio *{box-sizing:border-box}
+.studio button,.studio input,.studio select{font-family:inherit}
+.studio .eyebrow,.studio .sidebar-label,.studio .nav-group,.studio .control-section-title,
+.studio .stage-mode-label,.studio .build-badge,.studio .asset-index{
+ font-family:"Press Start 2P","Courier New",monospace;letter-spacing:0;font-size:8px;line-height:1.8}
+.studio .sidebar{background:#111b2b;border-right:2px solid #415070;box-shadow:inset -6px 0 #0d1624}
+.studio .identity{height:78px;padding:0 16px;background:#15243a;border-bottom:2px solid #45546e;gap:8px}
+.studio .identity strong{color:#f5ffd7;font-family:"Pixelify Sans",system-ui,sans-serif;font-size:27px;line-height:1;letter-spacing:-.04em}
+.studio .identity small{font-family:"Press Start 2P",monospace;font-size:6px;color:#9ab8c8;letter-spacing:0}
+.studio .brand-mark{transform:none;gap:3px;filter:drop-shadow(2px 2px 0 #050c17)}
+.studio .brand-mark span{border-radius:0}
+.studio .brand-mark span:nth-child(1){background:var(--accent)}
+.studio .brand-mark span:nth-child(2){background:var(--accent2)}
+.studio .brand-mark span:nth-child(3){background:var(--accent3)}
+.studio .brand-mark span:nth-child(4){background:var(--warning)}
+.studio .identity-version{font-family:"Press Start 2P",monospace;font-size:7px;border:1px solid #6f85a2;color:var(--accent);border-radius:0;margin-left:auto}
+.studio-home-link{font:9px "Press Start 2P",monospace;color:var(--accent);padding:19px 18px 10px;text-decoration:none;display:block;transition:color .15s}
+.studio-home-link:hover{color:white}
+.studio .section-nav{padding:0 11px 25px}
+.studio .nav-group{margin-top:10px;color:#7fa0b5;padding-left:11px}
+.studio .nav-link{font-size:15px;font-weight:600;border:1px solid transparent;border-radius:2px;padding:10px 9px;color:#aebdd1;gap:9px}
+.studio .nav-link:hover{background:#23334b;color:#fff;border-color:#405779}
+.studio .nav-link.active{background:#283d39;color:var(--accent);border-color:#71955a;box-shadow:inset 4px 0 var(--accent),3px 3px #050d1c}
+.studio .nav-glyph{color:var(--accent3);font-size:18px}
+.studio .sidebar-bottom{font-family:"Press Start 2P",monospace;font-size:7px;line-height:2.2;background:#0c1523;border-top:2px solid #42516a}
+.studio .sidebar-bottom a{font-family:"Pixelify Sans",system-ui,sans-serif;font-size:16px;color:var(--accent)}
+.studio .workspace{background:linear-gradient(transparent,transparent),#0d1423}
+.studio .topbar{background:#131f32;border-bottom:2px solid #40526b}
+.studio .breadcrumbs{font-size:15px;font-weight:600;color:#8ba3b9}
+.studio .breadcrumbs strong{font-size:15px;color:#e9f5e8}
+.studio .top-actions{gap:12px}
+.studio .top-repo,.studio-top-home{font-size:14px;color:#c8eeb5;text-decoration:none;white-space:nowrap}
+.studio-top-home{color:#a3b9d3}
+.studio .engine-status{font-size:12px}
+.studio .main-content{padding-top:34px}
+.studio .page-heading{margin-bottom:24px}
+.studio .page-heading h1{font:700 clamp(30px,3.3vw,52px)/1 "Pixelify Sans",system-ui,sans-serif;color:#f0f8e8;letter-spacing:-.02em;margin:11px 0 10px;text-shadow:3px 3px #30494b}
+.studio .page-heading p{font-size:18px;color:#b0c0d1;max-width:720px}
+.studio .eyebrow{color:var(--accent3)}
+.studio .build-badge{background:#27352d;border:1px solid #7aa76b;border-radius:0;color:var(--accent);padding:11px}
+.studio .build-version{color:#b4a8eb}
+.studio .preview-shell{border:2px solid #61778b;box-shadow:8px 8px 0 #080c17;border-radius:2px;background:#0e1c2c}
+.studio .preview-toolbar{height:auto;min-height:57px;background:#1b2a41;border-bottom:2px solid #516580;padding:9px 13px}
+.studio .preview-tabs{font:8px/1.7 "Press Start 2P",monospace;color:var(--accent);white-space:normal}
+.studio .tab-active{color:var(--accent)}
+.studio .preview-tabs>span:nth-child(2){font:12px "Pixelify Sans",system-ui,sans-serif;color:#9bb1c8;white-space:nowrap}
+.studio .preview-buttons{gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.studio .icon-button{font:13px/1.4 "Pixelify Sans",system-ui,sans-serif;font-weight:700;background:#2b3b52;color:#e3f5ed;border-radius:1px;border:1px solid #7488a3;box-shadow:2px 2px 0 #0a121d;min-height:30px}
+.studio .icon-button:hover{background:#3e5369;color:var(--accent)}
+.studio .icon-button[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
+.studio .viewport{background:radial-gradient(ellipse at center,#243854,#0b1727 75%)}
+.studio .viewport:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(180deg,#0000 0,#0000 5px,#00000008 6px)}
+.studio .canvas-vignette{box-shadow:inset 0 0 60px #08131c69}
+.studio .viewport-top,.studio .viewport-bottom{font:8px/1.5 "Press Start 2P",monospace;letter-spacing:0;color:#f7ffe4;z-index:2}
+.studio .preview-footer{background:#172539;border-top:2px solid #445b72;font:12px "Pixelify Sans",system-ui,sans-serif;color:#b3c5d7}
+.studio .preview-footer strong{font:9px "Press Start 2P",monospace;color:var(--accent)}
+.studio .section-heading h2{font:700 29px/1 "Pixelify Sans",system-ui,sans-serif;letter-spacing:0}
+.studio .gallery-nav{font:13px "Pixelify Sans",system-ui,sans-serif}
+.studio .gallery-nav button{border-radius:0;border:1px solid #647d98;color:var(--accent);background:#20314a;font-size:18px}
+.studio .asset-card{background:#172237;border:2px solid #435977;border-radius:2px;box-shadow:4px 4px 0 #080d17;transition:transform .16s,box-shadow .16s,border-color .16s}
+.studio .asset-card:hover{transform:translate(-2px,-3px);box-shadow:6px 7px 0 #080d17;border-color:var(--accent3)}
+.studio .asset-card.active{border:2px solid var(--accent);box-shadow:4px 4px 0 #627e41}
+.studio .asset-thumb{background:radial-gradient(circle at 50% 60%,#30425c,#1a2a3c);height:135px;position:relative}
+.studio .asset-thumb:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:15px 15px}
+.studio .asset-thumb canvas{z-index:1}
+.studio .asset-card-info{padding:12px 13px 14px;border-top:1px solid #425575}
+.studio .asset-card-info strong{font:700 18px "Pixelify Sans",system-ui,sans-serif;color:#eff5e8}
+.studio .asset-card-info small{font:7px/1.65 "Press Start 2P",monospace;color:#92a6c2}
+.studio .asset-index{color:var(--warning)}
+.studio .catalog-search-label{font-size:15px;color:#b1c5d0}
+.studio .catalog-search-label input{background:#111d2d;border:2px solid #425a76;color:#f0f4ed;border-radius:0;font-size:16px}
+.studio .catalog-search-label input:focus{border-color:var(--accent)}
+.studio .catalog-summary{font:12px "Pixelify Sans",system-ui,sans-serif;color:#abc6bd}
+.studio .bottom-info{background:#17243a;border:2px solid #415674;border-radius:2px;box-shadow:5px 5px 0 #080f1c}
+.studio .bottom-info strong{font:700 19px "Pixelify Sans",system-ui,sans-serif;color:var(--accent)}
+.studio .bottom-info p{font-size:15px;color:#a7bdd2}
+.studio .secondary-button,.studio .full-button{background:#293b50;border:1px solid #70839a;border-radius:1px;color:#dceacc;font:700 15px "Pixelify Sans",system-ui,sans-serif;box-shadow:2px 2px 0 #10151d}
+.studio .secondary-button:hover,.studio .full-button:hover{background:#345341;color:var(--accent)}
+.studio .inspector{background:#111e31;border-left:2px solid #405775}
+.studio .inspector-top{background:#1a2b40;border-bottom:2px solid #405775}
+.studio .inspector-top h2{font:700 25px "Pixelify Sans",system-ui,sans-serif;color:#f5f6ec}
+.studio .inspector-top p{font-size:15px;color:#9aadc2}
+.studio .control-section-title{color:var(--accent);border-color:#415b73}
+.studio .inspector label{font-size:16px;color:#b4c7d9;gap:6px}
+.studio .inspector label strong{font-size:14px;color:var(--acid)}
+.studio .inspector select,.studio .inspector input:not([type=checkbox]):not([type=range]){font-size:15px;background:#0d1828;border:1px solid #506580;border-radius:1px;color:#fff}
+.studio .inspector input[type=range],.studio .toggle-row input{accent-color:var(--accent)}
+.studio .inspector select:focus,.studio .inspector input:focus{border-color:var(--accent)}
+.studio .lab-heading{font:9px/1.8 "Press Start 2P",monospace;color:var(--accent)}
+.studio .lab-description{font-size:15px;color:#98acc1}
+.studio .inspector .color-field input[type=color]{width:74px;height:35px;cursor:pointer;padding:2px;border:2px solid #7081a1}
+.studio .telemetry-box{font:12px/1.9 "Courier New",monospace;color:#b4c3cf}
+.studio .inspector-bottom{background:#142138;border-top:2px solid #435779}
+.studio .error-banner{color:#ffb19c}
+.studio .live-dot{background:var(--accent);box-shadow:0 0 12px #aaff87}
+.mobile-inspector-button,.inspector-close,.inspector-scrim{display:none}
+@media(min-width:941px){.studio{grid-template-columns:245px minmax(0,1fr) 290px}}
+@media(max-width:1180px) and (min-width:941px){.studio{grid-template-columns:195px minmax(0,1fr) 250px}.studio .sidebar .nav-link{font-size:13px}}
+@media(max-width:940px){
+ .studio{grid-template-columns:210px minmax(0,1fr)}
+ .studio .inspector{position:fixed;right:0;top:0;bottom:0;z-index:33;display:flex;width:min(385px,89vw);height:100dvh;grid-column:auto;grid-row:auto;border-left:2px solid #667e99;box-shadow:-12px 0 60px #000b;transform:translateX(110%);transition:transform .25s}
+ .studio.inspector-open .inspector{transform:translateX(0)}
+ .studio .inspector-body{display:block;overflow-y:auto;min-height:0}
+ .studio .inspector-bottom{padding:12px 16px}
+ .studio .inspector-top{padding:18px}
+ .mobile-inspector-button{display:inline-block;background:#2b3e53;color:var(--accent);border:1px solid #71869e;padding:7px 10px;font-size:13px}
+ .inspector-close{display:block;position:absolute;right:15px;top:13px;background:#34465d;border:1px solid #7991a9;color:white;padding:5px 12px;font-size:23px;line-height:1;cursor:pointer}
+ .studio.inspector-open .inspector-scrim{display:block;position:fixed;inset:0;z-index:32;background:#010610aa}
+}
+@media(max-width:660px){
+ .studio{display:block}
+ .studio .main-content{padding:22px 13px 38px}
+ .studio .topbar{padding:0 12px;gap:9px}
+ .studio .top-actions{gap:7px}
+ .studio .top-repo{display:none}
+ .studio .studio-top-home{font-size:12px}
+ .studio .breadcrumbs{font-size:12px;gap:6px;white-space:nowrap;overflow:hidden}
+ .studio .breadcrumbs strong{font-size:13px;overflow:hidden;text-overflow:ellipsis}
+ .studio .page-heading h1{font-size:34px}
+ .studio .page-heading p{font-size:16px}
+ .studio .asset-thumb{height:115px}
+ .studio .asset-card-info strong{font-size:16px}
+ .studio .asset-card-info small{font-size:6px}
+ .studio .preview-tabs{font-size:6px}
+ .studio .preview-toolbar{flex-wrap:wrap}
+ .studio .preview-buttons{width:100%;justify-content:flex-start}
+ .studio .icon-button{font-size:13px}
+ .studio .build-badge{display:none}
+ .studio .topbar .mobile-nav-button{padding:7px 9px}
+ .studio .preview-footer{font-size:12px}
+ .studio .viewport-top,.studio .viewport-bottom{font-size:6px}
+ .studio .sidebar{width:min(300px,87vw)}
+ .studio .bottom-info{padding:13px}
+ .studio .inspector{display:flex}
+}
+@media(max-width:390px){
+ .studio .main-content{padding:18px 10px}
+ .studio .section-heading h2{font-size:24px}
+ .studio .asset-thumb{height:105px}
+ .studio .asset-card-info{padding:8px}
+ .studio .asset-card-info strong{font-size:14px}
+ .studio .icon-button{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.studio .asset-card,.studio .inspector{transition:none!important}}
+
+/* Native Pixelarticons (24x24 square path grid, embedded in JS).
+   Do not replace these with glyphs from the text font. */
+.px-icon{display:inline-block;width:24px;height:24px;flex:none;vertical-align:middle;fill:currentColor;shape-rendering:crispEdges;overflow:visible}
+.landing-page a:has(.px-icon),.landing-page button:has(.px-icon){align-items:center}
+.lp-cta .px-icon,.lp-refresh .px-icon,.lp-float-chip .px-icon{margin-inline:2px}
+.lp-logo-glyph .px-icon{display:block}
+.lp-ticker-content .px-icon{margin:0 18px;color:#6c8854}
+.lp-card-arrow{display:flex;align-items:center}
+.lp-feature-icon .px-icon{width:48px;height:48px}
+.lp-feature-tile a .px-icon,.lp-footer a .px-icon{margin-left:4px}
+.lp-refresh{display:inline-flex;align-items:center;gap:7px}
+.lp-float-chip{display:inline-flex;align-items:center;gap:4px}
+.studio .nav-glyph{display:inline-flex;align-items:center;justify-content:center;min-width:26px}
+.studio .nav-glyph .px-icon{color:var(--accent3)}
+.studio .icon-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:6px 9px}
+.studio .preview-buttons .icon-button .px-icon{display:block}
+.studio .gallery-nav button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
+.studio .mobile-inspector-button,.studio .mobile-nav-button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.studio .inspector-close{align-items:center;justify-content:center}
+.studio .inspector-close .px-icon{display:block}
+.studio .full-button:has(.px-icon){display:flex;align-items:center;justify-content:center;gap:7px}
+.studio .inspector-symbol .px-icon{color:var(--accent)}
+.studio .studio-top-home,.studio .studio-home-link,.studio .top-repo{display:inline-flex;align-items:center;gap:6px}
+.studio .studio-top-home .px-icon,.studio .studio-home-link .px-icon{color:var(--accent)}
+.studio .nav-link:focus-visible,.studio .icon-button:focus-visible,.studio .gallery-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:520px){.lp-feature-icon .px-icon{width:48px;height:48px}.lp-ticker-content .px-icon{margin:0 12px}}
+
+/* EN / ES / PT product language controls — shared by both routes. */
+.site-language-control{
+  display:inline-flex;align-items:center;gap:8px;
+  white-space:nowrap;font:8px/1.5 "Press Start 2P",monospace;
+  color:#caff70;flex-shrink:0;
+}
+.site-language-control select{
+  font:600 14px/1.2 "Pixelify Sans",system-ui,sans-serif;
+  color:#edf4ed;background:#1b2b42;
+  border:2px solid #7186a0;border-radius:2px;
+  padding:8px 22px 8px 8px;
+  max-width:140px;min-height:37px;cursor:pointer;
+}
+.site-language-control select:focus-visible{outline:2px solid #caff70;outline-offset:3px}
+.studio .top-actions .site-language-control select{
+  border:1px solid #6f85a4;max-width:115px;
+}
+@media(max-width:780px){
+  .lp-header .site-language-control{font-size:0;gap:0}
+  .lp-header .site-language-control select{max-width:100px;padding:7px 3px;min-height:37px}
+}
+@media(max-width:660px){
+  .studio .top-actions .site-language-control{font-size:0;gap:0}
+  .studio .top-actions .site-language-control select{max-width:94px;min-width:72px;padding:5px 2px;min-height:33px}
+}
+@media(max-width:380px){
+  .lp-header .site-language-control select{max-width:80px}
+  .studio .top-actions .site-language-control select{max-width:76px}
+}
+
+/* Compact mobile Studio toolbar: prioritize the translated section title.
+   Prevent language selector and mobile action controls from expanding viewport. */
+@media(max-width:660px){
+  .studio .topbar{display:flex;min-width:0;width:100%}
+  .studio .breadcrumbs{flex:1 1 0;min-width:0;overflow:hidden}
+  .studio .breadcrumbs span:first-child,.studio .breadcrumbs .chevron{display:none}
+  .studio .breadcrumbs strong{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .studio .top-actions{flex:0 0 auto;gap:5px;min-width:0}
+  .studio .topbar .engine-status{display:none}
+  .studio .studio-top-home{font-size:0;gap:0;min-width:25px;padding:3px}
+  .studio .mobile-inspector-button{font-size:0;gap:0;width:36px;min-width:36px;padding:5px}
+  .studio .mobile-nav-button{width:36px;min-width:36px;padding:5px}
+  .studio .top-actions .site-language-control select{width:86px;max-width:86px}
+}
+
+/* Phase 12: real-time technical telemetry, pixel-sharp and scroll-safe. */
+.live-diagnostics { overflow-x:auto; max-width:100%; margin:12px 0 0; padding:12px; border:1px solid var(--border, #46566b); border-radius:4px; background:rgba(7,13,20,.55); color:inherit; font:11px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }

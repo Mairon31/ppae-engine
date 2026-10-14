@@ -2,37 +2,32 @@ import {
   AnchorPoint,
   ArtStyleProfile,
   PaletteDefinition,
-  ProceduralAssetDefinition
+  ProceduralAssetDefinition,
+  RGBAColor,
+  BotanicalFamilyId,
+  TreeSpeciesDefinition,
+  GeologicalResourceKind
 } from '../core/contracts';
 import { SeededRNG } from '../core/deterministic';
-import { hexToRgba } from '../palette/palette-manager';
+import { rgbaToHex } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
+import { BOTANICAL_SPECIES_DEFINITIONS, TreeMorphologyResolver } from '../vegetation/tree-morphology';
+import { TreeSkeletonRasterizer } from '../vegetation/tree-skeleton-rasterizer';
+import { TreeCanopyFoliageRasterizer } from '../vegetation/tree-foliage-rasterizer';
+import { GeologicalMorphologyResolver, GEOLOGICAL_ARCHETYPE_CATALOG } from '../vegetation/geology-morphology';
+import { GeologicalFormationRasterizer } from '../vegetation/geology-rasterizer';
 
 export interface GrammarOutput {
   readonly buffer: PixelBuffer;
   readonly anchors: Record<string, AnchorPoint>;
 }
 
-/**
- * Patrones modulares discretos 4x4 y 6x6 para clusters de hojas y texturas minerales
- */
-const LEAF_CLUSTER_4X4: readonly number[][] = [
-  [0, 3, 3, 0],
-  [3, 3, 2, 2],
-  [2, 2, 2, 1],
-  [0, 1, 1, 0]
-];
-
-const LEAF_CLUSTER_6X6: readonly number[][] = [
-  [0, 0, 3, 3, 0, 0],
-  [0, 3, 3, 3, 2, 0],
-  [3, 3, 2, 2, 2, 2],
-  [2, 2, 2, 2, 1, 1],
-  [0, 2, 1, 1, 1, 0],
-  [0, 0, 1, 1, 0, 0]
-];
-
 export class ProceduralGrammarExecutor {
+  private readonly morphologyResolver = new TreeMorphologyResolver();
+  private readonly skeletonRasterizer = new TreeSkeletonRasterizer();
+  private readonly foliageRasterizer = new TreeCanopyFoliageRasterizer();
+  private readonly geologicalResolver = new GeologicalMorphologyResolver();
+  private readonly geologicalRasterizer = new GeologicalFormationRasterizer();
   public execute(
     def: ProceduralAssetDefinition,
     profile: ArtStyleProfile,
@@ -59,10 +54,10 @@ export class ProceduralGrammarExecutor {
   }
 
   /**
-   * Gramática de Árboles:
-   * 1. Genera tronco cónico con raíces ensanchadas en la base y sombreado lateral 3/4.
-   * 2. Genera clusters de copa jerárquicos alineados a la granularidad 4x4 o 6x6.
-   * 3. Aplica iluminación cenital-noroeste por bandas discretas y estado climático (nieve/viento).
+   * Grammar trees now use the same morphology, wood and foliage synthesis as
+   * world vegetation. The final nearest-neighbor fit preserves the catalogue
+   * definition's exact dimensions and maps every pixel to its palette ramps.
+   * No legacy cones, independent ellipse canopies or new colors are introduced.
    */
   private generateTree(
     buffer: PixelBuffer,
@@ -72,132 +67,126 @@ export class ProceduralGrammarExecutor {
     rng: SeededRNG,
     stateTag: 'intact' | 'damaged' | 'snowy' | 'wind_sway'
   ): GrammarOutput {
-    const foliageRamp = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
-    const woodRamp = palette.ramps[def.secondaryRampId] ?? palette.ramps.wood;
-    const accentRamp = def.accentRampId ? palette.ramps[def.accentRampId] : undefined;
-
-    const w = buffer.width;
-    const h = buffer.height;
-    const centerX = Math.floor(w / 2);
-    const baseY = h - 2;
-    const windShift = stateTag === 'wind_sway' ? Math.max(1, Math.floor(profile.moduleSize / 2)) : 0;
-
-    // 1. Tronco y raíces
-    const trunkHeight = Math.floor(h * rng.nextRange(0.38, 0.48));
-    const trunkBaseRadius = Math.max(2, Math.floor(w * 0.11));
-    const canopyCenterY = h - trunkHeight - Math.floor(h * 0.18);
-
-    for (let y = canopyCenterY; y <= baseY; y++) {
-      const progress = (y - canopyCenterY) / Math.max(1, baseY - canopyCenterY);
-      const flare = progress > 0.78 ? Math.ceil((progress - 0.78) * 8) : 0;
-      const halfWidth = trunkBaseRadius + flare;
-      const swayOffset = Math.round((1 - progress) * windShift * 0.5);
-
-      for (let dx = -halfWidth; dx <= halfWidth; dx++) {
-        const px = centerX + dx + swayOffset;
-        const tone =
-          dx < -halfWidth * 0.25
-            ? woodRamp.highlight
-            : dx > halfWidth * 0.3
-            ? woodRamp.shadow
-            : woodRamp.midtone;
-        buffer.setPixel(px, y, tone);
+    const foliage = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
+    const wood = palette.ramps[def.secondaryRampId] ?? palette.ramps.wood;
+    const accent = def.accentRampId ? palette.ramps[def.accentRampId] : undefined;
+    const botanicalIds = Object.keys(BOTANICAL_SPECIES_DEFINITIONS) as BotanicalFamilyId[];
+    const family: BotanicalFamilyId = botanicalIds.includes(def.archetype as BotanicalFamilyId)
+      ? def.archetype as BotanicalFamilyId
+      : def.archetype === 'pine_conifer' || def.id.startsWith('pine_')
+        ? 'pine' : 'oak';
+    const baseSpecies = BOTANICAL_SPECIES_DEFINITIONS[family];
+    // Use the palette ramp itself at source resolution: no hand-tuned color
+    // changes can escape the final declared PaletteDefinition color budget.
+    const styleColors: TreeSpeciesDefinition = {
+      ...baseSpecies,
+      woodColors: {
+        outline: rgbaToHex(wood.outline),
+        shadow: rgbaToHex(wood.shadow),
+        midtone: rgbaToHex(wood.midtone),
+        highlight: rgbaToHex(wood.highlight)
+      },
+      foliageColors: {
+        outline: rgbaToHex(foliage.outline),
+        shadow: rgbaToHex(foliage.shadow),
+        midtone: rgbaToHex(foliage.midtone),
+        highlight: rgbaToHex(foliage.highlight),
+        ...(accent ? { fruitOrAccent: rgbaToHex(accent.midtone) } : {})
       }
-    }
-
-    // 2. Copa por elipses jerárquicas + estampado de módulos 4x4 o 6x6
-    const isPine = def.archetype === 'pine_conifer';
-    const clusterCount = isPine ? 4 : rng.nextInt(5, 7);
-
-    for (let i = 0; i < clusterCount; i++) {
-      const ratio = i / clusterCount;
-      const cx = isPine
-        ? centerX + windShift
-        : centerX + rng.nextInt(-Math.floor(w * 0.22), Math.floor(w * 0.22)) + windShift;
-      const cy = isPine
-        ? Math.floor(h * 0.2 + ratio * (h * 0.42))
-        : canopyCenterY + rng.nextInt(-Math.floor(h * 0.22), Math.floor(h * 0.08));
-
-      const rx = isPine
-        ? Math.floor(w * (0.16 + ratio * 0.22))
-        : Math.floor(w * rng.nextRange(0.2, 0.28));
-      const ry = isPine
-        ? Math.max(3, Math.floor(h * 0.11))
-        : Math.floor(h * rng.nextRange(0.16, 0.22));
-
-      // Banda de sombra inferior, medio tono central, brillo superior-izquierdo
-      buffer.fillEllipse(cx, cy + 1, rx, ry, foliageRamp.shadow);
-      buffer.fillEllipse(cx, cy, rx, ry - 1, foliageRamp.midtone);
-      buffer.fillEllipse(
-        cx - Math.max(1, Math.floor(rx * 0.2)),
-        cy - Math.max(1, Math.floor(ry * 0.25)),
-        Math.max(2, Math.floor(rx * 0.65)),
-        Math.max(2, Math.floor(ry * 0.6)),
-        foliageRamp.highlight
-      );
-    }
-
-    // 3. Estampado de micro-clusters 4x4 o 6x6 para reforzar la textura modular
-    const pattern = profile.moduleSize === 4 ? LEAF_CLUSTER_4X4 : LEAF_CLUSTER_6X6;
-    const moduleMap = {
-      1: foliageRamp.shadow,
-      2: foliageRamp.midtone,
-      3: stateTag === 'snowy' ? hexToRgba('#eef6fa') : foliageRamp.highlight
     };
+    const stage = stateTag === 'damaged' ? 'damaged' : 'mature';
+    const windShift = stateTag === 'wind_sway'
+      ? Math.max(1, Math.floor(profile.moduleSize / 2)) : 0;
+    const descriptor = this.morphologyResolver.resolveTreeMorphology(
+      family, stage, profile, rng.nextInt(0, 0xffffffff)
+    );
+    const skeleton = this.skeletonRasterizer.renderSkeleton(
+      descriptor, profile, styleColors, windShift
+    );
+    const canopy = this.foliageRasterizer.renderCanopyAndCompose(
+      descriptor, skeleton, profile, styleColors,
+      stateTag === 'snowy' ? 'snowy' : 'normal', windShift
+    );
 
-    const gridCols = def.widthInModules;
-    const gridRows = Math.floor(def.heightInModules * 0.65);
-    for (let gy = 1; gy < gridRows; gy++) {
-      for (let gx = 1; gx < gridCols - 1; gx++) {
-        const sampleX = gx * profile.moduleSize + Math.floor(profile.moduleSize / 2);
-        const sampleY = gy * profile.moduleSize + Math.floor(profile.moduleSize / 2);
-        if (buffer.isOpaque(sampleX, sampleY) && rng.chance(0.45)) {
-          buffer.stampModulePattern(gx, gy, profile.moduleSize, pattern, moduleMap);
+    // At most N distinct opaque colors, selected exclusively from this palette.
+    const declared: RGBAColor[] = [
+      wood.outline, wood.shadow, wood.midtone, wood.highlight,
+      foliage.outline, foliage.shadow, foliage.midtone, foliage.highlight,
+      ...(accent ? [accent.midtone, accent.highlight] : []),
+      foliage.accent
+    ];
+    const seen = new Set<string>();
+    const permitted = declared.filter(color => {
+      const key = `${color.r}:${color.g}:${color.b}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, Math.max(1, palette.maxColorsPerAsset));
+    const source = canopy.compositeTreeBuffer;
+    const width = buffer.width;
+    const height = buffer.height;
+    const scale = Math.min((width - 2) / source.width, (height - 2) / source.height);
+    const fitWidth = Math.max(1, Math.min(width, Math.round(source.width * scale)));
+    const fitHeight = Math.max(1, Math.min(height, Math.round(source.height * scale)));
+    const left = Math.max(0, Math.min(width - fitWidth,
+      Math.round(width / 2 - (canopy.pivotTexel[0] / source.width) * fitWidth)));
+    const top = Math.max(0, Math.min(height - fitHeight,
+      height - 2 - Math.round((canopy.pivotTexel[1] / source.height) * fitHeight)));
+
+    // Quantization is deterministic, preserves every opaque silhouette pixel,
+    // and does not introduce anti-aliasing or change the public raster dimensions.
+    const quantize = (original: RGBAColor): RGBAColor => {
+      let nearest = permitted[0];
+      let distance = Infinity;
+      for (const color of permitted) {
+        const dr = color.r - original.r;
+        const dg = color.g - original.g;
+        const db = color.b - original.b;
+        const delta = dr * dr + dg * dg + db * db;
+        if (delta < distance) {
+          nearest = color;
+          distance = delta;
         }
       }
-    }
-
-    // 4. Frutos o flores opcionales
-    if (accentRamp && stateTag !== 'damaged') {
-      const fruitCount = rng.nextInt(4, 7);
-      for (let f = 0; f < fruitCount; f++) {
-        const fx = centerX + rng.nextInt(-Math.floor(w * 0.26), Math.floor(w * 0.26));
-        const fy = canopyCenterY + rng.nextInt(-Math.floor(h * 0.18), Math.floor(h * 0.08));
-        if (buffer.isOpaque(fx, fy)) {
-          buffer.fillRect(fx, fy, 2, 2, accentRamp.midtone);
-          buffer.setPixel(fx, fy, accentRamp.highlight);
-        }
+      return { ...nearest, a: original.a };
+    };
+    for (let y = 0; y < fitHeight; y++) {
+      const sourceY = Math.min(source.height - 1,
+        Math.floor((y + 0.5) * source.height / fitHeight));
+      for (let x = 0; x < fitWidth; x++) {
+        const sourceX = Math.min(source.width - 1,
+          Math.floor((x + 0.5) * source.width / fitWidth));
+        const pixel = source.getPixel(sourceX, sourceY);
+        if (pixel.a > 0) buffer.setPixel(left + x, top + y, quantize(pixel));
       }
     }
-
-    if (profile.outlineMode !== 'none') {
-      buffer.applySelectiveOutline(foliageRamp.outline);
-    }
-
+    const canvasAnchor = (id: string, sx: number, sy: number): {
+      id: string; texelX: number; texelY: number; normalizedX: number; normalizedY: number;
+    } => {
+      const texelX = Math.max(0, Math.min(width - 1,
+        left + Math.round(sx * fitWidth / source.width)));
+      const texelY = Math.max(0, Math.min(height - 1,
+        top + Math.round(sy * fitHeight / source.height)));
+      return { id, texelX, texelY, normalizedX: texelX / width, normalizedY: texelY / height };
+    };
     return {
       buffer,
       anchors: {
-        base_pivot: {
-          id: 'base_pivot',
-          texelX: centerX,
-          texelY: baseY,
-          normalizedX: centerX / w,
-          normalizedY: baseY / h
-        },
-        canopy_center: {
-          id: 'canopy_center',
-          texelX: centerX + windShift,
-          texelY: canopyCenterY,
-          normalizedX: (centerX + windShift) / w,
-          normalizedY: canopyCenterY / h
-        }
+        base_pivot: canvasAnchor(
+          'base_pivot', canopy.pivotTexel[0], canopy.pivotTexel[1]
+        ),
+        canopy_center: canvasAnchor(
+          'canopy_center', canopy.anchors.canopy_center.texelX,
+          canopy.anchors.canopy_center.texelY
+        )
       }
     };
   }
 
   /**
-   * Gramática de Rocas y Vetas Minerales:
-   * Construye facetas poligonales discretas y vetas cristalinas incrustadas.
+   * Catalog mineral and rock assets share the 2A/2B faceted geology pipeline.
+   * Nearest-neighbor fitting preserves the exact module dimensions, and
+   * palette quantization enforces maxColorsPerAsset without antialiasing.
    */
   private generateMineralRock(
     buffer: PixelBuffer,
@@ -207,53 +196,82 @@ export class ProceduralGrammarExecutor {
     rng: SeededRNG,
     stateTag: 'intact' | 'damaged' | 'snowy' | 'wind_sway'
   ): GrammarOutput {
-    const stoneRamp = palette.ramps[def.primaryRampId] ?? palette.ramps.stone;
-    const crystalRamp = palette.ramps[def.secondaryRampId] ?? palette.ramps.mineral_crystal;
+    const stone = palette.ramps[def.primaryRampId] ?? palette.ramps.stone;
+    const mineral = palette.ramps[def.secondaryRampId] ?? palette.ramps.mineral_crystal;
+    const family = def.archetype === 'crystal_vein'
+      ? 'crystal_geode' : def.archetype;
+    const kind: GeologicalResourceKind =
+      Object.prototype.hasOwnProperty.call(GEOLOGICAL_ARCHETYPE_CATALOG, family)
+        ? family as GeologicalResourceKind
+        : 'angular_boulder';
 
-    const w = buffer.width;
-    const h = buffer.height;
-    const cx = Math.floor(w / 2);
-    const cy = Math.floor(h * 0.62);
-    const rx = Math.floor(w * 0.36);
-    const ry = Math.floor(h * 0.28);
+    const descriptor = this.geologicalResolver.resolveGeologicalMorphology(
+      kind, profile, rng.nextInt(0, 0x7fffffff)
+    );
+    const rendered = this.geologicalRasterizer.renderGeologicalFormation(
+      descriptor, profile, stateTag
+    );
 
-    // Bloque rocoso facetado por niveles de sombra
-    buffer.fillEllipse(cx, cy + 1, rx, ry, stoneRamp.shadow);
-    buffer.fillEllipse(cx, cy - 1, rx - 1, ry - 1, stoneRamp.midtone);
-    buffer.fillRect(cx - Math.floor(rx * 0.5), cy - ry + 1, Math.floor(rx * 0.8), Math.floor(ry * 0.6), stoneRamp.highlight);
+    // Select a compact declared color ramp so accent/crystal detail remains
+    // distinguishable and no arbitrary colors escape into the asset atlas.
+    const colors: RGBAColor[] = [
+      stone.outline, stone.shadow, stone.midtone, stone.highlight, stone.accent,
+      mineral.outline, mineral.shadow, mineral.midtone, mineral.highlight, mineral.accent
+    ];
+    const used = new Set<string>();
+    const permitted = colors.filter(c => {
+      const key = `${c.r}:${c.g}:${c.b}`;
+      if(used.has(key))return false;
+      used.add(key);
+      return true;
+    }).slice(0,Math.max(1,palette.maxColorsPerAsset));
+    const source = rendered.buffer;
+    const width = buffer.width, height = buffer.height;
+    const scale = Math.min((width-2)/source.width,(height-2)/source.height);
+    const fitWidth = Math.max(1,Math.min(width,Math.round(source.width*scale)));
+    const fitHeight = Math.max(1,Math.min(height,Math.round(source.height*scale)));
+    const left = Math.max(0,Math.min(width-fitWidth,
+      Math.round(width/2-(rendered.pivotTexel[0]/source.width)*fitWidth)));
+    const top = Math.max(0,Math.min(height-fitHeight,
+      height-2-Math.round((rendered.pivotTexel[1]/source.height)*fitHeight)));
 
-    // Incrustaciones de cristales / vetas minerales según semilla
-    const crystalCount = stateTag === 'damaged' ? 2 : rng.nextInt(3, 6);
-    for (let i = 0; i < crystalCount; i++) {
-      const vx = cx + rng.nextInt(-Math.floor(rx * 0.65), Math.floor(rx * 0.65));
-      const vy = cy + rng.nextInt(-Math.floor(ry * 0.55), Math.floor(ry * 0.25));
-      const spireH = rng.nextInt(3, Math.max(4, profile.moduleSize + 1));
-      buffer.drawLine(vx, vy, vx + rng.nextInt(-2, 2), vy - spireH, crystalRamp.midtone, 2);
-      buffer.setPixel(vx, vy - spireH, crystalRamp.accent);
-      buffer.setPixel(vx - 1, vy - spireH + 1, crystalRamp.highlight);
+    const nearest=(original:RGBAColor):RGBAColor=>{
+      let best=permitted[0],distance=Infinity;
+      for(const c of permitted){
+        const dr=c.r-original.r,dg=c.g-original.g,db=c.b-original.b;
+        const delta=dr*dr+dg*dg+db*db;
+        if(delta<distance){best=c;distance=delta;}
+      }
+      return { ...best, a: original.a };
+    };
+    for(let y=0;y<fitHeight;y++){
+      const sy=Math.min(source.height-1,Math.floor((y+.5)*source.height/fitHeight));
+      for(let x=0;x<fitWidth;x++){
+        const sx=Math.min(source.width-1,Math.floor((x+.5)*source.width/fitWidth));
+        const p=source.getPixel(sx,sy);
+        if(p.a>0)buffer.setPixel(left+x,top+y,nearest(p));
+      }
     }
 
-    if (profile.outlineMode !== 'none') {
-      buffer.applySelectiveOutline(stoneRamp.outline);
-    }
-
+    const ax=Math.max(0,Math.min(width-1,
+      left+Math.round(rendered.pivotTexel[0]*fitWidth/source.width)));
+    const ay=Math.max(0,Math.min(height-1,
+      top+Math.round(rendered.pivotTexel[1]*fitHeight/source.height)));
     return {
       buffer,
       anchors: {
         base_pivot: {
-          id: 'base_pivot',
-          texelX: cx,
-          texelY: cy + ry,
-          normalizedX: cx / w,
-          normalizedY: (cy + ry) / h
+          id: 'base_pivot', texelX: ax, texelY: ay,
+          normalizedX: ax/width, normalizedY: ay/height
         }
       }
     };
   }
 
   /**
-   * Gramática de Arbustos y Flora:
-   * Clusters redondeados bajos con distribución de flores/bayas de alto contraste.
+   * Asymmetric shrub generation: primary woody twigs emerge from the soil,
+   * independent leaf pads preserve openings, and berries occupy actual foliage.
+   * Every shade comes from the biome palette (no new uncontrolled RGB tones).
    */
   private generateBushFlora(
     buffer: PixelBuffer,
@@ -263,59 +281,59 @@ export class ProceduralGrammarExecutor {
     rng: SeededRNG,
     stateTag: 'intact' | 'damaged' | 'snowy' | 'wind_sway'
   ): GrammarOutput {
-    const foliageRamp = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
-    const berryRamp = palette.ramps[def.secondaryRampId] ?? palette.ramps.berry_accent;
-
-    const w = buffer.width;
-    const h = buffer.height;
-    const cx = Math.floor(w / 2);
-    const baseY = h - 2;
-
-    const lobes = 3;
-    for (let i = 0; i < lobes; i++) {
-      const offsetX = (i - 1) * Math.floor(w * 0.16);
-      const lx = cx + offsetX;
-      const ly = Math.floor(h * 0.58) - (i === 1 ? 2 : 0);
-      const rx = Math.floor(w * 0.22);
-      const ry = Math.floor(h * 0.24);
-
-      buffer.fillEllipse(lx, ly + 1, rx, ry, foliageRamp.shadow);
-      buffer.fillEllipse(lx, ly, rx - 1, ry - 1, foliageRamp.midtone);
-      buffer.fillEllipse(
-        lx - 1,
-        ly - 2,
-        Math.max(2, Math.floor(rx * 0.55)),
-        Math.max(2, Math.floor(ry * 0.5)),
-        stateTag === 'snowy' ? hexToRgba('#eef6fa') : foliageRamp.highlight
-      );
+    const foliage = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
+    const berries = palette.ramps[def.secondaryRampId] ?? palette.ramps.berry_accent;
+    const wood = palette.ramps.wood ?? foliage;
+    const w=buffer.width,h=buffer.height,cx=Math.floor(w/2),baseY=h-2;
+    const shift=stateTag==='wind_sway'?1:0;
+    const count=rng.nextInt(3,5);
+    const nodes:Array<{x:number;y:number;rx:number;ry:number}>=[];
+    for(let i=0;i<count;i++){
+      const norm=count===1?0:i/(count-1)*2-1;
+      const x=Math.max(3,Math.min(w-4,Math.round(cx+norm*w*.24+rng.nextInt(-2,2)+shift)));
+      const y=Math.max(3,Math.min(baseY-3,Math.floor(h*.56)+rng.nextInt(-3,2)));
+      const rx=Math.max(2,Math.floor(w*rng.nextRange(.17,.25)));
+      const ry=Math.max(2,Math.floor(h*rng.nextRange(.19,.26)));
+      nodes.push({x,y,rx,ry});
+      const branchBaseX=cx+rng.nextInt(-2,2);
+      buffer.drawLine(branchBaseX,baseY,x,y+1,wood.shadow,1);
+      buffer.setPixel(x,y+2,wood.midtone);
     }
-
-    // Bayas/flores con distancia mínima
-    const berries = rng.nextInt(4, 7);
-    for (let b = 0; b < berries; b++) {
-      const bx = cx + rng.nextInt(-Math.floor(w * 0.28), Math.floor(w * 0.28));
-      const by = Math.floor(h * 0.45) + rng.nextInt(-3, 4);
-      if (buffer.isOpaque(bx, by)) {
-        buffer.setPixel(bx, by, berryRamp.midtone);
-        buffer.setPixel(bx, by - 1, berryRamp.highlight);
-      }
-    }
-
-    if (profile.outlineMode !== 'none') {
-      buffer.applySelectiveOutline(foliageRamp.outline);
-    }
-
-    return {
-      buffer,
-      anchors: {
-        base_pivot: {
-          id: 'base_pivot',
-          texelX: cx,
-          texelY: baseY,
-          normalizedX: cx / w,
-          normalizedY: baseY / h
+    const upper=stateTag==='snowy'?foliage.accent:foliage.highlight;
+    for(let i=0;i<nodes.length;i++){
+      const {x,y,rx,ry}=nodes[i];
+      if(stateTag==='damaged' && i===nodes.length-1)continue;
+      // Separate posterior pads and discrete foreground leaves instead of a fixed 3-ellipse row.
+      buffer.fillEllipse(x,y+1,rx,ry,foliage.shadow);
+      buffer.fillEllipse(x-1,y,Math.max(1,rx-1),Math.max(1,ry-1),foliage.midtone);
+      for(let j=0;j<Math.max(3,rx);j++){
+        const ox=x+rng.nextInt(-rx+1,rx-1);
+        const oy=y+rng.nextInt(-ry+1,Math.max(-ry+1,ry-1));
+        if(buffer.isOpaque(ox,oy)){
+          buffer.setPixel(ox,oy,oy<y?upper:foliage.midtone);
         }
       }
+      buffer.fillRect(x-1,y-ry+1,Math.max(1,Math.floor(rx*.6)),1,upper);
+    }
+    const berryCount=rng.nextInt(4,8);
+    let added=0,attempts=0;
+    while(added<berryCount && attempts<berryCount*10){
+      attempts++;
+      const node=nodes[rng.nextInt(0,nodes.length-1)];
+      const bx=node.x+rng.nextInt(-Math.max(1,node.rx-1),Math.max(1,node.rx-1));
+      const by=node.y+rng.nextInt(-Math.max(1,node.ry-1),Math.max(1,node.ry-1));
+      if(!buffer.isOpaque(bx,by))continue;
+      buffer.setPixel(bx,by,berries.midtone);
+      if(buffer.isOpaque(bx,by-1))buffer.setPixel(bx,by-1,berries.highlight);
+      added++;
+    }
+    if(profile.outlineMode!=='none')buffer.applySelectiveOutline(foliage.outline);
+    return {
+      buffer,
+      anchors:{base_pivot:{
+        id:'base_pivot',texelX:cx,texelY:baseY,
+        normalizedX:cx/w,normalizedY:baseY/h
+      }}
     };
   }
 

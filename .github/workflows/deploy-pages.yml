@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feat/ppae-2-art-overhaul
   workflow_dispatch:
 
 permissions:
@@ -43,12 +44,19 @@ jobs:
           path: dist/demo
 
   deploy:
+    # The playground may deploy from its existing PR branch when github-pages allows it.
+    # The environment's branch policies remain authoritative; no branch or PR merge required.
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/feat/ppae-2-art-overhaul'
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout smoke verification
+        uses: actions/checkout@v4
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify public Playground HTML and asset MIME types
+        run: node scripts/verify-live-pages.mjs

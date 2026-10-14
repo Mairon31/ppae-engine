@@ -88,6 +88,41 @@ export const DEFAULT_COTTAGE_INTERIOR: InteriorDefinition = {
   ]
 };
 
+
+/** Demonstration-ready interiors share the same renderer and logical collision grid. */
+export const DEFAULT_FORGE_INTERIOR: InteriorDefinition = {
+  ...DEFAULT_COTTAGE_INTERIOR,
+  interiorId: 'interior_blacksmith_01',
+  parentStructureId: 'blacksmith_forge_01',
+  floorMaterialHex: '#60564b',
+  floorAccentHex: '#383631',
+  furniture: [
+    { id: 'forge_hearth', kind: 'furnace_hearth', tileX: 1, tileY: 1, widthTiles: 1, heightTiles: 1, collidable: true, emitsLight: true },
+    { id: 'work_anvil', kind: 'anvil_station', tileX: 3, tileY: 2, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'work_bench', kind: 'dining_table', tileX: 5, tileY: 2, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'spare_barrel', kind: 'wooden_barrel', tileX: 6, tileY: 5, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'bench_chair', kind: 'wooden_chair', tileX: 2, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'forge_torch', kind: 'wall_torch', tileX: 4, tileY: 0, widthTiles: 1, heightTiles: 1, collidable: false, emitsLight: true }
+  ]
+};
+
+export const DEFAULT_ALCHEMY_INTERIOR: InteriorDefinition = {
+  ...DEFAULT_COTTAGE_INTERIOR,
+  interiorId: 'interior_alchemy_01',
+  parentStructureId: 'blue_slate_manor_01',
+  floorMaterialHex: '#716355',
+  floorAccentHex: '#473a32',
+  furniture: [
+    { id: 'elixir_bench', kind: 'alchemy_bench', tileX: 2, tileY: 2, widthTiles: 3, heightTiles: 1, collidable: true },
+    { id: 'plant_west', kind: 'potted_plant', tileX: 1, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: false },
+    { id: 'plant_east', kind: 'potted_plant', tileX: 6, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: false },
+    { id: 'herbal_books', kind: 'bookshelf', tileX: 5, tileY: 1, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'alchemy_stool', kind: 'wooden_chair', tileX: 3, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'supplies_barrel', kind: 'wooden_barrel', tileX: 6, tileY: 5, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'alchemy_torch', kind: 'wall_torch', tileX: 1, tileY: 0, widthTiles: 1, heightTiles: 1, collidable: false, emitsLight: true }
+  ]
+};
+
 export interface RenderedInteriorArtifact {
   readonly interiorId: string;
   readonly roomBuffer: PixelBuffer;
@@ -143,12 +178,18 @@ export class InteriorGenerator {
           walkability[ty][tx] = false;
           collisionRects.push({ x: tx * 16, y: ty * 16, width: 16, height: 16 });
           roomBuffer.fillRect(bx, by, tileTex, tileTex, wallMain);
+          // Aparejo de sillería/vigas en muros interiores y zócalo oscuro inferior
+          for (let py = 4; py < tileTex - 3; py += Math.max(4, profile.moduleSize)) {
+            roomBuffer.drawLine(bx, by + py, bx + tileTex - 1, by + py, wallDark, 1);
+          }
           roomBuffer.fillRect(bx, by + tileTex - 3, tileTex, 3, wallDark);
         } else {
           roomBuffer.fillRect(bx, by, tileTex, tileTex, floorMain);
-          // Vetas horizontales de tablones
+          // Vetas horizontales de tablones con uniones verticales alternadas
           for (let py = 0; py < tileTex; py += profile.moduleSize) {
             roomBuffer.drawLine(bx, by + py, bx + tileTex - 1, by + py, floorDark, 1);
+            const jointX = bx + ((tx * 7 + py * 3) % (tileTex - 4)) + 2;
+            roomBuffer.drawLine(jointX, by + py, jointX, Math.min(by + tileTex - 1, by + py + profile.moduleSize), floorDark, 1);
           }
         }
       }
@@ -298,6 +339,43 @@ export class InteriorGenerator {
         buf.fillRect(5, 5, w - 10, h - 10, hexToRgba('#d97706'));
         break;
       }
+      case 'wooden_chair': {
+        buf.fillRect(Math.floor(w * 0.25), 2, Math.floor(w * 0.5), Math.floor(h * 0.45), woodMid);
+        buf.fillRect(Math.floor(w * 0.25), Math.floor(h * 0.45), Math.floor(w * 0.5), Math.floor(h * 0.3), woodHigh);
+        buf.applySelectiveOutline(outlineCol);
+        break;
+      }
+      case 'anvil_station': {
+        const ironDark = hexToRgba('#334155');
+        const ironHigh = hexToRgba('#94a3b8');
+        buf.fillRect(Math.floor(w * 0.3), Math.floor(h * 0.55), Math.floor(w * 0.4), Math.floor(h * 0.35), woodMid);
+        buf.fillRect(Math.floor(w * 0.18), Math.floor(h * 0.32), Math.floor(w * 0.64), Math.floor(h * 0.24), ironDark);
+        buf.fillRect(Math.floor(w * 0.22), Math.floor(h * 0.32), Math.floor(w * 0.56), 2, ironHigh);
+        buf.applySelectiveOutline(outlineCol);
+        break;
+      }
+      case 'alchemy_bench': {
+        buf.fillRect(2, 4, w - 4, h - 6, woodMid);
+        buf.fillRect(3, 4, w - 6, 3, woodHigh);
+        // Matraces de vidrio con pociones roja y cian
+        buf.fillRect(Math.floor(w * 0.28), 2, 3, 4, hexToRgba('#ef4444'));
+        buf.fillRect(Math.floor(w * 0.62), 2, 3, 4, hexToRgba('#38bdf8'));
+        buf.applySelectiveOutline(outlineCol);
+        break;
+      }
+      case 'wooden_barrel': {
+        buf.fillEllipse(Math.floor(w / 2), Math.floor(h / 2), Math.floor(w * 0.36), Math.floor(h * 0.4), woodMid);
+        buf.fillRect(Math.floor(w * 0.2), Math.floor(h * 0.35), Math.floor(w * 0.6), 2, hexToRgba('#475569'));
+        buf.fillRect(Math.floor(w * 0.2), Math.floor(h * 0.65), Math.floor(w * 0.6), 2, hexToRgba('#475569'));
+        buf.applySelectiveOutline(outlineCol);
+        break;
+      }
+      case 'potted_plant': {
+        buf.fillRect(Math.floor(w * 0.3), Math.floor(h * 0.55), Math.floor(w * 0.4), Math.floor(h * 0.35), hexToRgba('#b45309'));
+        buf.fillEllipse(Math.floor(w / 2), Math.floor(h * 0.38), Math.floor(w * 0.32), Math.floor(h * 0.26), hexToRgba('#22c55e'));
+        buf.applySelectiveOutline(outlineCol);
+        break;
+      }
       default: {
         buf.fillRect(3, 3, w - 6, h - 6, woodMid);
         buf.applySelectiveOutline(outlineCol);
@@ -307,3 +385,4 @@ export class InteriorGenerator {
     return buf;
   }
 }
+

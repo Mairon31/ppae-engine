@@ -4,6 +4,8 @@ import {
   LightSourceDefinition,
   LogicalRect,
   RGBAColor,
+  SolarShadowCaster,
+  SolarShadowVector,
   TimeOfDayPhase
 } from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
@@ -114,6 +116,127 @@ export class PixelPerfectLightingEngine {
     if (h >= 15 && h < 18) return AMBIENT_PROFILES_BY_PHASE.afternoon;
     if (h >= 18 && h < 20.5) return AMBIENT_PROFILES_BY_PHASE.dusk;
     return AMBIENT_PROFILES_BY_PHASE.night;
+  }
+
+  /**
+   * Calcula el vector de dirección, longitud y opacidad de las sombras proyectadas
+   * por el sol o la luna según la hora del día [0.0 a 24.0).
+   */
+  public resolveSolarShadowVector(hour24: number, isUnderground = false): SolarShadowVector {
+    const ambient = this.resolveAmbientProfileFromHour(hour24, isUnderground);
+    if (isUnderground) {
+      return {
+        phase: ambient.phase,
+        dirX: 0,
+        dirY: -0.25,
+        lengthMultiplier: ambient.shadowLengthMultiplier,
+        shadowAlpha: 55
+      };
+    }
+
+    const h = ((hour24 % 24) + 24) % 24;
+    // Entre las 06:00 y las 20:00 el sol recorre de Este a Oeste:
+    // 06:00 -> sombra proyectada al Oeste (dirX = -1.25)
+    // 13:00 -> sombra corta hacia el Norte (dirX = 0.0)
+    // 20:00 -> sombra proyectada al Este (dirX = +1.35)
+    if (h >= 5 && h <= 20.5) {
+      const dayProgress = (h - 5) / 15.5; // [0.0 a 1.0]
+      const dirX = Number(((dayProgress - 0.5) * 2.4).toFixed(3));
+      const dirY = Number((-0.35 - (1 - Math.abs(dayProgress - 0.5) * 2) * 0.25).toFixed(3));
+      const shadowAlpha =
+        ambient.phase === 'noon'
+          ? 115
+          : ambient.phase === 'dawn' || ambient.phase === 'dusk'
+          ? 95
+          : 105;
+
+      return {
+        phase: ambient.phase,
+        dirX,
+        dirY,
+        lengthMultiplier: ambient.shadowLengthMultiplier,
+        shadowAlpha
+      };
+    }
+
+    // Noche: sombra lunar tenue ligeramente inclinada
+    return {
+      phase: ambient.phase,
+      dirX: -0.35,
+      dirY: -0.3,
+      lengthMultiplier: ambient.shadowLengthMultiplier,
+      shadowAlpha: 65
+    };
+  }
+
+  /**
+   * Proyecta sombras direccionales pixel-art sobre el buffer de escena para una lista de
+   * entidades/árboles/estructuras (`casters`), utilizando dithering Bayer en la penumbra.
+   */
+  public renderDirectionalCastShadows(
+    sceneBuffer: PixelBuffer,
+    casters: readonly SolarShadowCaster[],
+    cameraWorldRect: LogicalRect,
+    hour24: number,
+    profile: ArtStyleProfile,
+    isUnderground = false
+  ): {
+    readonly shadowVector: SolarShadowVector;
+    readonly renderedShadowPixels: number;
+  } {
+    const shadowVector = this.resolveSolarShadowVector(hour24, isUnderground);
+    const texelsPerLogical = profile.canonicalTileTexels / profile.logicalTileUnits;
+    const darkenFactor = 1 - shadowVector.shadowAlpha / 255;
+    let renderedShadowPixels = 0;
+
+    // Rasterize a swept, tapered silhouette once per pixel/caster. Repeatedly
+    // darkening overlapping line strokes produced near-black stripes.
+    for (const caster of casters) {
+      if (!Number.isFinite(caster.worldX) || !Number.isFinite(caster.worldY) ||
+          !Number.isFinite(caster.baseRadiusTexels) || !Number.isFinite(caster.heightTexels) ||
+          caster.baseRadiusTexels <= 0 || caster.heightTexels <= 0) continue;
+      const bx = Math.round((caster.worldX - cameraWorldRect.x) * texelsPerLogical);
+      const by = Math.round((caster.worldY - cameraWorldRect.y) * texelsPerLogical);
+      const length = Math.max(2, Math.round(caster.heightTexels * 0.55 *
+        shadowVector.lengthMultiplier));
+      const vx = shadowVector.dirX * length;
+      const vy = shadowVector.dirY * length;
+      const lenSq = Math.max(0.001, vx * vx + vy * vy);
+      const ex = bx + vx, ey = by + vy;
+      const spread = Math.max(2, caster.baseRadiusTexels);
+      const minX = Math.max(0, Math.floor(Math.min(bx, ex) - spread - 2));
+      const maxX = Math.min(sceneBuffer.width - 1, Math.ceil(Math.max(bx, ex) + spread + 2));
+      const minY = Math.max(0, Math.floor(Math.min(by, ey) - spread - 2));
+      const maxY = Math.min(sceneBuffer.height - 1, Math.ceil(Math.max(by, ey) + spread + 2));
+
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const rawT = ((x - bx) * vx + (y - by) * vy) / lenSq;
+          // Cap the shadow at both ends; no artificial projected rectangles.
+          if (rawT < -0.075 || rawT > 1.06) continue;
+          const t = Math.max(0, Math.min(1, rawT));
+          const nearX = bx + t * vx, nearY = by + t * vy;
+          const radial = Math.hypot(x - nearX, y - nearY);
+          const radius = spread * (1 - t * 0.4);
+          if (radial > radius) continue;
+          const edge = (radius - radial) / Math.max(1, radius * 0.35);
+          const tail = t > 0.72 ? Math.max(0.15, (1 - t) / 0.28) : 1;
+          const coverage = Math.min(1, edge) * tail;
+          // Bayer table is normalized [-0.5, +0.5]; edge coverage is [0,1].
+          if (coverage <= BAYER_4X4[y & 3][x & 3] + 0.5) continue;
+          const orig = sceneBuffer.getPixel(x, y);
+          if (orig.a === 0) continue;
+          sceneBuffer.setPixel(x, y, {
+            r: Math.round(orig.r * darkenFactor),
+            g: Math.round(orig.g * darkenFactor),
+            b: Math.round(orig.b * darkenFactor),
+            a: orig.a
+          });
+          renderedShadowPixels++;
+        }
+      }
+    }
+    return { shadowVector, renderedShadowPixels };
   }
 
   /**

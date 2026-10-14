@@ -125,7 +125,10 @@ export class ChunkWorldRenderer {
     totalLiquidFrames: number
   ): PixelBuffer {
     const matDef = TERRAIN_MATERIALS[sample.material];
-    const variantIdx = Math.abs((sample.tileX * 31 + sample.tileY * 17) % 4);
+    const variantIdx = Math.abs(
+      (sample.tileX * 73 + sample.tileY * 151 +
+        ((sample.tileX ^ sample.tileY) * 29)) % 16
+    );
 
     if (matDef.isLiquid) {
       const key = `liq::${sample.material}::${sample.autotileMask}::f${liquidFrame}::${profile.id}`;
@@ -167,7 +170,8 @@ export class ChunkWorldRenderer {
         propSpawn.subType as TreeSpeciesId,
         (propSpawn.stage ?? 'mature') as TreeLifecycleStage,
         profile,
-        propSpawn.variantSeed
+        propSpawn.variantSeed,
+        propSpawn.archetypeId ? { archetypeId: propSpawn.archetypeId } : undefined
       );
     }
     if (propSpawn.kind === 'flora') {

@@ -1,0 +1,48 @@
+name: Playground browser QA
+
+on:
+  push:
+    branches:
+      - feat/ppae-2-art-overhaul
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playground-browser-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium:
+    name: Chromium Canvas and gallery smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout existing PR branch
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - name: Install project
+        run: npm ci
+      - name: Build Pages demo and validate artifacts
+        run: npm run build:demo
+      - name: Install pinned Chromium browser runner
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Audit compiled Pages preview in Chromium
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/ppae-vite-preview.log 2>&1 &
+          node scripts/playground-browser-qa.mjs
+      - name: Upload screenshots and exported assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ppae-playground-chromium-qa
+          path: artifacts/playground/
+          if-no-files-found: warn
+          retention-days: 14
