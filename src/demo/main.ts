@@ -1,6 +1,8 @@
 import './landing.css';
 import './studio-theme.css';
 import { initLanding } from './landing';
+import { pixelIcon, hydratePixelIcons } from './pixelarticons';
+import type { PixelIconName } from './pixelarticons';
 import {
   AdaptiveResolutionController, ALL_DIRECTIONS_8, AMBIENT_PROFILES_BY_PHASE,
   AnimationStateMachine, ArtStyleProfile, CharacterActionId, CharacterAvatarGenerator,
@@ -751,7 +753,10 @@ function appendLabSelect(
 function appendLabButton(root: HTMLElement, label: string, id: string, action: () => void): void {
   const button = document.createElement('button');
   button.type = 'button'; button.id = id; button.className = 'full-button';
-  button.textContent = label;
+  const icon: PixelIconName | null = id === 'avatar-randomize' ? 'refresh' :
+    id === 'avatar-reset' ? 'refresh' : id === 'avatar-export-json' ? 'download' : null;
+  if (icon) button.append(pixelIcon(icon));
+  button.append(document.createTextNode(label));
   button.addEventListener('click', action);
   root.append(button);
 }
@@ -785,7 +790,7 @@ function renderLabControls(): void {
     const caption = document.createElement('p'); caption.className = 'lab-description';
     caption.textContent = 'Los cambios afectan el renderizador de 16 articulaciones y los spritesheets exportados.';
     avatarRoot.append(caption);
-    appendLabButton(avatarRoot, '↻ Aleatorizar personaje', 'avatar-randomize', () => {
+    appendLabButton(avatarRoot, 'Aleatorizar personaje', 'avatar-randomize', () => {
       state.avatarReroll++;
       state.avatarAppearance = {}; state.avatarEquipment = {};
       renderLabControls(); refreshLabPreview();
@@ -879,7 +884,7 @@ function renderLabControls(): void {
       AVATAR_FIELDS.status, state.avatarStatus, value => {
         state.avatarStatus = value as VisualStatusEffect; refreshLabPreview();
       });
-    appendLabButton(avatarRoot, '↓ Exportar definición JSON', 'avatar-export-json', () => {
+    appendLabButton(avatarRoot, 'Exportar definición JSON', 'avatar-export-json', () => {
       const json = JSON.stringify({
         seed: state.seed, variant: state.activeAvatarId, ...currentCharacter(),
         statusEffect: state.avatarStatus
@@ -1037,8 +1042,20 @@ function renderNav(): void {
   const nav = byId('section-nav');
   nav.replaceChildren();
   let lastGroup = '';
-  const glyphs = ['▦','◈','⌘','♟','♜','♠','♧','◈','▤','⌂','▧','◬','❀','◆','✦','☂','☼'];
-  PLAYGROUND_SECTIONS.forEach((section, idx) => {
+  const sectionIcons: Partial<Record<PlaygroundSectionId, PixelIconName>> = {
+    world:'home', characters:'users', 'character-actions':'play',
+    npcs:'users', 'npc-variants':'users', creatures:'gamepad',
+    'creature-variants':'gamepad', bosses:'star', trees:'tree',
+    'tree-lifecycle':'tree', 'tree-archetypes':'tree-pine',
+    flora:'tree-pine', geology:'grid-3x3', terrain:'grid-3x3',
+    'terrain-variants':'grid-3x3', autotiling:'grid-3x3',
+    liquids:'cloud', structures:'home', interiors:'home',
+    caves:'grid-3x3', farming:'tree', 'crop-lifecycle':'tree',
+    equipment:'gamepad', 'equipment-materials':'gear',
+    hud:'heart', particles:'sparkles', weather:'cloud',
+    lighting:'sun', palettes:'star', 'resolution-profiles':'sliders'
+  };
+  PLAYGROUND_SECTIONS.forEach(section => {
     if (lastGroup !== section.group) {
       lastGroup = section.group;
       const group = document.createElement('div'); group.className = 'nav-group'; group.textContent = lastGroup;
@@ -1046,7 +1063,8 @@ function renderNav(): void {
     }
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'nav-link' + (state.section === section.id ? ' active' : '');
-    const glyph = document.createElement('span'); glyph.className = 'nav-glyph'; glyph.textContent = glyphs[idx % glyphs.length];
+    const glyph = document.createElement('span'); glyph.className = 'nav-glyph';
+    glyph.append(pixelIcon(sectionIcons[section.id] ?? 'grid-3x3'));
     const label = document.createElement('span'); label.textContent = section.label;
     btn.append(glyph, label);
     btn.addEventListener('click', () => selectSection(section.id));
@@ -1305,7 +1323,7 @@ function exportTechnicalJSON(): void {
 }
 function syncPlayButton(): void {
   const button = byId<HTMLButtonElement>('play-toggle');
-  button.textContent = state.playing ? 'Ⅱ' : '▶';
+  button.replaceChildren(pixelIcon(state.playing ? 'pause' : 'play'));
   button.setAttribute('aria-pressed', String(state.playing));
   button.setAttribute('aria-label', state.playing ? 'Pausar animación' : 'Reproducir animación');
 }
@@ -1518,6 +1536,7 @@ let lastRender = 0;
 let lastFps = 0;
 const initialHash = location.hash.replace('#','') as PlaygroundSectionId;
 const hasStudioRoute = PLAYGROUND_SECTIONS.some(section => section.id === initialHash);
+hydratePixelIcons();
 connectControls();
 // selectSection initializes existing atlas navigation; restore the root route
 // afterward so a visit to /ppae-engine/ stays on the product landing.
