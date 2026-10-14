@@ -850,3 +850,40 @@ export interface HudBarConfig {
   readonly fillColorHex: string;
   readonly backgroundColorHex: string;
 }
+// ============================================================================
+// PHASE 8 CONTRACTS: OPTIMIZED ATLAS, LOD, CULLING & PHASER ADAPTER
+// ============================================================================
+
+export type LevelOfDetailTier = 'near' | 'mid' | 'far';
+
+export interface LodConfiguration {
+  readonly schemaVersion: string;
+  readonly nearDistanceTiles: number; // Ej: < 12 tiles
+  readonly midDistanceTiles: number; // Ej: 12 - 24 tiles
+  readonly farDistanceTiles: number; // Ej: > 24 tiles (o culling fuera de pantalla)
+}
+
+export interface CullingViewportRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface BenchmarkMetricsReport {
+  readonly schemaVersion: string;
+  readonly totalGeneratedAssets: number;
+  readonly averageGenerationTimeMs: number;
+  readonly p50FrameTimeMs: number;
+  readonly p95FrameTimeMs: number;
+  readonly p99FrameTimeMs: number;
+  readonly activeDrawCalls: number;
+  readonly estimatedMemoryUsageBytes: number;
+  readonly passedAllBenchmarks: boolean;
+}
+
+export interface PhaserAdapterConfig {
+  readonly textureManagerRef: unknown; // Referencia a Phaser.Textures.TextureManager
+  readonly defaultProfileId: string;
+  readonly enableBatching: boolean;
+}
