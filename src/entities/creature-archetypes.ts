@@ -310,7 +310,7 @@ export class CreatureGenerator {
     const rng = new SeededRNG(variantSeed);
     const u = (mod / 4) * scale;
     const pivotX = Math.floor(width / 2);
-    const pivotY = height - Math.max(2, Math.round(mod * .65 * scale));
+    const pivotY = height - Math.max(2, Math.floor(mod * .65 * scale));
     let result: RenderedCreatureFrame;
 
     switch (spec.family) {

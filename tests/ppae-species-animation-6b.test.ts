@@ -18,9 +18,15 @@ describe('PPAE 2.0 Phase 6B — species capabilities and creature spritesheets',
   const profile4 = DEFAULT_STYLE_PROFILES['micro-4x4'];
   const profile6 = DEFAULT_STYLE_PROFILES['micro-6x6'];
 
-  it('registers exactly 12 clips and six anatomical family profiles', () => {
+  it('retains 12 canonical clips and includes all ten anatomical families after phase 8A', () => {
     expect(Object.keys(DEFAULT_CREATURE_CLIPS)).toHaveLength(12);
-    expect(Object.keys(FAMILY_ANIMATION_CAPABILITIES)).toHaveLength(6);
+    expect(Object.keys(FAMILY_ANIMATION_CAPABILITIES)).toHaveLength(10);
+    for (const originalFamily of [
+      'quadruped', 'avian_biped', 'gelatinous_slime', 'arachnid',
+      'flying_winged', 'aquatic_swimmer'
+    ]) {
+      expect(FAMILY_ANIMATION_CAPABILITIES).toHaveProperty(originalFamily);
+    }
     for (const [action, clip] of Object.entries(DEFAULT_CREATURE_CLIPS)) {
       expect(clip.action).toBe(action);
       expect(clip.frameCount).toBeGreaterThan(2);
