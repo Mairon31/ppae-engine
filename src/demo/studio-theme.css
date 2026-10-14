@@ -150,3 +150,30 @@
  .studio .icon-button{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.studio .asset-card,.studio .inspector{transition:none!important}}
+
+/* Native Pixelarticons (24x24 square path grid, embedded in JS).
+   Do not replace these with glyphs from the text font. */
+.px-icon{display:inline-block;width:24px;height:24px;flex:none;vertical-align:middle;fill:currentColor;shape-rendering:crispEdges;overflow:visible}
+.landing-page a:has(.px-icon),.landing-page button:has(.px-icon){align-items:center}
+.lp-cta .px-icon,.lp-refresh .px-icon,.lp-float-chip .px-icon{margin-inline:2px}
+.lp-logo-glyph .px-icon{display:block}
+.lp-ticker-content .px-icon{margin:0 18px;color:#6c8854}
+.lp-card-arrow{display:flex;align-items:center}
+.lp-feature-icon .px-icon{width:48px;height:48px}
+.lp-feature-tile a .px-icon,.lp-footer a .px-icon{margin-left:4px}
+.lp-refresh{display:inline-flex;align-items:center;gap:7px}
+.lp-float-chip{display:inline-flex;align-items:center;gap:4px}
+.studio .nav-glyph{display:inline-flex;align-items:center;justify-content:center;min-width:26px}
+.studio .nav-glyph .px-icon{color:var(--accent3)}
+.studio .icon-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:6px 9px}
+.studio .preview-buttons .icon-button .px-icon{display:block}
+.studio .gallery-nav button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
+.studio .mobile-inspector-button,.studio .mobile-nav-button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.studio .inspector-close{align-items:center;justify-content:center}
+.studio .inspector-close .px-icon{display:block}
+.studio .full-button:has(.px-icon){display:flex;align-items:center;justify-content:center;gap:7px}
+.studio .inspector-symbol .px-icon{color:var(--accent)}
+.studio .studio-top-home,.studio .studio-home-link,.studio .top-repo{display:inline-flex;align-items:center;gap:6px}
+.studio .studio-top-home .px-icon,.studio .studio-home-link .px-icon{color:var(--accent)}
+.studio .nav-link:focus-visible,.studio .icon-button:focus-visible,.studio .gallery-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:520px){.lp-feature-icon .px-icon{width:48px;height:48px}.lp-ticker-content .px-icon{margin:0 12px}}
