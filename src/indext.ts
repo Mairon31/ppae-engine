@@ -28,3 +28,7 @@ export * from './items/equipment-generator';
 export * from './items/inventory-icon-generator';
 export * from './farming/crop-generator';
 export * from './ui/hud-primitives';
+export * from './runtime/atlas-packer';
+export * from './runtime/lod-culling';
+export * from './integration/phaser-adapter';
+export * from './benchmarks/performance-benchmark';
