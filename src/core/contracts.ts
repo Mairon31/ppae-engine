@@ -1712,3 +1712,62 @@ export interface GoldenSeedBenchmarkEntry {
   /** Stable RGBA fingerprint; locked only after the specimen baseline is inspected. */
   readonly expectedPixelHash?: string;
 }
+
+// ============================================================================
+// PHASE 12 CONTRACTS: INTERACTIVE SHOWCASE, SCENE PIPELINE & LIVE TELEMETRY
+// ============================================================================
+
+export interface ShowcaseSceneConfig {
+  readonly worldSeed: string | number;
+  readonly requestedProfileId: GranularityProfileId;
+  readonly cameraZoom: number;
+  readonly viewportHeightPx: number;
+  readonly screenPixelRatio: number;
+  readonly hour24: number;
+  readonly weatherCondition: WeatherConditionId;
+  readonly heroAction: CharacterActionId;
+  readonly heroDirection: Direction8;
+  readonly npcProfession: NpcProfessionArchetypeId;
+  readonly featuredCreature: CreatureSpeciesId;
+  readonly featuredCreatureAction: CreatureActionId;
+  readonly featuredBoss: BossArchetypeId;
+  readonly featuredStructureId: string;
+  readonly isDoorOpen: boolean;
+  readonly isRoofCutaway: boolean;
+  readonly activeVfxPreset: VFXPresetId;
+  readonly frameIndex: number;
+  readonly timeSeconds: number;
+}
+
+export interface ShowcaseCatalogInventory {
+  readonly resolutionProfiles: readonly GranularityProfileId[];
+  readonly treeFamiliesCount: number;
+  readonly treeLifecycleStagesCount: number;
+  readonly geologicalFormationsCount: number;
+  readonly floraSpeciesCount: number;
+  readonly canonicalAutotileMasksCount: number;
+  readonly characterActionsCount: number;
+  readonly npcProfessionsCount: number;
+  readonly creatureSpeciesCount: number;
+  readonly creatureFamiliesCount: number;
+  readonly bossArchetypesCount: number;
+  readonly structurePresetsCount: number;
+  readonly vfxPresetsCount: number;
+  readonly goldenSeedsCount: number;
+}
+
+export interface ShowcaseTelemetrySnapshot {
+  readonly resolvedProfileId: GranularityProfileId;
+  readonly moduleSizeTexels: ArtModuleSize;
+  readonly canonicalTileTexels: CanonicalTileTexelSize;
+  readonly heroDimensionSpec: MultiResolutionDimensionSpec;
+  readonly solarShadowVector: SolarShadowVector;
+  readonly renderedShadowPixels: number;
+  readonly weatherDropsSpawned: number;
+  readonly weatherDropsSuppressedByRoof: number;
+  readonly lightningBranchesCount: number;
+  readonly activeParticlesRendered: number;
+  readonly heroQualityReport: ArtQualityEvaluationReport;
+  readonly featuredTreeQualityReport: ArtQualityEvaluationReport;
+  readonly featuredRockQualityReport: ArtQualityEvaluationReport;
+}

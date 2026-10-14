@@ -457,3 +457,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **QA coverage:** synthetic circular/pillow shading, lollipop symmetry, orphan noise, empty silhouette, palette overflow, invisible foreground, broken tile seams, hash mutation, all 5 native-profile terrain edge checks.
 - **Evaluation limitations:** chroma-based lighting and boundary contrast are quantitative heuristics, not an art director. Two specimens opt out of nonapplicable solar light-source assumptions and terrain opts out of sprite-foreground contrast, with raw metrics still visible. Signature match verifies RGBA identity but **not human artwork approval**. Full-gallery manual visual signoff and device profiling are pending.
 - **Status: VERIFIED** for deterministic code, quality gates, CI, browser compatibility and package distribution. Phase 12 not started. `master` unchanged, PR #2 open and not merged.
+
+## Phase 12 — Interactive Showcase, Visual Inspector & Production Integration Overhaul (in progress)
+
+- Audited against actual branch head `01547bd6a3c0bb927c791bf8e016c4e7dc4473d5`, preserving Phase 11. User-supplied patches referenced an older historical commit; adapted to current contract names and existing boss renderer API.
+- Added typed scene config/telemetry, unified controller, live catalog inventory, deterministic scene and multi-resolution quality comparison, plus new regression suite.
+- **Status: IMPLEMENTED, pending CI and real interactive Playground integration.** Browser UI must expose a dedicated inspector and actual telemetry before completion. No master edits, no npm release.

@@ -44,3 +44,4 @@ export * from './runtime/lod-culling';
 export * from './integration/phaser-adapter';
 export * from './benchmarks/performance-benchmark';
 export * from './quality/art-quality-evaluator';
+export * from './showcase/interactive-inspector';
