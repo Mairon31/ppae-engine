@@ -869,8 +869,8 @@ function renderLabControls(): void {
   }
 }
 function refreshControlVisibility(): void {
-  const character = ['characters','character-actions','npcs','world'].includes(state.section);
-  const creature = state.section === 'creatures';
+  const character = ['characters','character-actions','npcs','npc-variants','world'].includes(state.section);
+  const creature = state.section === 'creatures' || state.section === 'creature-variants';
   const animated = character || creature;
   const actionSelect = byId<HTMLSelectElement>('action-select');
   actionSelect.disabled = !animated;
@@ -883,10 +883,10 @@ function refreshControlVisibility(): void {
   const selectedStage = stages.includes(state.stage as never) ? state.stage : stages[0];
   state.stage = selectedStage;
   options(byId<HTMLSelectElement>('stage-select'), stages, selectedStage);
-  byId<HTMLSelectElement>('age-select').disabled = !creature;
-  byId<HTMLSelectElement>('health-select').disabled = !creature;
-  byId<HTMLSelectElement>('direction-select').disabled = !['characters', 'npcs', 'creatures', 'bosses','world'].includes(state.section);
-  const downloadable = state.section === 'characters' || state.section === 'character-actions' || state.section === 'npcs' || creature;
+  byId<HTMLSelectElement>('age-select').disabled = !creature || state.section === 'creature-variants';
+  byId<HTMLSelectElement>('health-select').disabled = !creature || state.section === 'creature-variants';
+  byId<HTMLSelectElement>('direction-select').disabled = !['characters','character-actions','npcs','npc-variants','creatures','creature-variants','bosses','world'].includes(state.section);
+  const downloadable = ['characters','character-actions','npcs','npc-variants'].includes(state.section) || creature;
   (byId('download-atlas') as HTMLButtonElement).disabled = !downloadable;
   (byId('download-json') as HTMLButtonElement).disabled = !downloadable;
 }
@@ -899,6 +899,13 @@ function selectItem(id: string): void {
     state.avatarEquipment = {};
   }
   if (state.section === 'character-actions') state.action = id as CharacterActionId;
+  if (state.section === 'creature-variants') {
+    const [, age, health] = id.split(':');
+    state.age = age as CreatureAgeStage;
+    state.health = health as CreatureHealthState;
+    byId<HTMLSelectElement>('age-select').value = age;
+    byId<HTMLSelectElement>('health-select').value = health;
+  }
   state.frame = 0;
   elapsed = 0;
   particleMode = '';
@@ -931,6 +938,11 @@ function renderNav(): void {
 function selectSection(section: PlaygroundSectionId): void {
   state.section = section; state.selected = PLAYGROUND_OPTIONS[section][0];
   if (section === 'character-actions') state.action = 'idle';
+  if (section === 'creature-variants') {
+    state.age = 'juvenile'; state.health = 'healthy';
+    byId<HTMLSelectElement>('age-select').value = state.age;
+    byId<HTMLSelectElement>('health-select').value = state.health;
+  }
   state.catalogQuery = '';
   byId<HTMLInputElement>('catalog-search').value = '';
   state.page = 0; state.frame = 0; elapsed = 0;
