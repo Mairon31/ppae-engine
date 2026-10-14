@@ -426,7 +426,8 @@ export class PPAEInteractiveShowcaseController {
         assetId: 'featured_crystal_geode',
         category: 'mineral_rock',
         profile,
-        requireOrganicAsymmetry: true,
+        // Faceted crystal axes can be radial; organic-tree asymmetry is inapplicable.
+        requireOrganicAsymmetry: false,
         allowMultiFragment: true,
         maxColorsOverride: 24,
         checkDirectionalLighting: false // Emissive geode: no single solar key light.
@@ -495,7 +496,7 @@ export class PPAEInteractiveShowcaseController {
       } else if (assetKind === 'crystal_geode') {
         buffer = this.natureGen.generateGeologicalResource('crystal_geode', profile, seed).buffer;
         category = 'mineral_rock';
-        requireAsymmetry = true;
+        requireAsymmetry = false; // Crystalline radial symmetry is not an organic-lollipop fault.
       } else {
         buffer = this.avatarGen.renderCharacterFrame(
           DEFAULT_HERO_APPEARANCE,

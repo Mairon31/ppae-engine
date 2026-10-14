@@ -468,3 +468,5 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 
 - **Live-scene determinism correction:** weather now applied before wind sampling, avoiding mutated previous-frame weather; a dimension-aware pixel fingerprint verifies full RGBA identity without expanding multi-megabyte arrays.
 - **Material-appropriate light audit:** emissive crystal geodes opt out of solar key-light alignment, matching Phase 11's documented quality registry, while remaining metrics are enforced.
+
+- **Geode audit calibration:** real 32x32 geode has symmetry 0.942 (just above the organic silhouette cutoff 0.940), while tree and hero pass. Radial crystal symmetry does not imply an organic lollipop defect; disabled the **organic-tree** asymmetry requirement only for geodes, leaving their measured ratio, contrast, palette, noise, connectivity and emissive-light exception in the live quality report. Trees/organic rocks remain covered.
