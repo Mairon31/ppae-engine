@@ -8,7 +8,27 @@ const DELAY_MS = 5000;
 const sha = process.env.GITHUB_SHA ?? 'manual';
 const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
+async function assertPagesBuildMode() {
+  const endpoint = 'https://api.github.com/repos/Mairon31/ppae-engine/pages';
+  const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': 'ppae-pages-smoke' };
+  const response = await fetch(endpoint,{headers});
+  // Some unauthenticated requests may be throttled; HTML+asset checks remain
+  // authoritative for availability, but never silently accept known legacy mode.
+  if (!response.ok) {
+    console.warn('PAGES SOURCE CHECK UNAVAILABLE',response.status);
+    return;
+  }
+  const metadata = await response.json();
+  if (metadata.build_type && metadata.build_type !== 'workflow') {
+    throw new Error('GITHUB PAGES SOURCE IS LEGACY/BRANCH, NOT GITHUB ACTIONS. '
+      + 'Open Settings → Pages → Build and deployment → Source → GitHub Actions. '
+      + 'A successful actions/deploy-pages can be replaced by the legacy Jekyll build.');
+  }
+  console.log('PAGES SOURCE MODE',metadata.build_type ?? 'not supplied by Pages API');
+}
+
 async function inspect() {
+  await assertPagesBuildMode();
   const target = new URL(PAGE_URL);
   target.searchParams.set('qa', sha);
   const page = await fetch(target, { headers: { 'Cache-Control': 'no-cache' } });
