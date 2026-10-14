@@ -608,20 +608,20 @@ function paint(): void {
     byId('stage-frames').textContent = 'FRAME ' + String(info.frame + 1).padStart(2, '0') +
       ' / ' + String(info.count).padStart(2, '0');
     byId('telemetry').innerHTML =
-      '<strong>PRODUCCIÓN LIVE</strong><br/>Perfil: ' + p.id +
-      '<br/>Semilla hash: ' + sourceHash.toString(16) +
+      '<strong>LIVE GENERATION</strong><br/>Profile: ' + p.id +
+      '<br/>Seed hash: ' + sourceHash.toString(16) +
       '<br/>Buffer: ' + buffer.width + ' × ' + buffer.height +
-      '<br/>Colores opacos: ' + buffer.countUniqueOpaqueColors() +
+      '<br/>Opaque colors: ' + buffer.countUniqueOpaqueColors() +
       '<br/>Render: ' + lastDrawTime.toFixed(1) + ' ms' +
-      '<br/>Animación: ' + (state.playing ? 'PLAY' : 'PAUSE') +
-      '<br/>VFX activos: ' + particles.getTelemetry().activeParticlesCount;
+      '<br/>Animation: ' + (state.playing ? 'PLAY' : 'PAUSE') +
+      '<br/>Active VFX: ' + particles.getTelemetry().activeParticlesCount;
   } catch (err) {
     errorString = err instanceof Error ? err.message : String(err);
     byId('engine-live').textContent = 'ERROR';
     byId('telemetry').textContent = errorString;
     sceneBackground(view, stage.width, stage.height);
     view.fillStyle = '#f5b0a6'; view.font = '14px ui-monospace,monospace';
-    view.fillText('No se pudo generar esta muestra. Ver inspector.', 32, stage.height / 2);
+    view.fillText('Unable to generate this sample. Check the inspector.', 32, stage.height / 2);
   }
 }
 function toThumbnail(container: HTMLCanvasElement, buffer: PixelBuffer): void {
@@ -692,14 +692,14 @@ function renderCards(): void {
     if (!restoreThumbnail(key, canvas)) pending.push({ id, key, canvas, thumb });
   });
   byId('gallery-range').textContent = items.length ?
-    (start + 1) + '–' + Math.min(items.length, start + PAGE_SIZE) + ' de ' + items.length :
-    '0 resultados';
+    (start + 1) + '–' + Math.min(items.length, start + PAGE_SIZE) + ' of ' + items.length :
+    '0 results';
   byId('catalog-summary').textContent = PLAYGROUND_OPTIONS[section].length +
-    ' muestras de este sistema';
+    ' samples in this category';
   if (items.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'catalog-empty';
-    empty.textContent = 'Sin resultados para este filtro.';
+    empty.textContent = 'No results match this filter.';
     wrap.appendChild(empty);
   }
   (byId('gallery-prev') as HTMLButtonElement).disabled = state.page === 0;
@@ -717,7 +717,7 @@ function renderCards(): void {
     } catch (error) {
       const caption = document.createElement('small');
       caption.className = 'error-banner';
-      caption.textContent = 'No disponible: ' + String(error);
+      caption.textContent = 'Unavailable: ' + String(error);
       item.thumb.appendChild(caption);
     }
     if (pending.length > 0) requestAnimationFrame(nextThumbnail);
@@ -764,14 +764,14 @@ function refreshLabPreview(): void {
   thumbnailCache.clear(); renderCards(); renderPreviewPending = true;
 }
 const avatarFieldNames: Record<string, string> = {
-  bodyBuild: 'Complexión',
-  hairStyle: 'Peinado', beardStyle: 'Barba',
-  expression: 'Expresión facial', ageGroup: 'Edad',
-  earStyle: 'Orejas', hornStyle: 'Cuernos',
-  faceMarking: 'Marcas faciales', scarSide: 'Lado de la cicatriz',
-  helmet: 'Casco o sombrero', armor: 'Vestimenta / armadura',
-  mainHand: 'Mano principal', offHand: 'Mano secundaria',
-  backpack: 'Mochila'
+  bodyBuild: 'Body build',
+  hairStyle: 'Hairstyle', beardStyle: 'Beard',
+  expression: 'Facial expression', ageGroup: 'Age group',
+  earStyle: 'Ears', hornStyle: 'Horns',
+  faceMarking: 'Face markings', scarSide: 'Scar side',
+  helmet: 'Helmet or hat', armor: 'Outfit / armor',
+  mainHand: 'Main hand', offHand: 'Off hand',
+  backpack: 'Backpack'
 };
 function renderLabControls(): void {
   const avatarRoot = byId<HTMLElement>('avatar-lab-controls');
@@ -785,17 +785,17 @@ function renderLabControls(): void {
   systemRoot.hidden = !isSystem;
   if (isAvatar) {
     const heading = document.createElement('h3'); heading.className = 'lab-heading';
-    heading.textContent = 'PERSONALIZACIÓN DEL JUGADOR';
+    heading.textContent = 'PLAYER CUSTOMIZATION';
     avatarRoot.append(heading);
     const caption = document.createElement('p'); caption.className = 'lab-description';
-    caption.textContent = 'Los cambios afectan el renderizador de 16 articulaciones y los spritesheets exportados.';
+    caption.textContent = 'Changes are reflected in the 16-joint character renderer and exported spritesheets.';
     avatarRoot.append(caption);
-    appendLabButton(avatarRoot, 'Aleatorizar personaje', 'avatar-randomize', () => {
+    appendLabButton(avatarRoot, 'Randomize character', 'avatar-randomize', () => {
       state.avatarReroll++;
       state.avatarAppearance = {}; state.avatarEquipment = {};
       renderLabControls(); refreshLabPreview();
     });
-    appendLabButton(avatarRoot, 'Restaurar apariencia base', 'avatar-reset', () => {
+    appendLabButton(avatarRoot, 'Reset appearance', 'avatar-reset', () => {
       state.avatarReroll = 0;
       state.avatarAppearance = {}; state.avatarEquipment = {}; state.avatarStatus = 'none';
       renderLabControls(); refreshLabPreview();
@@ -817,7 +817,7 @@ function renderLabControls(): void {
         });
     }
     const heightLabel = document.createElement('label');
-    heightLabel.textContent = 'Altura anatómica ';
+    heightLabel.textContent = 'Character height ';
     const heightValue = document.createElement('strong');
     heightValue.textContent = source.appearance.heightScale.toFixed(2) + '×';
     const heightInput = document.createElement('input');
@@ -839,8 +839,8 @@ function renderLabControls(): void {
         });
     }
     for (const [id, title, value] of [
-      ['hasCape','Capa',source.equipment.hasCape],
-      ['hasFacialScar','Cicatriz',source.appearance.hasFacialScar]
+      ['hasCape','Cape',source.equipment.hasCape],
+      ['hasFacialScar','Facial scar',source.appearance.hasFacialScar]
     ] as const) {
       const row = document.createElement('label'); row.className = 'toggle-row';
       const caption = document.createElement('span'); caption.textContent = title;
@@ -854,11 +854,11 @@ function renderLabControls(): void {
       row.append(caption, box); avatarRoot.append(row);
     }
     for (const [key, title] of [
-      ['skinColorHex','Piel'], ['hairColorHex','Cabello'], ['eyeColorHex','Ojos'],
-      ['armorPrimaryHex','Armadura'], ['armorSecondaryHex','Detalles de armadura'],
-      ['capeColorHex','Capa'], ['helmetPrimaryHex','Casco'],
-      ['bootsColorHex','Botas'], ['glovesColorHex','Guantes'],
-      ['backpackColorHex','Mochila']
+      ['skinColorHex','Skin'], ['hairColorHex','Hair'], ['eyeColorHex','Eyes'],
+      ['armorPrimaryHex','Armor'], ['armorSecondaryHex','Armor accents'],
+      ['capeColorHex','Cape'], ['helmetPrimaryHex','Helmet'],
+      ['bootsColorHex','Boots'], ['glovesColorHex','Gloves'],
+      ['backpackColorHex','Backpack']
     ] as const) {
       const label = document.createElement('label'); label.className = 'color-field';
       label.textContent = title;
@@ -880,11 +880,11 @@ function renderLabControls(): void {
       });
       label.append(input); avatarRoot.append(label);
     }
-    appendLabSelect(avatarRoot, 'Efecto de estado', 'avatar-status',
+    appendLabSelect(avatarRoot, 'Status effect', 'avatar-status',
       AVATAR_FIELDS.status, state.avatarStatus, value => {
         state.avatarStatus = value as VisualStatusEffect; refreshLabPreview();
       });
-    appendLabButton(avatarRoot, 'Exportar definición JSON', 'avatar-export-json', () => {
+    appendLabButton(avatarRoot, 'Export character JSON', 'avatar-export-json', () => {
       const json = JSON.stringify({
         seed: state.seed, variant: state.activeAvatarId, ...currentCharacter(),
         statusEffect: state.avatarStatus
@@ -896,7 +896,7 @@ function renderLabControls(): void {
   }
   if (!isSystem) return;
   const heading = document.createElement('h3'); heading.className = 'lab-heading';
-  heading.textContent = 'PARÁMETROS DEL SISTEMA';
+  heading.textContent = 'SYSTEM PARAMETERS';
   systemRoot.append(heading);
   const choose = (label: string, name: string, vals: readonly string[], current: string,
     assign: (v: string) => void): void => {
@@ -905,20 +905,20 @@ function renderLabControls(): void {
     });
   };
   if (state.section === 'trees' || state.section === 'tree-archetypes')
-    choose('Estación de follaje', 'lab-tree-env',
+    choose('Foliage season', 'lab-tree-env',
       ['normal','autumn','snowy','blossom'], state.treeEnvironment,
       value => { state.treeEnvironment = value as typeof state.treeEnvironment; });
   if (state.section === 'bosses') {
-    choose('Telegráfico real', 'lab-boss-telegraph',
+    choose('Boss telegraph', 'lab-boss-telegraph',
       ['none','radial_slam','frontal_cleave','cross_laser'], state.bossTelegraph,
       value => { state.bossTelegraph = value as typeof state.bossTelegraph; });
-    choose('Acción del jefe', 'lab-boss-action',
+    choose('Boss action', 'lab-boss-action',
       ['idle_float','telegraph_charge','crusher_slam','crystal_nova','hurt_stagger','staged_death'],
       state.bossAction, value => { state.bossAction = value as typeof state.bossAction; });
-    choose('Secuencia de muerte', 'lab-boss-death',
+    choose('Death sequence', 'lab-boss-death',
       ['alive','stage_1_arms_shatter','stage_2_core_overload','stage_3_monolith_collapse'],
       state.bossDeath, value => { state.bossDeath = value as typeof state.bossDeath; });
-    choose('Integridad de segmentos', 'lab-boss-integrity',
+    choose('Segment integrity', 'lab-boss-integrity',
       ['intact','cracked','destroyed'], state.bossIntegrity,
       value => { state.bossIntegrity = value as typeof state.bossIntegrity; });
   }
@@ -930,17 +930,17 @@ function renderLabControls(): void {
     row.append(titleSpan, input); systemRoot.append(row);
   };
   if (state.section === 'structures') {
-    addToggle('lab-roof','Mostrar tejado',state.structureRoof,
+    addToggle('lab-roof','Show roof',state.structureRoof,
       value => { state.structureRoof = value; });
-    addToggle('lab-door','Puerta abierta',state.structureDoor,
+    addToggle('lab-door','Open door',state.structureDoor,
       value => { state.structureDoor = value; });
-    addToggle('lab-windows','Ventanas iluminadas',state.structureWindows,
+    addToggle('lab-windows','Lit windows',state.structureWindows,
       value => { state.structureWindows = value; });
   }
   if (state.section === 'caves') {
-    addToggle('lab-cave-lava','Pozo de lava',state.caveLava,
+    addToggle('lab-cave-lava','Lava pool',state.caveLava,
       value => { state.caveLava = value; });
-    const label = document.createElement('label'); label.textContent = 'Cristales: ';
+    const label = document.createElement('label'); label.textContent = 'Crystals: ';
     const value = document.createElement('strong'); value.textContent = String(state.caveCrystals);
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-cave-crystals'; input.min = '0'; input.max = '12';
@@ -952,7 +952,7 @@ function renderLabControls(): void {
     label.append(value, input); systemRoot.append(label);
   }
   if (state.section === 'creatures' || state.section === 'creature-variants') {
-    const label = document.createElement('label'); label.textContent = 'Escala anatómica: ';
+    const label = document.createElement('label'); label.textContent = 'Anatomical scale: ';
     const value = document.createElement('strong'); value.textContent = state.creatureScale.toFixed(2) + '×';
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-creature-scale'; input.min = '.75'; input.max = '1.35';
@@ -966,21 +966,21 @@ function renderLabControls(): void {
   if (state.section === 'equipment' || state.section === 'equipment-materials') {
     choose('Material', 'lab-tier', Object.keys(MATERIAL_TIER_PALETTES), state.materialTier,
       value => { state.materialTier = value as ItemMaterialTier; });
-    choose('Desgaste', 'lab-wear', ['pristine','worn','damaged'], state.wearState,
+    choose('Wear state', 'lab-wear', ['pristine','worn','damaged'], state.wearState,
       value => { state.wearState = value as ItemWearState; });
   }
   if (state.section === 'autotiling') {
-    choose('Material primario', 'lab-terrain-primary', Object.keys(TERRAIN_MATERIALS),
+    choose('Primary terrain material', 'lab-terrain-primary', Object.keys(TERRAIN_MATERIALS),
       state.terrainMaterial, value => { state.terrainMaterial = value as TerrainMaterialId; });
-    choose('Sustrato', 'lab-terrain-underlay', Object.keys(TERRAIN_MATERIALS),
+    choose('Underlying material', 'lab-terrain-underlay', Object.keys(TERRAIN_MATERIALS),
       state.terrainUnderlay, value => { state.terrainUnderlay = value as TerrainMaterialId; });
   }
   if (state.section === 'liquids')
-    choose('Máscara de costa (47 estados)', 'lab-liquid-mask',
+    choose('Shore mask (47 states)', 'lab-liquid-mask',
       CANONICAL_47_AUTOTILE_MASKS.map(String), String(state.terrainMask),
       value => { state.terrainMask = Number(value); });
   if (state.section === 'hud') {
-    const label = document.createElement('label'); label.textContent = 'Progreso: ';
+    const label = document.createElement('label'); label.textContent = 'Progress: ';
     const val = document.createElement('strong'); val.textContent = state.progress + '%';
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-progress'; input.min = '0'; input.max = '100'; input.value = String(state.progress);
@@ -1089,7 +1089,7 @@ function selectSection(section: PlaygroundSectionId): void {
   byId('page-description').textContent = definition.description;
   byId('crumb-current').textContent = definition.label;
   byId('preview-subtitle').textContent = definition.group + ' / PPAE 2.0';
-  byId('gallery-title').textContent = definition.label + ' · Colección';
+  byId('gallery-title').textContent = definition.label + ' · Collection';
   byId('stage-mode-label').textContent = section.toUpperCase() + ' / LIVE SCENE';
   window.history.replaceState(null, '', '#' + section);
   document.querySelector('.studio')?.classList.remove('nav-open');
@@ -1325,7 +1325,7 @@ function syncPlayButton(): void {
   const button = byId<HTMLButtonElement>('play-toggle');
   button.replaceChildren(pixelIcon(state.playing ? 'pause' : 'play'));
   button.setAttribute('aria-pressed', String(state.playing));
-  button.setAttribute('aria-label', state.playing ? 'Pausar animación' : 'Reproducir animación');
+  button.setAttribute('aria-label', state.playing ? 'Pause animation' : 'Play animation');
 }
 function closeMobileNav(): void {
   document.querySelector('.studio')?.classList.remove('nav-open');
@@ -1526,7 +1526,7 @@ function tick(now: number): void {
   if ((renderPreviewPending || (state.playing && now - lastRender > drawInterval)) && !document.hidden) {
     lastRender = now; renderPreviewPending = false; paint(); frameCounter++;
     if (now - lastFps > 1000) {
-      byId('fps-counter').textContent = frameCounter + ' FPS (visor)';
+      byId('fps-counter').textContent = frameCounter + ' FPS (preview)';
       frameCounter = 0; lastFps = now;
     }
   }
