@@ -24,7 +24,7 @@ try {
   if (!loaded) throw new Error('Vite preview never served compiled /ppae-engine/ assets');
   const nav = page.locator('#section-nav .nav-link');
   const total = await nav.count();
-  if (total < 28) {
+  if (total < 30) {
     await page.screenshot({ path: join(output, '00-diagnostic.png'), fullPage: true });
     const pageHtml = (await page.content()).slice(0, 3000);
     const failed = errors.join(' | ');
@@ -37,7 +37,7 @@ try {
       previewText: document.getElementById('engine-live')?.textContent,
       mainText: document.body.innerText.slice(0, 800)
     }));
-    throw new Error('Only ' + total + ' navigation sections; expected 28. ' +
+    throw new Error('Only ' + total + ' navigation sections; expected 30. ' +
       'diagnostic=' + JSON.stringify(navigation) + '; browser errors=' + failed +
       '; HTML=' + pageHtml);
   }
@@ -111,7 +111,7 @@ try {
   const avatarJson = JSON.parse(readFileSync(avatarPath, 'utf8'));
   if (!avatarJson.appearance?.hairStyle || !avatarJson.equipment?.armor)
     throw new Error('Avatar JSON definition missing appearance or equipment');
-  await page.screenshot({ path: join(output, '29-avatar-customizer.png'), fullPage: true });
+  await page.screenshot({ path: join(output, '31-avatar-customizer.png'), fullPage: true });
   console.log('AVATAR LAB OK: edited attributes, reroll, definition JSON');
 
   await nav.filter({ hasText: 'Diversidad de NPCs' }).click();
@@ -131,7 +131,7 @@ try {
   ]);
   await variantExport.saveAs(join(output, 'creature-variant-atlas.json'));
   if (await variantExport.failure()) throw new Error('Variant atlas export failed');
-  await page.screenshot({ path: join(output, '30-creature-variants.png'), fullPage: true });
+  await page.screenshot({ path: join(output, '32-creature-variants.png'), fullPage: true });
   console.log('EXTENDED CATALOG OK: NPC filter, canonical masks, variant atlas');
   
   await page.setViewportSize({ width: 390, height: 844 });
@@ -142,7 +142,7 @@ try {
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'false')
     throw new Error('Mobile navigation did not close on selection');
   await page.waitForFunction(() => document.querySelector('#stage-action')?.textContent?.startsWith('PARTICLES /'), null, { timeout: 30000 });
-  await page.screenshot({ path: join(output, '20-mobile-vfx.png'), fullPage: true });
+  await page.screenshot({ path: join(output, '33-mobile-vfx.png'), fullPage: true });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (overflow > 1) throw new Error('Horizontal overflow on mobile: ' + overflow + 'px');
   if (errors.length) throw new Error('Browser errors:\n' + errors.join('\n'));
