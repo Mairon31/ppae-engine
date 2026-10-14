@@ -11,6 +11,8 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 1A — Procedural Tree Morphology Architecture | VERIFIED | Contratos, 12 familias, arquetipos, esqueleto y métricas |
 | 1B — Tree Skeleton Rasterization | VERIFIED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
 | 1C — Advanced Canopy / Foliage | VERIFIED | Follaje avanzado y diferenciación por especie |
+| 1D — Production Pipeline and World Ecology | IMPLEMENTED | Árboles morfológicos reales en generadores y distribución ecológica |
+| 1E — Spatial Diversity and Silhouette Metrics | PENDING | Evitar clones vecinos y métricas de silueta sobre píxeles |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -51,6 +53,19 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Validación visual:** pendiente de inspección directa de composiciones reales y comparativa por especie. Los nuevos renderizadores son API separadas; no cambian automáticamente la salida de `NatureGenerator` hasta Fase 1D.
 - **Estado actual:** VERIFIED (implementación y CI). Evaluación visual manual de sprites completos pendiente de 1D.
 - **Siguiente fase:** 1D — Integración de especies, edades y estados en NatureGenerator, ProceduralGrammarExecutor y DeterministicWorldField.
+
+## Fase 1D — 14 de octubre de 2026
+
+- **Base citada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con fases 1A–1C supuestas. **Base real de integración:** `e7427b23838497019e48df523e60a8728042dd51`.
+- **Commit real:** pendiente de registrar SHA después de la publicación.
+- **Archivos:** MODIFY `src/vegetation/nature-generator.ts`, MODIFY `src/art-generator/grammars.ts`, MODIFY `src/terrain/world-field.ts`, ADD `tests/ppae-tree-lifecycle-1d.test.ts`, MODIFY este documento.
+- **NatureGenerator:** reemplaza íntegramente los antiguos troncos rectos y copas repetitivas por la resolución morfológica (1A), el rasterizador leñoso (1B) y la composición foliar (1C); catálogo sincronizado a 12 familias, 12 etapas, opciones retrocompatibles de arquetipo/estación/viento y metadatos morphology/anchors.
+- **Grammar:** genera también robles y pinos de catálogo con la tubería 1A–1C, adapta por vecino más cercano y remapea todos los colores a las rampas de `PaletteDefinition` para conservar el presupuesto, el tamaño módulo×definición y los anclajes; respeta `damaged`, `snowy` y `wind_sway`.
+- **Ecología del mundo:** rollos separados de aparición, familia y edad; selección contextual mediante humedad, temperatura, bioma y proximidad al agua, con 12 familias elegibles y edades/estados variados, manteniendo determinismo espacial por coordenadas.
+- **Pruebas:** suite de 1D para doce especies, doce etapas, tamaños y paletas de catálogo, diversidad de spawn, opciones y determinismo del mundo. `npm test` y `npm run build` pendientes de ejecución CI.
+- **Estado:** IMPLEMENTED tras publicación; VERIFIED sólo con evidencia de pruebas y compilación.
+- **Validación artística:** requiere inspección visual de los sprites renderizados en la demostración. Los tests de píxeles no certifican una paridad artística exacta.
+- **Siguiente fase:** 1E — TreeDiversityController, métricas de silueta reales y cierre de Fase 1.
 
 ## Convenciones de estado
 

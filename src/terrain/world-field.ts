@@ -5,6 +5,7 @@ import {
   TerrainMaterialDefinition,
   TerrainMaterialId,
   TreeLifecycleStage,
+  TreeSpeciesId,
   WorldTileSample
 } from '../core/contracts';
 import { fnv1aHash32 } from '../core/deterministic';
@@ -387,6 +388,8 @@ export class DeterministicWorldField {
     // Sólo colocar árboles, flora o rocas en tiles terrestres interiores (mask === 255 evita bordes de costa)
     if (!matDef.isLiquid && mask === 255 && override?.treeStageOverride !== 'removed') {
       const spawnRoll = this.latticeHash(tileX, tileY, 901);
+      const speciesRoll = this.latticeHash(tileX, tileY, 937);
+      const stageRoll = this.latticeHash(tileX, tileY, 971);
       const variantSeed = fnv1aHash32(`${this.seedNum}::prop::${tileX},${tileY}`);
 
       if (base.material === 'rock_cliff' && spawnRoll < 0.22) {
@@ -396,10 +399,11 @@ export class DeterministicWorldField {
         (base.material === 'meadow_grass' || base.material === 'forest_moss' || base.material === 'snow_frost') &&
         spawnRoll < (base.biome === 'forest' ? 0.16 : 0.08)
       ) {
-        const species =
-          base.biome === 'tundra' ? 'pine' : base.biome === 'forest' && spawnRoll < 0.08 ? 'pine' : 'oak';
-        const defaultStage: TreeLifecycleStage =
-          spawnRoll < 0.02 ? 'sapling' : spawnRoll < 0.03 ? 'stump' : 'mature';
+        const nearWater = this.isNearWater(tileX, tileY, base.moisture);
+        const species = this.selectEcologicalTreeSpecies(
+          base.biome, base.moisture, base.temperature, speciesRoll, nearWater
+        );
+        const defaultStage = this.selectEcologicalTreeStage(stageRoll);
         propSpawn = {
           kind: 'tree',
           subType: species,
@@ -409,8 +413,8 @@ export class DeterministicWorldField {
       } else if (base.material === 'sand_beach' && spawnRoll < 0.04) {
         propSpawn = {
           kind: 'tree',
-          subType: 'palm',
-          stage: override?.treeStageOverride ?? 'mature',
+          subType: base.moisture > 0.65 && speciesRoll < 0.35 ? 'mangrove' : 'palm',
+          stage: override?.treeStageOverride ?? this.selectEcologicalTreeStage(stageRoll),
           variantSeed
         };
       } else if (base.material === 'desert_dune' && spawnRoll < 0.06) {
@@ -438,4 +442,69 @@ export class DeterministicWorldField {
       propSpawn
     };
   }
+  /** Approximate riparian proximity at fixed offsets without chunk state. */
+  private isNearWater(tileX: number, tileY: number, moisture: number): boolean {
+    if (moisture < 0.58) return false;
+    for (const [dx, dy] of [[0, -2], [2, 0], [0, 2], [-2, 0]]) {
+      const material = this.sampleMaterialOnly(tileX + dx, tileY + dy).material;
+      if (material === 'shallow_water' || material === 'deep_water') return true;
+    }
+    return false;
+  }
+
+  /** Habitat-weighted families. Roll is independent of spawn and stage rolls. */
+  private selectEcologicalTreeSpecies(
+    biome: BiomeId,
+    moisture: number,
+    temperature: number,
+    speciesRoll: number,
+    nearWater: boolean
+  ): TreeSpeciesId {
+    if (biome === 'corrupted') return speciesRoll < 0.8 ? 'corrupted_thorn' : 'dead_tree';
+    if (biome === 'volcanic') return speciesRoll < 0.65 ? 'dead_tree' : 'corrupted_thorn';
+    if (biome === 'tundra') {
+      if (speciesRoll < 0.12) return 'dead_tree';
+      if (speciesRoll < 0.4) return 'birch';
+      return 'pine';
+    }
+    if (biome === 'forest') {
+      // Rare fantasy or blighted individuals never dominate otherwise healthy habitat.
+      if (speciesRoll > 0.992) return 'fantasy_lumin';
+      if (speciesRoll > 0.982 && moisture < 0.7) return 'corrupted_thorn';
+      if (nearWater && moisture > 0.65 && speciesRoll < 0.35) {
+        return temperature > 0.61 ? 'mangrove' : 'willow';
+      }
+      if (temperature > 0.65 && moisture > 0.60 && speciesRoll < 0.48) {
+        return speciesRoll < 0.26 ? 'tropical' : 'bamboo';
+      }
+      if (speciesRoll < 0.25) return 'pine';
+      if (speciesRoll < 0.49) return 'birch';
+      if (speciesRoll < 0.55) return 'dead_tree';
+      if (speciesRoll < 0.68) return 'fruit_tree';
+      return 'oak';
+    }
+    if (biome === 'desert') return speciesRoll > 0.8 ? 'dead_tree' : 'palm';
+    if (nearWater && moisture > 0.64 && speciesRoll < 0.28) return 'willow';
+    if (speciesRoll > 0.995 && moisture > 0.62) return 'fantasy_lumin';
+    if (speciesRoll < 0.23) return 'fruit_tree';
+    if (speciesRoll < 0.51) return 'birch';
+    if (speciesRoll < 0.61 && temperature < 0.4) return 'pine';
+    return 'oak';
+  }
+
+  /** Age and damage are independent of tree species and spawn placement. */
+  private selectEcologicalTreeStage(stageRoll: number): TreeLifecycleStage {
+    if (stageRoll < 0.008) return 'seed';
+    if (stageRoll < 0.04) return 'sprout';
+    if (stageRoll < 0.12) return 'sapling';
+    if (stageRoll < 0.24) return 'young';
+    if (stageRoll < 0.4) return 'immature';
+    if (stageRoll < 0.76) return 'mature';
+    if (stageRoll < 0.88) return 'ancient';
+    if (stageRoll < 0.93) return 'damaged';
+    if (stageRoll < 0.96) return 'dead';
+    if (stageRoll < 0.985) return 'stump';
+    return 'fallen_log';
+  }
+
 }
