@@ -732,7 +732,8 @@ function renderLabControls(): void {
   const isAvatar = ['characters','character-actions'].includes(state.section);
   avatarRoot.hidden = !isAvatar;
   const isSystem = ['trees','tree-archetypes','bosses','autotiling','liquids',
-    'equipment','equipment-materials','hud'].includes(state.section);
+    'equipment','equipment-materials','hud','creatures','creature-variants',
+    'structures','caves'].includes(state.section);
   systemRoot.hidden = !isSystem;
   if (isAvatar) {
     const heading = document.createElement('h3'); heading.className = 'lab-heading';
@@ -859,10 +860,61 @@ function renderLabControls(): void {
     choose('Estación de follaje', 'lab-tree-env',
       ['normal','autumn','snowy','blossom'], state.treeEnvironment,
       value => { state.treeEnvironment = value as typeof state.treeEnvironment; });
-  if (state.section === 'bosses')
+  if (state.section === 'bosses') {
     choose('Telegráfico real', 'lab-boss-telegraph',
       ['none','radial_slam','frontal_cleave','cross_laser'], state.bossTelegraph,
       value => { state.bossTelegraph = value as typeof state.bossTelegraph; });
+    choose('Acción del jefe', 'lab-boss-action',
+      ['idle_float','telegraph_charge','crusher_slam','crystal_nova','hurt_stagger','staged_death'],
+      state.bossAction, value => { state.bossAction = value as typeof state.bossAction; });
+    choose('Secuencia de muerte', 'lab-boss-death',
+      ['alive','stage_1_arms_shatter','stage_2_core_overload','stage_3_monolith_collapse'],
+      state.bossDeath, value => { state.bossDeath = value as typeof state.bossDeath; });
+    choose('Integridad de segmentos', 'lab-boss-integrity',
+      ['intact','cracked','destroyed'], state.bossIntegrity,
+      value => { state.bossIntegrity = value as typeof state.bossIntegrity; });
+  }
+  const addToggle = (id: string, title: string, value: boolean, cb: (checked: boolean) => void): void => {
+    const row = document.createElement('label'); row.className = 'toggle-row';
+    const titleSpan = document.createElement('span'); titleSpan.textContent = title;
+    const input = document.createElement('input'); input.type = 'checkbox'; input.id = id; input.checked = value;
+    input.addEventListener('change', () => { cb(input.checked); refreshLabPreview(); });
+    row.append(titleSpan, input); systemRoot.append(row);
+  };
+  if (state.section === 'structures') {
+    addToggle('lab-roof','Mostrar tejado',state.structureRoof,
+      value => { state.structureRoof = value; });
+    addToggle('lab-door','Puerta abierta',state.structureDoor,
+      value => { state.structureDoor = value; });
+    addToggle('lab-windows','Ventanas iluminadas',state.structureWindows,
+      value => { state.structureWindows = value; });
+  }
+  if (state.section === 'caves') {
+    addToggle('lab-cave-lava','Pozo de lava',state.caveLava,
+      value => { state.caveLava = value; });
+    const label = document.createElement('label'); label.textContent = 'Cristales: ';
+    const value = document.createElement('strong'); value.textContent = String(state.caveCrystals);
+    const input = document.createElement('input'); input.type = 'range';
+    input.id = 'lab-cave-crystals'; input.min = '0'; input.max = '12';
+    input.step = '1'; input.value = String(state.caveCrystals);
+    input.addEventListener('input', () => {
+      state.caveCrystals = Number(input.value); value.textContent = input.value;
+      refreshLabPreview();
+    });
+    label.append(value, input); systemRoot.append(label);
+  }
+  if (state.section === 'creatures' || state.section === 'creature-variants') {
+    const label = document.createElement('label'); label.textContent = 'Escala anatómica: ';
+    const value = document.createElement('strong'); value.textContent = state.creatureScale.toFixed(2) + '×';
+    const input = document.createElement('input'); input.type = 'range';
+    input.id = 'lab-creature-scale'; input.min = '.75'; input.max = '1.35';
+    input.step = '.05'; input.value = String(state.creatureScale);
+    input.addEventListener('input', () => {
+      state.creatureScale = Number(input.value); value.textContent = input.value + '×';
+      refreshLabPreview();
+    });
+    label.append(value, input); systemRoot.append(label);
+  }
   if (state.section === 'equipment' || state.section === 'equipment-materials') {
     choose('Material', 'lab-tier', Object.keys(MATERIAL_TIER_PALETTES), state.materialTier,
       value => { state.materialTier = value as ItemMaterialTier; });
@@ -1127,8 +1179,10 @@ function exportTechnicalJSON(): void {
       data.material = id;
       break;
     case 'structures': {
-      const artifact = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p, true, true);
+      const artifact = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p,
+        state.structureDoor, state.structureWindows);
       data.definition = DEFAULT_STRUCTURE_CATALOG[id];
+      data.showRoof = state.structureRoof;
       data.anchors = { ground: artifact.pivotTexel };
       data.wallCollisionRects = artifact.wallCollisionRects;
       data.doorCollisionRect = artifact.doorCollisionRect;
@@ -1144,8 +1198,10 @@ function exportTechnicalJSON(): void {
       break;
     }
     case 'caves': {
-      const artifact = caves.generateChamber({ ...DEFAULT_CRYSTAL_CAVERN, seed: seedNumber(id) }, p);
-      data.definition = DEFAULT_CRYSTAL_CAVERN;
+      const artifact = caves.generateChamber({ ...DEFAULT_CRYSTAL_CAVERN, seed: seedNumber(id),
+        hasLavaPool: state.caveLava, crystalCount: state.caveCrystals }, p);
+      data.definition = { ...DEFAULT_CRYSTAL_CAVERN, hasLavaPool: state.caveLava,
+        crystalCount: state.caveCrystals };
       data.collisionRects = artifact.collisionRects;
       data.bioluminescentNodes = artifact.bioluminescentNodes;
       break;
@@ -1153,7 +1209,11 @@ function exportTechnicalJSON(): void {
     case 'bosses': {
       const boss = id === BOSS_IDS[1] ?
         createCorruptedTreantBossState(seedNumber(id)) : createDefaultColossusBossState(seedNumber(id));
-      data.bossState = { ...boss, phase: state.stage, telegraphKind: state.bossTelegraph };
+      data.bossState = {
+        ...boss, phase: state.stage, action: state.bossAction,
+        telegraphKind: state.bossTelegraph,
+        deathStage: state.bossDeath, segmentIntegrity: state.bossIntegrity
+      };
       break;
     }
     case 'farming':
