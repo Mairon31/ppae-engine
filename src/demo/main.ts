@@ -1,6 +1,7 @@
 import './landing.css';
 import './studio-theme.css';
 import { initLanding } from './landing';
+import { initializeLanguageControls, tr } from './i18n';
 import { pixelIcon, hydratePixelIcons } from './pixelarticons';
 import type { PixelIconName } from './pixelarticons';
 import {
@@ -608,20 +609,20 @@ function paint(): void {
     byId('stage-frames').textContent = 'FRAME ' + String(info.frame + 1).padStart(2, '0') +
       ' / ' + String(info.count).padStart(2, '0');
     byId('telemetry').innerHTML =
-      '<strong>LIVE GENERATION</strong><br/>Profile: ' + p.id +
-      '<br/>Seed hash: ' + sourceHash.toString(16) +
-      '<br/>Buffer: ' + buffer.width + ' × ' + buffer.height +
-      '<br/>Opaque colors: ' + buffer.countUniqueOpaqueColors() +
-      '<br/>Render: ' + lastDrawTime.toFixed(1) + ' ms' +
-      '<br/>Animation: ' + (state.playing ? 'PLAY' : 'PAUSE') +
-      '<br/>Active VFX: ' + particles.getTelemetry().activeParticlesCount;
+      '<strong>' + tr('LIVE GENERATION') + '</strong><br/>' + tr('Profile: ') + p.id +
+      '<br/>' + tr('Seed hash: ') + sourceHash.toString(16) +
+      '<br/>' + tr('Buffer: ') + buffer.width + ' × ' + buffer.height +
+      '<br/>' + tr('Opaque colors: ') + buffer.countUniqueOpaqueColors() +
+      '<br/>' + tr('Render: ') + lastDrawTime.toFixed(1) + ' ms' +
+      '<br/>' + tr('Animation: ') + (state.playing ? 'PLAY' : 'PAUSE') +
+      '<br/>' + tr('Active VFX: ') + particles.getTelemetry().activeParticlesCount;
   } catch (err) {
     errorString = err instanceof Error ? err.message : String(err);
     byId('engine-live').textContent = 'ERROR';
     byId('telemetry').textContent = errorString;
     sceneBackground(view, stage.width, stage.height);
     view.fillStyle = '#f5b0a6'; view.font = '14px ui-monospace,monospace';
-    view.fillText('Unable to generate this sample. Check the inspector.', 32, stage.height / 2);
+    view.fillText(tr('Unable to generate this sample. Check the inspector.'), 32, stage.height / 2);
   }
 }
 function toThumbnail(container: HTMLCanvasElement, buffer: PixelBuffer): void {
@@ -692,14 +693,14 @@ function renderCards(): void {
     if (!restoreThumbnail(key, canvas)) pending.push({ id, key, canvas, thumb });
   });
   byId('gallery-range').textContent = items.length ?
-    (start + 1) + '–' + Math.min(items.length, start + PAGE_SIZE) + ' of ' + items.length :
-    '0 results';
+    (start + 1) + '–' + Math.min(items.length, start + PAGE_SIZE) + tr(' of ') + items.length :
+    tr('0 results');
   byId('catalog-summary').textContent = PLAYGROUND_OPTIONS[section].length +
-    ' samples in this category';
+    tr(' samples in this category');
   if (items.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'catalog-empty';
-    empty.textContent = 'No results match this filter.';
+    empty.textContent = tr('No results match this filter.');
     wrap.appendChild(empty);
   }
   (byId('gallery-prev') as HTMLButtonElement).disabled = state.page === 0;
@@ -717,7 +718,7 @@ function renderCards(): void {
     } catch (error) {
       const caption = document.createElement('small');
       caption.className = 'error-banner';
-      caption.textContent = 'Unavailable: ' + String(error);
+      caption.textContent = tr('Unavailable: ') + String(error);
       item.thumb.appendChild(caption);
     }
     if (pending.length > 0) requestAnimationFrame(nextThumbnail);
@@ -739,7 +740,7 @@ function appendLabSelect(
   values: readonly string[], selected: string, onSelect: ChoiceCallback
 ): void {
   const label = document.createElement('label');
-  label.textContent = labelText;
+  label.textContent = tr(labelText);
   const select = document.createElement('select'); select.id = id;
   for (const value of values) {
     const opt = document.createElement('option');
@@ -756,7 +757,7 @@ function appendLabButton(root: HTMLElement, label: string, id: string, action: (
   const icon: PixelIconName | null = id === 'avatar-randomize' ? 'refresh' :
     id === 'avatar-reset' ? 'refresh' : id === 'avatar-export-json' ? 'download' : null;
   if (icon) button.append(pixelIcon(icon));
-  button.append(document.createTextNode(label));
+  button.append(document.createTextNode(tr(label)));
   button.addEventListener('click', action);
   root.append(button);
 }
@@ -785,10 +786,10 @@ function renderLabControls(): void {
   systemRoot.hidden = !isSystem;
   if (isAvatar) {
     const heading = document.createElement('h3'); heading.className = 'lab-heading';
-    heading.textContent = 'PLAYER CUSTOMIZATION';
+    heading.textContent = tr('PLAYER CUSTOMIZATION');
     avatarRoot.append(heading);
     const caption = document.createElement('p'); caption.className = 'lab-description';
-    caption.textContent = 'Changes are reflected in the 16-joint character renderer and exported spritesheets.';
+    caption.textContent = tr('Changes are reflected in the 16-joint character renderer and exported spritesheets.');
     avatarRoot.append(caption);
     appendLabButton(avatarRoot, 'Randomize character', 'avatar-randomize', () => {
       state.avatarReroll++;
@@ -817,7 +818,7 @@ function renderLabControls(): void {
         });
     }
     const heightLabel = document.createElement('label');
-    heightLabel.textContent = 'Character height ';
+    heightLabel.textContent = tr('Character height ');
     const heightValue = document.createElement('strong');
     heightValue.textContent = source.appearance.heightScale.toFixed(2) + '×';
     const heightInput = document.createElement('input');
@@ -843,7 +844,7 @@ function renderLabControls(): void {
       ['hasFacialScar','Facial scar',source.appearance.hasFacialScar]
     ] as const) {
       const row = document.createElement('label'); row.className = 'toggle-row';
-      const caption = document.createElement('span'); caption.textContent = title;
+      const caption = document.createElement('span'); caption.textContent = tr(title);
       const box = document.createElement('input');
       box.type = 'checkbox'; box.id = 'avatar-' + id; box.checked = value;
       box.addEventListener('change', () => {
@@ -861,7 +862,7 @@ function renderLabControls(): void {
       ['backpackColorHex','Backpack']
     ] as const) {
       const label = document.createElement('label'); label.className = 'color-field';
-      label.textContent = title;
+      label.textContent = tr(title);
       const input = document.createElement('input'); input.type = 'color';
       input.id = 'avatar-' + key;
       const raw = key in source.appearance
@@ -896,7 +897,7 @@ function renderLabControls(): void {
   }
   if (!isSystem) return;
   const heading = document.createElement('h3'); heading.className = 'lab-heading';
-  heading.textContent = 'SYSTEM PARAMETERS';
+  heading.textContent = tr('SYSTEM PARAMETERS');
   systemRoot.append(heading);
   const choose = (label: string, name: string, vals: readonly string[], current: string,
     assign: (v: string) => void): void => {
@@ -924,7 +925,7 @@ function renderLabControls(): void {
   }
   const addToggle = (id: string, title: string, value: boolean, cb: (checked: boolean) => void): void => {
     const row = document.createElement('label'); row.className = 'toggle-row';
-    const titleSpan = document.createElement('span'); titleSpan.textContent = title;
+    const titleSpan = document.createElement('span'); titleSpan.textContent = tr(title);
     const input = document.createElement('input'); input.type = 'checkbox'; input.id = id; input.checked = value;
     input.addEventListener('change', () => { cb(input.checked); refreshLabPreview(); });
     row.append(titleSpan, input); systemRoot.append(row);
@@ -940,7 +941,7 @@ function renderLabControls(): void {
   if (state.section === 'caves') {
     addToggle('lab-cave-lava','Lava pool',state.caveLava,
       value => { state.caveLava = value; });
-    const label = document.createElement('label'); label.textContent = 'Crystals: ';
+    const label = document.createElement('label'); label.textContent = tr('Crystals: ');
     const value = document.createElement('strong'); value.textContent = String(state.caveCrystals);
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-cave-crystals'; input.min = '0'; input.max = '12';
@@ -952,7 +953,7 @@ function renderLabControls(): void {
     label.append(value, input); systemRoot.append(label);
   }
   if (state.section === 'creatures' || state.section === 'creature-variants') {
-    const label = document.createElement('label'); label.textContent = 'Anatomical scale: ';
+    const label = document.createElement('label'); label.textContent = tr('Anatomical scale: ');
     const value = document.createElement('strong'); value.textContent = state.creatureScale.toFixed(2) + '×';
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-creature-scale'; input.min = '.75'; input.max = '1.35';
@@ -980,7 +981,7 @@ function renderLabControls(): void {
       CANONICAL_47_AUTOTILE_MASKS.map(String), String(state.terrainMask),
       value => { state.terrainMask = Number(value); });
   if (state.section === 'hud') {
-    const label = document.createElement('label'); label.textContent = 'Progress: ';
+    const label = document.createElement('label'); label.textContent = tr('Progress: ');
     const val = document.createElement('strong'); val.textContent = state.progress + '%';
     const input = document.createElement('input'); input.type = 'range';
     input.id = 'lab-progress'; input.min = '0'; input.max = '100'; input.value = String(state.progress);
@@ -1058,14 +1059,14 @@ function renderNav(): void {
   PLAYGROUND_SECTIONS.forEach(section => {
     if (lastGroup !== section.group) {
       lastGroup = section.group;
-      const group = document.createElement('div'); group.className = 'nav-group'; group.textContent = lastGroup;
+      const group = document.createElement('div'); group.className = 'nav-group'; group.textContent = tr(lastGroup);
       nav.appendChild(group);
     }
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'nav-link' + (state.section === section.id ? ' active' : '');
     const glyph = document.createElement('span'); glyph.className = 'nav-glyph';
     glyph.append(pixelIcon(sectionIcons[section.id] ?? 'grid-3x3'));
-    const label = document.createElement('span'); label.textContent = section.label;
+    const label = document.createElement('span'); label.textContent = tr(section.label);
     btn.append(glyph, label);
     btn.addEventListener('click', () => selectSection(section.id));
     nav.appendChild(btn);
@@ -1085,13 +1086,13 @@ function selectSection(section: PlaygroundSectionId): void {
   state.stage = section === 'trees' || section === 'farming' ? 'mature' :
     section === 'bosses' ? 'phase_2_enraged' : 'intact';
   const definition = getPlaygroundSection(section);
-  byId('page-title').textContent = definition.label;
-  byId('page-description').textContent = definition.description;
-  byId('crumb-current').textContent = definition.label;
-  byId('preview-subtitle').textContent = definition.group + ' / PPAE 2.0';
-  byId('gallery-title').textContent = definition.label + ' · Collection';
+  byId('page-title').textContent = tr(definition.label);
+  byId('page-description').textContent = tr(definition.description);
+  byId('crumb-current').textContent = tr(definition.label);
+  byId('preview-subtitle').textContent = tr(definition.group) + ' / PPAE 2.0';
+  byId('gallery-title').textContent = tr(definition.label) + tr(' · Collection');
   byId('stage-mode-label').textContent = section.toUpperCase() + ' / LIVE SCENE';
-  window.history.replaceState(null, '', '#' + section);
+  window.history.replaceState(null, '', location.pathname + location.search + '#' + section);
   document.querySelector('.studio')?.classList.remove('nav-open');
   closeInspector();
   (byId('toggle-sidebar') as HTMLButtonElement).setAttribute('aria-expanded','false');
@@ -1325,7 +1326,7 @@ function syncPlayButton(): void {
   const button = byId<HTMLButtonElement>('play-toggle');
   button.replaceChildren(pixelIcon(state.playing ? 'pause' : 'play'));
   button.setAttribute('aria-pressed', String(state.playing));
-  button.setAttribute('aria-label', state.playing ? 'Pause animation' : 'Play animation');
+  button.setAttribute('aria-label', tr(state.playing ? 'Pause animation' : 'Play animation'));
 }
 function closeMobileNav(): void {
   document.querySelector('.studio')?.classList.remove('nav-open');
@@ -1526,7 +1527,7 @@ function tick(now: number): void {
   if ((renderPreviewPending || (state.playing && now - lastRender > drawInterval)) && !document.hidden) {
     lastRender = now; renderPreviewPending = false; paint(); frameCounter++;
     if (now - lastFps > 1000) {
-      byId('fps-counter').textContent = frameCounter + ' FPS (preview)';
+      byId('fps-counter').textContent = frameCounter + tr(' FPS (preview)');
       frameCounter = 0; lastFps = now;
     }
   }
@@ -1537,6 +1538,7 @@ let lastFps = 0;
 const initialHash = location.hash.replace('#','') as PlaygroundSectionId;
 const hasStudioRoute = PLAYGROUND_SECTIONS.some(section => section.id === initialHash);
 hydratePixelIcons();
+initializeLanguageControls();
 connectControls();
 // selectSection initializes existing atlas navigation; restore the root route
 // afterward so a visit to /ppae-engine/ stays on the product landing.
