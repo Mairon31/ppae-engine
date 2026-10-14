@@ -102,6 +102,35 @@ let errorString = '';
 let frameCounter = 0;
 let renderPreviewPending = true;
 const PAGE_SIZE = 6;
+const THUMB_CACHE_LIMIT = 36;
+const thumbnailCache = new Map<string, HTMLCanvasElement>();
+let galleryGeneration = 0;
+let vfxEmissionElapsed = 0;
+let vfxBurstIndex = 0;
+
+function thumbnailKey(section: PlaygroundSectionId, id: string): string {
+  return [
+    section, id, state.seed, state.selected, state.stage, state.age, state.health,
+    state.time, state.weather, state.direction, state.action, state.creatureAction
+  ].join('|');
+}
+function restoreThumbnail(key: string, canvas: HTMLCanvasElement): boolean {
+  const cached = thumbnailCache.get(key);
+  if (!cached) return false;
+  thumbnailCache.delete(key); thumbnailCache.set(key, cached);
+  canvas.getContext('2d')!.drawImage(cached, 0, 0);
+  return true;
+}
+function storeThumbnail(key: string, canvas: HTMLCanvasElement): void {
+  const copy = document.createElement('canvas');
+  copy.width = canvas.width; copy.height = canvas.height;
+  copy.getContext('2d')!.drawImage(canvas, 0, 0);
+  thumbnailCache.delete(key); thumbnailCache.set(key, copy);
+  while (thumbnailCache.size > THUMB_CACHE_LIMIT) {
+    thumbnailCache.delete(thumbnailCache.keys().next().value!);
+  }
+}
+
 
 function seedNumber(extra = ''): number {
   return fnv1aHash32(state.seed + ':' + state.selected + ':' + extra);
@@ -458,6 +487,9 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
   }
 }
 function renderCards(): void {
+  const generation = ++galleryGeneration;
+  const section = state.section;
+  const pending: Array<{ id: string; key: string; canvas: HTMLCanvasElement; thumb: HTMLElement }> = [];
   const items = PLAYGROUND_OPTIONS[state.section];
   const start = state.page * PAGE_SIZE;
   const visible = items.slice(start, start + PAGE_SIZE);
@@ -482,17 +514,32 @@ function renderCards(): void {
     button.append(thumb, info);
     button.addEventListener('click', () => selectItem(id));
     wrap.appendChild(button);
-    try { previewCard(state.section, id, canvas); }
-    catch (e) {
-      const caption = document.createElement('small');
-      caption.className = 'error-banner'; caption.textContent = 'No disponible: ' + String(e);
-      thumb.appendChild(caption);
-    }
+    const key = thumbnailKey(section, id);
+    if (!restoreThumbnail(key, canvas)) pending.push({ id, key, canvas, thumb });
   });
   byId('gallery-range').textContent = (start + 1) + '–' +
     Math.min(items.length, start + PAGE_SIZE) + ' de ' + items.length;
   (byId('gallery-prev') as HTMLButtonElement).disabled = state.page === 0;
   (byId('gallery-next') as HTMLButtonElement).disabled = start + PAGE_SIZE >= items.length;
+  // Generate a single real engine thumbnail per animation frame; cancel stale pages.
+  function nextThumbnail(): void {
+    if (generation !== galleryGeneration) return;
+    const item = pending.shift();
+    if (!item) return;
+    try {
+      if (!restoreThumbnail(item.key, item.canvas)) {
+        previewCard(section, item.id, item.canvas);
+        storeThumbnail(item.key, item.canvas);
+      }
+    } catch (error) {
+      const caption = document.createElement('small');
+      caption.className = 'error-banner';
+      caption.textContent = 'No disponible: ' + String(error);
+      item.thumb.appendChild(caption);
+    }
+    if (pending.length > 0) requestAnimationFrame(nextThumbnail);
+  }
+  if (pending.length > 0) requestAnimationFrame(nextThumbnail);
 }
 function options(select: HTMLSelectElement, values: readonly string[], selected: string): void {
   select.replaceChildren();
@@ -573,11 +620,14 @@ function selectSection(section: PlaygroundSectionId): void {
   refreshControlVisibility(); renderNav(); renderCards(); renderPreviewPending = true;
 }
 function resetParticles(): void {
+  vfxEmissionElapsed = 0;
+  vfxBurstIndex = 0;
   particles = new PixelParticleEngine(450);
   particleMode = state.selected;
   particles.emitBurst(state.selected as VFXPresetId, 120, 90, seedNumber(), 85);
 }
 function regenerateWorld(): void {
+  thumbnailCache.clear();
   worldField = new DeterministicWorldField(state.seed);
   worldRenderer = new ChunkWorldRenderer(worldField);
   cachedWorld.clear();
@@ -618,6 +668,16 @@ function exportSheet(kind: 'png' | 'json'): void {
       { type: 'application/json' })), name + '.json');
   }
 }
+function syncPlayButton(): void {
+  const button = byId<HTMLButtonElement>('play-toggle');
+  button.textContent = state.playing ? 'Ⅱ' : '▶';
+  button.setAttribute('aria-pressed', String(state.playing));
+  button.setAttribute('aria-label', state.playing ? 'Pausar animación' : 'Reproducir animación');
+}
+function closeMobileNav(): void {
+  document.querySelector('.studio')?.classList.remove('nav-open');
+  byId('toggle-sidebar').setAttribute('aria-expanded', 'false');
+}
 function connectControls(): void {
   options(byId<HTMLSelectElement>('direction-select'), EIGHT_DIRECTIONS, state.direction);
   byId<HTMLInputElement>('seed-input').addEventListener('change', e => {
@@ -635,31 +695,31 @@ function connectControls(): void {
   byId<HTMLSelectElement>('direction-select').addEventListener('change', e => {
     state.direction = (e.currentTarget as HTMLSelectElement).value as Direction8;
     characterAsm.setDirection(state.direction);
-    renderPreviewPending = true;
+    renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('action-select').addEventListener('change', e => {
     const act = (e.currentTarget as HTMLSelectElement).value;
     if (state.section === 'creatures') state.creatureAction = act as CreatureActionId;
     else { state.action = act as CharacterActionId; characterAsm.requestState(state.action, true); }
-    state.frame = 0; elapsed = 0; renderPreviewPending = true;
+    state.frame = 0; elapsed = 0; renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('stage-select').addEventListener('change', e => {
     state.stage = (e.currentTarget as HTMLSelectElement).value;
-    renderPreviewPending = true;
+    renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('age-select').addEventListener('change', e => {
-    state.age = (e.currentTarget as HTMLSelectElement).value as CreatureAgeStage; renderPreviewPending = true;
+    state.age = (e.currentTarget as HTMLSelectElement).value as CreatureAgeStage; renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('health-select').addEventListener('change', e => {
-    state.health = (e.currentTarget as HTMLSelectElement).value as CreatureHealthState; renderPreviewPending = true;
+    state.health = (e.currentTarget as HTMLSelectElement).value as CreatureHealthState; renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('time-select').addEventListener('change', e => {
     state.time = (e.currentTarget as HTMLSelectElement).value as TimeOfDayPhase;
-    renderPreviewPending = true;
+    renderCards(); renderPreviewPending = true;
   });
   byId<HTMLSelectElement>('weather-select').addEventListener('change', e => {
     state.weather = (e.currentTarget as HTMLSelectElement).value as WeatherConditionId;
-    renderPreviewPending = true;
+    renderCards(); renderPreviewPending = true;
   });
   byId<HTMLInputElement>('zoom-select').addEventListener('input', e => {
     state.zoom = Number((e.currentTarget as HTMLInputElement).value);
@@ -689,10 +749,11 @@ function connectControls(): void {
     }
   }
   byId('play-toggle').addEventListener('click', () => {
+    if (!state.playing && !state.loop && state.frame >= frameInfo().count - 1) {
+      state.frame = 0; elapsed = 0;
+    }
     state.playing = !state.playing;
-    const button = byId<HTMLButtonElement>('play-toggle');
-    button.textContent = state.playing ? 'Ⅱ' : '▶';
-    button.setAttribute('aria-pressed', String(state.playing));
+    syncPlayButton();
     renderPreviewPending = true;
   });
   byId('gallery-prev').addEventListener('click', () => {
@@ -709,6 +770,10 @@ function connectControls(): void {
   });
   byId('download-atlas').addEventListener('click', () => exportSheet('png'));
   byId('download-json').addEventListener('click', () => exportSheet('json'));
+  byId('mobile-nav-scrim').addEventListener('click', closeMobileNav);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeMobileNav();
+  });
   byId('toggle-sidebar').addEventListener('click', () => {
     const studio = document.querySelector('.studio')!;
     const open = !studio.classList.contains('nav-open');
@@ -731,7 +796,7 @@ function tick(now: number): void {
       if (!state.loop && state.frame >= info.count) {
         state.frame = info.count - 1;
         state.playing = false;
-        byId('play-toggle').textContent = '▶';
+        syncPlayButton();
         break;
       }
       if (state.frame >= info.count) { state.frame = 0; elapsed = 0; }
@@ -740,8 +805,11 @@ function tick(now: number): void {
       const dtMs = dt * state.speed;
       particles.update(dtMs, { vx: .17, vy: 0,
         canopyPixelShiftX: 0, canopyPixelShiftY: 0, strength: .17 });
-      if (Math.floor(now / 1150) !== Math.floor((now - dt) / 1150)) {
-        particles.emitBurst(state.selected as VFXPresetId, 120, 90, seedNumber(String(Math.floor(now / 1150))), 60);
+      vfxEmissionElapsed += dtMs;
+      if (vfxEmissionElapsed >= 1150) {
+        vfxEmissionElapsed %= 1150;
+        particles.emitBurst(state.selected as VFXPresetId, 120, 90,
+          seedNumber(String(++vfxBurstIndex)), 60);
       }
     }
   }
