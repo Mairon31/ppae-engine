@@ -16,7 +16,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 2A — Geological Morphology Architecture | VERIFIED | 17 formaciones, polígonos, facetas, fracturas e inclusiones |
 | 2B — Geological Rasterization and World Integration | VERIFIED | Rasterización de rocas e integración al mundo |
 | 3A — Flora Morphology and Ecological Patches | VERIFIED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
-| 3B — Flora Rasterizer and World Integration | PENDING | Sustitución de sprites antiguos de vegetación y distribución real |
+| 3B — Flora Rasterizer and World Integration | IMPLEMENTED | Sustitución de sprites antiguos de vegetación y distribución real |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -119,6 +119,18 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Compatibilidad:** no se altera `NatureGenerator.generateSecondaryFlora`, `ProceduralGrammarExecutor.generateBushFlora` ni la distribución de flora actual en `DeterministicWorldField`: la arquitectura 3A requiere conexión de rasterizador y spawns en 3B. Los tests de 3A comprueban descriptores, no calidad visual de sprites.
 - **Pruebas:** VERIFIED, GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38593279027: `npm test` con **17 suites y 95 pruebas aprobadas** (6 nuevas de 3A); `npm run build` con generación correcta de biblioteca, declaraciones TypeScript, typecheck del paquete y demo.
 - **Siguiente fase:** 3B — FloraBotanicalRasterizer e Integración Ecológica en el Mundo.
+
+## Fase 3B — 14 de octubre de 2026
+
+- **Base citada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con 1A–3A asumidas; **HEAD real utilizado:** `61fc6628394fd703d824fe1d0046f00609aedb50`.
+- **Commit de implementación:** pendiente de registrar tras publicar.
+- **Archivos:** ADD `src/vegetation/flora-rasterizer.ts`, ADD `tests/ppae-flora-rasterizer-3b.test.ts`; MODIFY `src/vegetation/nature-generator.ts`, `src/art-generator/grammars.ts`, `src/terrain/world-field.ts`, `src/index.ts` y este archivo.
+- **Rasterización:** `FloraBotanicalRasterizer` procesa los descriptores de 3A con tallos Bézier, espinas, hojas diferenciadas, inflorescencias, manto de musgo, nenúfares, cactus y sombreros de hongos. Cuenta píxeles florales únicos pintados y mantiene `base_pivot` inmóvil al desplazar las partes superiores con viento.
+- **Integración:** `NatureGenerator.generateSecondaryFlora` sustituye el generador anterior de cinco líneas, conserva el contrato de sprite y añade `flora` y `anchors`. `ProceduralGrammarExecutor.generateBushFlora` añade ramas divergentes, cojines asimétricos y bayas con colores solo de las rampas del bioma. `DeterministicWorldField` emplea parches de flora 3A, respetando prioridades de rocas/árboles y semillas independientes del orden de chunks.
+- **Pruebas:** siete tests específicos 3B y suite general con `npm test` + `npm run build`; pendiente del resultado CI antes de marcar VERIFIED.
+- **Cobertura ambiental:** nuevos recursos botánicos en tierra de pradera, bosque, costas, desierto y tundra. La selección de nenúfares en aguas someras queda implementada en el resolver 3A, pero el muestreo de props actual descarta líquidos; para mostrar nenúfares en superficies de agua hará falta un pase de props acuáticos específico.
+- **Validación visual:** pendiente de inspeccionar capturas reales en la demo y comprobar riqueza de siluetas y composición por bioma. Los tests no certifican fidelidad artística.
+- **Siguiente fase:** 4A — Terrain Rendering & Autotiling Overhaul; diagnóstico de cuadrados oscuros y transiciones 47-estados.
 
 ## Convenciones de estado
 

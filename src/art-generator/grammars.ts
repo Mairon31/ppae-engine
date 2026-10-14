@@ -269,8 +269,9 @@ export class ProceduralGrammarExecutor {
   }
 
   /**
-   * Gramática de Arbustos y Flora:
-   * Clusters redondeados bajos con distribución de flores/bayas de alto contraste.
+   * Asymmetric shrub generation: primary woody twigs emerge from the soil,
+   * independent leaf pads preserve openings, and berries occupy actual foliage.
+   * Every shade comes from the biome palette (no new uncontrolled RGB tones).
    */
   private generateBushFlora(
     buffer: PixelBuffer,
@@ -280,59 +281,59 @@ export class ProceduralGrammarExecutor {
     rng: SeededRNG,
     stateTag: 'intact' | 'damaged' | 'snowy' | 'wind_sway'
   ): GrammarOutput {
-    const foliageRamp = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
-    const berryRamp = palette.ramps[def.secondaryRampId] ?? palette.ramps.berry_accent;
-
-    const w = buffer.width;
-    const h = buffer.height;
-    const cx = Math.floor(w / 2);
-    const baseY = h - 2;
-
-    const lobes = 3;
-    for (let i = 0; i < lobes; i++) {
-      const offsetX = (i - 1) * Math.floor(w * 0.16);
-      const lx = cx + offsetX;
-      const ly = Math.floor(h * 0.58) - (i === 1 ? 2 : 0);
-      const rx = Math.floor(w * 0.22);
-      const ry = Math.floor(h * 0.24);
-
-      buffer.fillEllipse(lx, ly + 1, rx, ry, foliageRamp.shadow);
-      buffer.fillEllipse(lx, ly, rx - 1, ry - 1, foliageRamp.midtone);
-      buffer.fillEllipse(
-        lx - 1,
-        ly - 2,
-        Math.max(2, Math.floor(rx * 0.55)),
-        Math.max(2, Math.floor(ry * 0.5)),
-        stateTag === 'snowy' ? hexToRgba('#eef6fa') : foliageRamp.highlight
-      );
+    const foliage = palette.ramps[def.primaryRampId] ?? palette.ramps.foliage;
+    const berries = palette.ramps[def.secondaryRampId] ?? palette.ramps.berry_accent;
+    const wood = palette.ramps.wood ?? foliage;
+    const w=buffer.width,h=buffer.height,cx=Math.floor(w/2),baseY=h-2;
+    const shift=stateTag==='wind_sway'?1:0;
+    const count=rng.nextInt(3,5);
+    const nodes:Array<{x:number;y:number;rx:number;ry:number}>=[];
+    for(let i=0;i<count;i++){
+      const norm=count===1?0:i/(count-1)*2-1;
+      const x=Math.max(3,Math.min(w-4,Math.round(cx+norm*w*.24+rng.nextInt(-2,2)+shift)));
+      const y=Math.max(3,Math.min(baseY-3,Math.floor(h*.56)+rng.nextInt(-3,2)));
+      const rx=Math.max(2,Math.floor(w*rng.nextRange(.17,.25)));
+      const ry=Math.max(2,Math.floor(h*rng.nextRange(.19,.26)));
+      nodes.push({x,y,rx,ry});
+      const branchBaseX=cx+rng.nextInt(-2,2);
+      buffer.drawLine(branchBaseX,baseY,x,y+1,wood.shadow,1);
+      buffer.setPixel(x,y+2,wood.midtone);
     }
-
-    // Bayas/flores con distancia mínima
-    const berries = rng.nextInt(4, 7);
-    for (let b = 0; b < berries; b++) {
-      const bx = cx + rng.nextInt(-Math.floor(w * 0.28), Math.floor(w * 0.28));
-      const by = Math.floor(h * 0.45) + rng.nextInt(-3, 4);
-      if (buffer.isOpaque(bx, by)) {
-        buffer.setPixel(bx, by, berryRamp.midtone);
-        buffer.setPixel(bx, by - 1, berryRamp.highlight);
-      }
-    }
-
-    if (profile.outlineMode !== 'none') {
-      buffer.applySelectiveOutline(foliageRamp.outline);
-    }
-
-    return {
-      buffer,
-      anchors: {
-        base_pivot: {
-          id: 'base_pivot',
-          texelX: cx,
-          texelY: baseY,
-          normalizedX: cx / w,
-          normalizedY: baseY / h
+    const upper=stateTag==='snowy'?foliage.accent:foliage.highlight;
+    for(let i=0;i<nodes.length;i++){
+      const {x,y,rx,ry}=nodes[i];
+      if(stateTag==='damaged' && i===nodes.length-1)continue;
+      // Separate posterior pads and discrete foreground leaves instead of a fixed 3-ellipse row.
+      buffer.fillEllipse(x,y+1,rx,ry,foliage.shadow);
+      buffer.fillEllipse(x-1,y,Math.max(1,rx-1),Math.max(1,ry-1),foliage.midtone);
+      for(let j=0;j<Math.max(3,rx);j++){
+        const ox=x+rng.nextInt(-rx+1,rx-1);
+        const oy=y+rng.nextInt(-ry+1,Math.max(-ry+1,ry-1));
+        if(buffer.isOpaque(ox,oy)){
+          buffer.setPixel(ox,oy,oy<y?upper:foliage.midtone);
         }
       }
+      buffer.fillRect(x-1,y-ry+1,Math.max(1,Math.floor(rx*.6)),1,upper);
+    }
+    const berryCount=rng.nextInt(4,8);
+    let added=0,attempts=0;
+    while(added<berryCount && attempts<berryCount*10){
+      attempts++;
+      const node=nodes[rng.nextInt(0,nodes.length-1)];
+      const bx=node.x+rng.nextInt(-Math.max(1,node.rx-1),Math.max(1,node.rx-1));
+      const by=node.y+rng.nextInt(-Math.max(1,node.ry-1),Math.max(1,node.ry-1));
+      if(!buffer.isOpaque(bx,by))continue;
+      buffer.setPixel(bx,by,berries.midtone);
+      if(buffer.isOpaque(bx,by-1))buffer.setPixel(bx,by-1,berries.highlight);
+      added++;
+    }
+    if(profile.outlineMode!=='none')buffer.applySelectiveOutline(foliage.outline);
+    return {
+      buffer,
+      anchors:{base_pivot:{
+        id:'base_pivot',texelX:cx,texelY:baseY,
+        normalizedX:cx/w,normalizedY:baseY/h
+      }}
     };
   }
 

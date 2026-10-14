@@ -18,6 +18,7 @@ export * from './vegetation/tree-diversity-controller';
 export * from './vegetation/geology-morphology';
 export * from './vegetation/geology-rasterizer';
 export * from './vegetation/flora-morphology';
+export * from './vegetation/flora-rasterizer';
 export * from './entities/character-rig';
 export * from './entities/character-generator';
 export * from './animation/state-machine';

@@ -10,6 +10,7 @@ import {
   WorldTileSample
 } from '../core/contracts';
 import { fnv1aHash32 } from '../core/deterministic';
+import { FloraMorphologyResolver } from '../vegetation/flora-morphology';
 import { TreeDiversityController } from '../vegetation/tree-diversity-controller';
 
 export const TERRAIN_MATERIALS: Readonly<Record<TerrainMaterialId, TerrainMaterialDefinition>> = {
@@ -172,6 +173,7 @@ export class DeterministicWorldField {
   private readonly seedNum: number;
   private readonly overrides = new Map<string, TileOverrideRecord>();
   private readonly treeDiversity = new TreeDiversityController();
+  private readonly floraResolver = new FloraMorphologyResolver();
 
   constructor(public readonly worldSeed: string | number) {
     this.seedNum = typeof worldSeed === 'number' ? worldSeed >>> 0 : fnv1aHash32(String(worldSeed));
@@ -433,7 +435,11 @@ export class DeterministicWorldField {
           archetypeId: stratified.archetypeId
         };
       } else if (base.material === 'desert_dune' && spawnRoll < 0.06) {
-        propSpawn = { kind: 'flora', subType: 'desert_cactus', variantSeed };
+        const flora = this.floraResolver.selectEcologicalFloraKind(
+          this.seedNum, tileX, tileY, base.biome, base.material,
+          base.moisture, base.temperature, false
+        );
+        propSpawn = { kind: 'flora', subType: flora.kind, variantSeed: flora.variantSeed };
       } else if (
         (base.material === 'desert_dune' || base.material === 'sand_beach') &&
         spawnRoll >= 0.06 && spawnRoll < 0.14
@@ -443,12 +449,21 @@ export class DeterministicWorldField {
         );
         propSpawn = { kind: 'mineral', subType, variantSeed };
       } else if (
-        (base.material === 'meadow_grass' || base.material === 'forest_moss') &&
-        spawnRoll >= 0.2 &&
+        (base.material === 'meadow_grass' ||
+          base.material === 'forest_moss' ||
+          base.material === 'sand_beach' ||
+          base.material === 'snow_frost') &&
+        spawnRoll >= 0.18 &&
         spawnRoll < 0.34
       ) {
-        const subType = spawnRoll < 0.25 ? 'wild_flower' : spawnRoll < 0.3 ? 'tall_grass' : 'mushroom_cluster';
-        propSpawn = { kind: 'flora', subType, variantSeed };
+        const isNearWaterShore =
+          base.material === 'sand_beach' ||
+          this.isNearWater(tileX, tileY, base.moisture);
+        const flora = this.floraResolver.selectEcologicalFloraKind(
+          this.seedNum, tileX, tileY, base.biome, base.material,
+          base.moisture, base.temperature, isNearWaterShore
+        );
+        propSpawn = { kind: 'flora', subType: flora.kind, variantSeed: flora.variantSeed };
       } else if (
         (base.material === 'meadow_grass' || base.material === 'forest_moss' ||
           base.material === 'snow_frost') &&
