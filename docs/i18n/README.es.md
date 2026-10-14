@@ -198,7 +198,7 @@ El adaptador `PhaserPPAEAdapter` registra texturas Canvas a partir de assets gen
 
 ## Estado y hoja de ruta
 
-PPAE está en **desarrollo alfa activo**. Las fases documentadas hasta **8A** están implementadas con pruebas, pero la validación visual de todas las semillas y perfiles continúa. El Playground funciona, las exportaciones y declaraciones están compiladas y existen oportunidades para mejorar integración, rendimiento y calidad artística.
+PPAE está en **desarrollo alfa activo**. Las fases documentadas hasta **9** están implementadas con pruebas, incluyendo diez estructuras, interiores de cabaña, herrería y alquimia y formaciones de cuevas, pero la validación visual de todas las semillas y perfiles continúa. El Playground funciona, las exportaciones y declaraciones están compiladas y existen oportunidades para mejorar integración, rendimiento y calidad artística.
 
 **Seguir el desarrollo:** [Progreso de implementación](../PPAE_2_0_IMPLEMENTATION_PROGRESS.md) · [Arquitectura del Playground](../PLAYGROUND.md) · [PR #2](https://github.com/Mairon31/ppae-engine/pull/2).
 

@@ -166,4 +166,18 @@ describe('PPAE 2.0 Phase 9 — Procedural Architecture, Roof & Wall Grammars, In
     )).toBe(true);
   });
 
+
+  it('uses true material and roof geometry, not just different palettes', () => {
+    const cottage = DEFAULT_STRUCTURE_CATALOG.village_cottage_01;
+    const timber = structureGen.generateStructure(cottage, profile6, false);
+    const stone = structureGen.generateStructure({ ...cottage, wallMaterial: 'cobblestone' }, profile6, false);
+    const ashlar = structureGen.generateStructure({ ...cottage, wallMaterial: 'ashlar_brick' }, profile6, false);
+    expect(Array.from(timber.baseAndWallsBuffer.data)).not.toEqual(Array.from(stone.baseAndWallsBuffer.data));
+    expect(Array.from(stone.baseAndWallsBuffer.data)).not.toEqual(Array.from(ashlar.baseAndWallsBuffer.data));
+    expect(stone.wallCollisionRects).toEqual(timber.wallCollisionRects);
+    const thatch = structureGen.generateStructure({ ...cottage, roofStyle: 'thatched_gable', hasDormerWindow: false }, profile6, false);
+    expect(Array.from(thatch.roofOverlayBuffer.data)).not.toEqual(Array.from(timber.roofOverlayBuffer.data));
+    expect(thatch.roofOcclusionFootprint).toEqual(timber.roofOcclusionFootprint);
+  });
+
 });

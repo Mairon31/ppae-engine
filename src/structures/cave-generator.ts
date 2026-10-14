@@ -155,7 +155,8 @@ export class CaveDungeonGenerator {
     for (let i = 0; i < def.crystalCount; i++) {
       const tx = rng.nextInt(1, def.widthInTiles - 2);
       const ty = rng.nextInt(1, def.heightInTiles - 3);
-      if (tx === def.exitStairsTileX && ty === def.exitStairsTileY) continue;
+      if ((tx === def.exitStairsTileX && ty === def.exitStairsTileY) ||
+          occupiedColumns.has(tx + ':' + ty)) continue;
 
       const cx = tx * tileTex + Math.floor(tileTex / 2);
       const cy = ty * tileTex + Math.floor(tileTex / 2);

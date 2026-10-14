@@ -101,6 +101,45 @@ try {
       (await page.locator('#render-stats').innerText()).trim());
   }
 
+
+  // Phase 9 actual new structures and interior layout smoke/PNG evidence.
+  await nav.filter({ hasText: 'Structures' }).click();
+  for (const [id, filename] of [
+    ['grain_windmill_01', '38-phase9-windmill.png'],
+    ['ancient_mossy_ruins_01', '39-phase9-ruins.png'],
+    ['blue_slate_manor_01', '40-phase9-slate-manor.png']
+  ]) {
+    await page.locator('#catalog-search').fill(id);
+    await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+    await page.locator('.asset-card').first().click();
+    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.screenshot({ path: join(output, filename), fullPage: true });
+  }
+  await page.locator('#catalog-search').fill('');
+  await nav.filter({ hasText: 'Interiors' }).click();
+  for (const [id, filename] of [
+    ['forge_interior', '41-phase9-forge-interior.png'],
+    ['alchemy_interior', '42-phase9-alchemy-interior.png']
+  ]) {
+    await page.locator('#catalog-search').fill(id);
+    await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+    await page.locator('.asset-card').first().click();
+    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.screenshot({ path: join(output, filename), fullPage: true });
+  }
+  const [interiorDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const interiorPath = join(output, 'phase9-alchemy-interior.json');
+  await interiorDownload.saveAs(interiorPath);
+  const interiorJson = JSON.parse(readFileSync(interiorPath, 'utf8'));
+  if (interiorJson.definition?.interiorId !== 'interior_alchemy_01' ||
+      !interiorJson.collisionRects?.length ||
+      !interiorJson.walkabilityGrid?.length)
+    throw new Error('Phase 9 alchemy lab does not export real interior metadata');
+  await page.locator('#catalog-search').fill('');
+  console.log('PHASE 9 BROWSER OK: windmill/ruins/manor, forge/alchemy, real interior metadata');
+
   await page.locator('#section-nav .nav-link').nth(1).click();
   await page.locator('#direction-select').selectOption('NE');
   await page.locator('#action-select').selectOption('walk');

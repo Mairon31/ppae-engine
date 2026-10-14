@@ -33,9 +33,9 @@
 | `terrain-variants` | `TerrainAutotiler.generateSeamlessBaseTile` | 16 variantes repetibles por material definido |
 | `autotiling` | `TerrainAutotiler.composeAutotiledSurface` | 256 máscaras de vecinos crudas normalizadas al subconjunto canónico de 47; material, sustrato |
 | `liquids` | `LiquidTileGenerator.generateAnimatedFrame` | Agua somera, profunda y lava; ocho frames y máscara de costa canónica |
-| `structures` | `DEFAULT_STRUCTURE_CATALOG` y `StructureGenerator` | Las cuatro definiciones de construcción existentes; puerta, luces de ventana y visibilidad de tejado |
-| `interiors` | `InteriorGenerator`, `DEFAULT_COTTAGE_INTERIOR`, `DEFAULT_FORGE_INTERIOR`, `DEFAULT_ALCHEMY_INTERIOR` | Three real furnished room layouts, collision/walkability geometry and lighting source metadata; preserves original cottage |
-| `caves` | `CaveDungeonGenerator.generateChamber` | Cámara de cristal con semilla, lava activable, 0–12 cristales y colisiones |
+| `structures` | `DEFAULT_STRUCTURE_CATALOG` y `StructureGenerator` | Diez construcciones reales, incluidos graneros, molino, pozo, ruinas, paja y pizarra; puerta, ventanas, techo separado y colisiones |
+| `interiors` | `InteriorGenerator`, `DEFAULT_COTTAGE_INTERIOR`, `DEFAULT_FORGE_INTERIOR`, `DEFAULT_ALCHEMY_INTERIOR` | Tres habitaciones amuebladas: cabaña, herrería y laboratorio de alquimia; colisiones, transitabilidad y fuentes de luz |
+| `caves` | `CaveDungeonGenerator.generateChamber` | Cámara de cristal por semilla con lava, pilares colisionables, estalagmitas, estalactitas, cristales (0–12) y colisiones |
 | `farming` | `FarmingAndCropGenerator` | Las cuatro especies de cultivos, etapa y terreno cultivado |
 | `crop-lifecycle` | `FarmingAndCropGenerator.renderCropStage` | Cuatro cultivos × cinco etapas = 20 muestras |
 | `equipment` | `InventoryIconGenerator` y `PixelNineSliceLibrary` | Cinco tipos iconográficos, material y desgaste |

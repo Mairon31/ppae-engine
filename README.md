@@ -283,11 +283,12 @@ The `PhaserPPAEAdapter` provides a canvas-texture registration path for generate
 
 ## Current status & roadmap
 
-PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 8A**; new work builds on top of these systems rather than starting a replacement engine.
+PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 9**; new work builds on top of these systems rather than starting a replacement engine.
 
 | Area | Status |
 | :--- | :--- |
-| Procedural generation systems through Phase 8A | Implemented with automated tests |
+| Procedural generation systems through Phase 9 | Implemented with automated tests |
+| Architecture / interiors / caves | Ten structure definitions, three explorable interior layouts, seeded cave formations and separate roof occlusion buffers |
 | Browser-based interactive Playground | Available |
 | Library, type declarations and demo build | Available |
 | Native tree-canopy clipping regression | Fixed and covered by tests |

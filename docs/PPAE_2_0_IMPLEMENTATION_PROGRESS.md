@@ -353,3 +353,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Cave renderer now includes seeded rock pillars (with logical collision rectangles), layered wall strata and stepped stalagmites while retaining exits, lava/crystals and the existing cave API.
 - New `DEFAULT_FORGE_INTERIOR` / `DEFAULT_ALCHEMY_INTERIOR` demonstrate real furniture via the existing Interiors lab; the lab has three selectable layouts, type-safe metadata and localized labels.
 - Added native-resolution roof/door invariants, interior collision/exit tests and cave determinism/pillar coverage. Validation of this increment and visual review remain PENDING until new GitHub Actions runs finish.
+
+### Phase 9 — Regression hardening and visual QA capture
+
+- New no-palette-change material/roof differential regression; crystals avoid rock-column collision cells.
+- Chromium QA now captures generated windmill, ruins, slate manor, forge and alchemy screens and validates exported alchemy metadata, in addition to the original 30 sections.
+- README EN/ES/PT-BR updated consistently; coverage matrix documents 10 catalog structures and three real interior layouts.
+- `b185caf68dbfc67f8f6d64304651f458e5225901` passed CI (`npm test`, `npm run build`, `npm run check:package`) and Pages deployment. Phase 9 remains PENDING final verification of this subsequent QA commit and human art-direction review.
