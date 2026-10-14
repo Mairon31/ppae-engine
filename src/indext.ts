@@ -24,3 +24,7 @@ export * from './interiors/portal-system';
 export * from './lighting/lighting-engine';
 export * from './environment/weather-wind-system';
 export * from './vfx/particle-engine';
+export * from './items/equipment-generator';
+export * from './items/inventory-icon-generator';
+export * from './farming/crop-generator';
+export * from './ui/hud-primitives';
