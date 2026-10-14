@@ -15,36 +15,36 @@ import {
 import { AVATAR_VARIANTS } from './avatar-lab';
 
 export const PLAYGROUND_SECTIONS = [
-  { id: 'world', label: 'Mundo procedural', group: 'Escenarios', description: 'Chunks, biomas, props, agua y profundidad' },
-  { id: 'characters', label: 'Creador de personajes', group: 'Entidades', description: '32 avatares y personalización anatómica, rasgos, equipo y colores' },
-  { id: 'character-actions', label: 'Acciones de personaje', group: 'Entidades', description: 'Las 28 animaciones con equipo y ocho direcciones' },
-  { id: 'npcs', label: 'NPCs y oficios', group: 'Entidades', description: '8 arquetipos profesionales deterministas' },
-  { id: 'npc-variants', label: 'Diversidad de NPCs', group: 'Entidades', description: '64 habitantes: ocho semillas por cada oficio' },
-  { id: 'creatures', label: 'Bestiario', group: 'Entidades', description: '16 especies, 10 familias, 12 acciones' },
-  { id: 'creature-variants', label: 'Variantes de criaturas', group: 'Entidades', description: 'Especies combinadas con edad y condición física' },
-  { id: 'bosses', label: 'Jefes', group: 'Entidades', description: 'Coloso, señor Ent y segmentos' },
-  { id: 'trees', label: 'Árboles', group: 'Naturaleza', description: '12 familias botánicas y ciclos de vida' },
-  { id: 'tree-lifecycle', label: 'Ciclos de árboles', group: 'Naturaleza', description: '12 etapas de vida por familia botánica' },
-  { id: 'tree-archetypes', label: 'Arquetipos arbóreos', group: 'Naturaleza', description: 'Todas las morfologías estructurales de las 12 familias' },
-  { id: 'flora', label: 'Vegetación menor', group: 'Naturaleza', description: '17 morfologías botánicas' },
-  { id: 'geology', label: 'Geología', group: 'Naturaleza', description: '17 formaciones y depósitos' },
-  { id: 'terrain', label: 'Materiales del terreno', group: 'Mundo', description: 'Texturas y transiciones de suelo auténticas' },
-  { id: 'terrain-variants', label: 'Variantes tileables', group: 'Mundo', description: 'Dieciséis variantes de cada material con bordes repetibles' },
-  { id: 'autotiling', label: 'Autotiling 8 vecinos', group: 'Mundo', description: 'Máscaras de conexión y esquinas de terreno' },
-  { id: 'liquids', label: 'Líquidos animados', group: 'Mundo', description: 'Agua superficial, agua profunda, animación y flujo' },
-  { id: 'structures', label: 'Arquitectura', group: 'Mundo', description: 'Edificios, puentes, tejados y portales' },
-  { id: 'interiors', label: 'Interiores', group: 'Mundo', description: 'Habitaciones, mobiliario y colisiones' },
-  { id: 'caves', label: 'Cuevas', group: 'Mundo', description: 'Cámara de cristal y lava' },
-  { id: 'farming', label: 'Agricultura', group: 'Mundo', description: 'Cultivos, suelo y etapas de crecimiento' },
-  { id: 'crop-lifecycle', label: 'Ciclos de cultivo', group: 'Mundo', description: 'Todas las variedades y etapas de crecimiento agrícola' },
-  { id: 'equipment', label: 'Iconos de equipamiento', group: 'Sistemas', description: 'Materiales y desgaste de ítems procedurales' },
-  { id: 'equipment-materials', label: 'Herramientas por material', group: 'Sistemas', description: 'Seis grados de material, armas y armaduras' },
-  { id: 'hud', label: 'HUD / Nine-slice', group: 'Sistemas', description: 'Paneles pixel-perfect y barras de progreso paramétricas' },
-  { id: 'particles', label: 'Partículas', group: 'Sistemas', description: '10 emisores, gravedad y pooling' },
-  { id: 'weather', label: 'Clima y viento', group: 'Sistemas', description: '11 estados meteorológicos' },
-  { id: 'lighting', label: 'Iluminación', group: 'Sistemas', description: 'Fases del día y mapas de luz' },
-  { id: 'palettes', label: 'Paletas del motor', group: 'Diagnóstico artístico', description: 'Rampas cromáticas reales por bioma y estación' },
-  { id: 'resolution-profiles', label: 'Comparador multirresolución', group: 'Diagnóstico artístico', description: 'Una misma especie generada nativamente a 4, 6, 8, 16 y 32' }
+  { id: 'world', label: 'Procedural World', group: 'Worlds', description: 'Deterministic chunks, biomes, props, water, and depth' },
+  { id: 'characters', label: 'Character Creator', group: 'Entities', description: '32 avatars with anatomical features, equipment, and customizable colors' },
+  { id: 'character-actions', label: 'Character Actions', group: 'Entities', description: '28 actions, equipment, and eight directions' },
+  { id: 'npcs', label: 'NPCs & Professions', group: 'Entities', description: 'Eight deterministic profession archetypes' },
+  { id: 'npc-variants', label: 'NPC Diversity', group: 'Entities', description: '64 residents with eight seeded variations per profession' },
+  { id: 'creatures', label: 'Bestiary', group: 'Entities', description: '16 species, ten anatomy families, 12 actions' },
+  { id: 'creature-variants', label: 'Creature Variants', group: 'Entities', description: 'Species combined with age and physical condition' },
+  { id: 'bosses', label: 'Bosses', group: 'Entities', description: 'Crystal colossus, treant lord, and segmented anatomy' },
+  { id: 'trees', label: 'Trees', group: 'Nature', description: '12 botanical families with lifecycle stages' },
+  { id: 'tree-lifecycle', label: 'Tree Lifecycles', group: 'Nature', description: 'All 12 lifecycle stages across botanical families' },
+  { id: 'tree-archetypes', label: 'Tree Archetypes', group: 'Nature', description: 'Every structural morphology for all 12 families' },
+  { id: 'flora', label: 'Secondary Flora', group: 'Nature', description: '17 botanical morphologies' },
+  { id: 'geology', label: 'Geology', group: 'Nature', description: '17 formations and geological deposits' },
+  { id: 'terrain', label: 'Terrain Materials', group: 'World', description: 'Authentic terrain textures and material transitions' },
+  { id: 'terrain-variants', label: 'Seamless Variants', group: 'World', description: '16 tileable variations for each material' },
+  { id: 'autotiling', label: '8-Neighbor Autotiling', group: 'World', description: 'Terrain connection masks, edges, and corners' },
+  { id: 'liquids', label: 'Animated Liquids', group: 'World', description: 'Shallow water, deep water, lava, and motion' },
+  { id: 'structures', label: 'Structures', group: 'World', description: 'Buildings, bridges, roofs, and portals' },
+  { id: 'interiors', label: 'Interiors', group: 'World', description: 'Rooms, furniture, and collision geometry' },
+  { id: 'caves', label: 'Caves', group: 'World', description: 'Crystal chambers and lava' },
+  { id: 'farming', label: 'Farming', group: 'World', description: 'Crops, soil, and growth stages' },
+  { id: 'crop-lifecycle', label: 'Crop Lifecycles', group: 'World', description: 'Every crop species and growth stage' },
+  { id: 'equipment', label: 'Equipment Icons', group: 'Systems', description: 'Procedural equipment materials and wear' },
+  { id: 'equipment-materials', label: 'Equipment Materials', group: 'Systems', description: 'Six material tiers across tools, weapons, and armor' },
+  { id: 'hud', label: 'HUD & Nine-slice', group: 'Systems', description: 'Pixel-perfect panels and parameterized progress bars' },
+  { id: 'particles', label: 'Particles & VFX', group: 'Systems', description: 'Ten emitters, gravity, and object pooling' },
+  { id: 'weather', label: 'Weather & Wind', group: 'Systems', description: '11 weather states' },
+  { id: 'lighting', label: 'Lighting', group: 'Systems', description: 'Daylight phases and light maps' },
+  { id: 'palettes', label: 'Engine Palettes', group: 'Art Diagnostics', description: 'Real palette ramps across biomes and seasons' },
+  { id: 'resolution-profiles', label: 'Resolution Comparison', group: 'Art Diagnostics', description: 'One species rendered natively at 4, 6, 8, 16, and 32' }
 ] as const;
 
 export type PlaygroundSectionId = (typeof PLAYGROUND_SECTIONS)[number]['id'];
@@ -120,34 +120,34 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
 };
 
 const LABELS: Record<string, string> = {
-  hero: 'Avatar original',
-  shallow_water: 'Agua superficial', deep_water: 'Agua profunda',
-  hud_panel: 'Panel nine-slice', health_bar: 'Salud', mana_bar: 'Maná', stamina_bar: 'Energía',
-  world_overview: 'Panorámica procedural', world_wildlife: 'Hábitat y fauna',
-  world_village: 'Pueblo y habitantes',
-  village_cottage_01: 'Cabaña aldeana', blacksmith_forge_01: 'Forja',
-  north_mine_cave_mouth: 'Entrada a mina', river_wooden_bridge: 'Puente de madera',
-  ancient_crystal_colossus: 'Coloso de cristal',
-  corrupted_forest_treant_lord: 'Señor Ent corrupto',
-  villager_farmer: 'Granjero', blacksmith_artisan: 'Herrero',
-  town_guard: 'Guardia', wandering_mage: 'Mago',
-  forest_ranger: 'Explorador', merchant_trader: 'Mercader',
-  elder_scholar: 'Sabio anciano', miner_prospector: 'Minero',
-  dawn: 'Amanecer', morning: 'Mañana', noon: 'Mediodía',
-  afternoon: 'Tarde', dusk: 'Atardecer', night: 'Noche',
-  underground_dark: 'Oscuridad subterránea',
-  idle: 'Reposo', move: 'Movimiento', sprint_flee: 'Huida / galope',
-  jump_pounce: 'Salto / emboscada', special_ability: 'Habilidad especial',
-  rest_graze: 'Pastoreo', eat_feed: 'Alimentación', sleep: 'Dormir',
-  attack: 'Ataque', hurt: 'Herido', death: 'Muerte',
-  weapon_sword: 'Espada', tool_axe: 'Hacha',
-  tool_pickaxe: 'Pico', armor_chest: 'Coraza', shield: 'Escudo'
+  hero: 'Default avatar',
+  shallow_water: 'Shallow Water', deep_water: 'Deep Water',
+  hud_panel: 'Nine-slice Panel', health_bar: 'Health', mana_bar: 'Mana', stamina_bar: 'Stamina',
+  world_overview: 'Procedural Overview', world_wildlife: 'Wildlife Habitat',
+  world_village: 'Village & Residents',
+  village_cottage_01: 'Village Cottage', blacksmith_forge_01: 'Blacksmith Forge',
+  north_mine_cave_mouth: 'Mine Entrance', river_wooden_bridge: 'Wooden Bridge',
+  ancient_crystal_colossus: 'Crystal Colossus',
+  corrupted_forest_treant_lord: 'Corrupted Treant Lord',
+  villager_farmer: 'Farmer', blacksmith_artisan: 'Blacksmith',
+  town_guard: 'Guard', wandering_mage: 'Wandering Mage',
+  forest_ranger: 'Forest Ranger', merchant_trader: 'Merchant',
+  elder_scholar: 'Elder Scholar', miner_prospector: 'Miner',
+  dawn: 'Dawn', morning: 'Morning', noon: 'Noon',
+  afternoon: 'Afternoon', dusk: 'Dusk', night: 'Night',
+  underground_dark: 'Underground Darkness',
+  idle: 'Idle', move: 'Move', sprint_flee: 'Sprint / Flee',
+  jump_pounce: 'Jump / Pounce', special_ability: 'Special Ability',
+  rest_graze: 'Rest / Graze', eat_feed: 'Eat / Feed', sleep: 'Sleep',
+  attack: 'Attack', hurt: 'Hurt', death: 'Death',
+  weapon_sword: 'Sword', tool_axe: 'Axe',
+  tool_pickaxe: 'Pickaxe', armor_chest: 'Chest Armor', shield: 'Shield'
 };
 
 export function formatPlaygroundLabel(id: string): string {
   if (id.startsWith('avatar_')) return 'Avatar ' + id.slice(-2);
   if (id.includes(':')) return id.split(':').map(part => LABELS[part] ?? part.replace(/[_-]/g, ' ')).join(' · ');
-  if (/^\d+$/.test(id)) return 'Máscara ' + id.padStart(3, '0');
+  if (/^\d+$/.test(id)) return 'Mask ' + id.padStart(3, '0');
   return LABELS[id] ?? id.replace(/[_-]/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
 }
 
