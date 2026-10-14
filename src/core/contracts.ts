@@ -945,7 +945,11 @@ export type CreatureFamilyId =
   | 'gelatinous_slime'
   | 'arachnid'
   | 'flying_winged'
-  | 'aquatic_swimmer';
+  | 'aquatic_swimmer'
+  | 'serpentine_reptile'
+  | 'insectoid'
+  | 'elemental_golem'
+  | 'undead_biped';
 
 export type CreatureActionId =
   | 'idle'
@@ -971,7 +975,25 @@ export type CreatureSpeciesId =
   | 'river_trout'
   | 'emerald_slime'
   | 'cave_spider'
-  | 'vampire_bat';
+  | 'vampire_bat'
+  | 'forest_stag'
+  | 'wild_boar'
+  | 'brown_bear'
+  | 'desert_viper'
+  | 'horned_beetle'
+  | 'skeleton_warrior'
+  | 'forest_goblin'
+  | 'stone_golem';
+
+export type CreatureAgeStage = 'juvenile' | 'adult' | 'alpha_elder';
+export type CreatureHealthState = 'healthy' | 'wounded' | 'corrupted';
+
+export interface CreatureMorphVariantOptions {
+  readonly ageStage?: CreatureAgeStage;
+  readonly healthState?: CreatureHealthState;
+  /** Extra size factor clamped to [0.75, 1.35] separately from age stage. */
+  readonly sizeScaleMultiplier?: number;
+}
 
 export interface CreatureSpeciesProfile {
   readonly schemaVersion: string;
@@ -988,13 +1010,17 @@ export interface CreatureSpeciesProfile {
   readonly outlineHex: string;
   readonly features: {
     readonly hasHorns?: boolean;
+    readonly hasAntlers?: boolean;
+    readonly hasTusks?: boolean;
     readonly hasSpots?: boolean;
     readonly hasUdder?: boolean;
     readonly hasBushyTail?: boolean;
     readonly hasPointedEars?: boolean;
     readonly hasCombAndWattle?: boolean;
     readonly hasTranslucentCore?: boolean;
-    readonly legPairs?: 1 | 2 | 4;
+    readonly hasExposedRibcage?: boolean;
+    readonly hasCarapaceHorn?: boolean;
+    readonly legPairs?: 0 | 1 | 2 | 3 | 4;
     readonly defaultFlightAltitudeTexels?: number;
   };
   readonly logicalHitbox: LogicalHitbox;
@@ -1055,6 +1081,8 @@ export interface CompiledCreatureSpritesheetMetadata {
   readonly sequenceOrder: Readonly<Record<string, readonly string[]>>;
 }
 
+export type BossArchetypeId = 'ancient_crystal_colossus' | 'corrupted_forest_treant_lord';
+
 export type BossPhaseId = 'phase_1_dormant' | 'phase_2_enraged' | 'phase_3_critical';
 
 export type BossSegmentId =
@@ -1090,7 +1118,7 @@ export interface BossSegmentState {
 
 export interface BossVisualState {
   readonly schemaVersion: string;
-  readonly bossId: string;
+  readonly bossId: BossArchetypeId;
   readonly seed: number;
   readonly phase: BossPhaseId;
   readonly action: BossActionId;

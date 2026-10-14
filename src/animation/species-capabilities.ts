@@ -127,6 +127,34 @@ export const FAMILY_ANIMATION_CAPABILITIES: Readonly<Record<CreatureFamilyId, Sp
     locomotionMedia: ['aquatic'],
     supportedActions: ['idle', 'move', 'sprint_flee', 'eat_feed', 'sleep', 'swim', 'attack', 'hurt', 'death'],
     fallbackActionMap: {"rest_graze":"swim","jump_pounce":"sprint_flee","special_ability":"sprint_flee"}
+  },
+  serpentine_reptile: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    family: 'serpentine_reptile',
+    locomotionMedia: ['terrestrial', 'amphibious'],
+    supportedActions: ['idle', 'move', 'sprint_flee', 'sleep', 'jump_pounce', 'swim', 'attack', 'special_ability', 'hurt', 'death'],
+    fallbackActionMap: {"rest_graze":"idle","eat_feed":"attack"}
+  },
+  insectoid: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    family: 'insectoid',
+    locomotionMedia: ['terrestrial'],
+    supportedActions: ['idle', 'move', 'sprint_flee', 'eat_feed', 'sleep', 'jump_pounce', 'attack', 'special_ability', 'hurt', 'death'],
+    fallbackActionMap: {"rest_graze":"eat_feed","swim":"move"}
+  },
+  elemental_golem: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    family: 'elemental_golem',
+    locomotionMedia: ['terrestrial'],
+    supportedActions: ['idle', 'move', 'sleep', 'attack', 'special_ability', 'hurt', 'death'],
+    fallbackActionMap: {"sprint_flee":"move","rest_graze":"idle","eat_feed":"idle","jump_pounce":"special_ability","swim":"move"}
+  },
+  undead_biped: {
+    schemaVersion: PPAE_SCHEMA_VERSION,
+    family: 'undead_biped',
+    locomotionMedia: ['terrestrial'],
+    supportedActions: ['idle', 'move', 'sprint_flee', 'sleep', 'jump_pounce', 'attack', 'special_ability', 'hurt', 'death'],
+    fallbackActionMap: {"rest_graze":"idle","eat_feed":"attack","swim":"move"}
   }
 };
 

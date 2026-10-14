@@ -25,6 +25,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 6B — Species Animation Capabilities & Creature Atlas | VERIFIED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
+| 8A — Advanced Creatures & Bosses | IMPLEMENTED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -235,6 +236,17 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas:** nuevo archivo de regresión de escala, contraste cromático/geométrico, determinismo y continuidad direccional; ejecución CI pendiente al momento del primer commit.
 - **Estado:** VERIFIED técnicamente. Commit de implementación `843af8564f066cc25d472666f9e41ca62ca7e4e6`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38606458485: `npm test` **26 suites / 151 pruebas aprobadas** (4 nuevas) y `npm run build` correcto (TypeScript, declaraciones, biblioteca y demo). Validación visual con capturas de personajes, copas y rocas en el navegador pendiente; las pruebas técnicas no acreditan equivalencia visual.
 - **Siguiente:** Fase 8A — familias anatómicas adicionales y escala multirresolución de criaturas y jefes.
+
+## Fase 8A — 14 de octubre de 2026
+
+- **Rama y PR:** `feat/ppae-2-art-overhaul`, PR #2, sin modificar `master`. HEAD real inspeccionado: `f7211c33ad8d9100582166b66cffe0bd6853fa34`; la referencia original `217f76b393cda5b9755119a67f8b56d854df4520` no contiene los desarrollos posteriores.
+- **Contratos:** diez `CreatureFamilyId`, 16 `CreatureSpeciesId`, `CreatureMorphVariantOptions` (juvenile/adult/alpha_elder, healthy/wounded/corrupted, escala limitada) y `BossArchetypeId` tipado.
+- **Rigs:** los seis solvers existentes reciben escala continua `profile.moduleSize / 4`, con tamaño extra de variante; cuatro solvers nuevos: reptil serpentino (espina continua, lengua y capucha), insecto hexápodo (trípode/élitros), gólem pétreo (núcleo y puños) y bípeda no muerta/goblin (costillas/orejas/arma). Ciervo con astas y jabalí con colmillos. Detalle superficial adicional nativo en perfiles 16 y 32.
+- **Capacidades:** las cuatro familias nuevas se registran en `SpeciesAnimationCapabilityRegistry`; acciones incompatibles resuelven alternativas seguras y permanecen compatibles los clips/atlas 6B.
+- **Jefes:** `createCorruptedTreantBossState`, paleta corrupta por fase, corteza, ramificaciones y garras de raíces, sin romper estados de cuatro segmentos, puntos débiles, telegrafía ni fases del coloso preexistente.
+- **Pruebas:** `tests/ppae-advanced-creatures-bosses-8a.test.ts` cubre catálogo, render escalado, determinismo en ocho direcciones, variantes, ambos jefes y compilación de atlas.
+- **Estado:** IMPLEMENTED hasta comprobar CI (`npm test`, `npm run build`); inspección visual de las diez familias en 4/6/8/16/32 aún pendiente. Un CI aprobado por sí solo no certifica fidelidad artística.
+- **Siguiente:** Fase 9 — Procedural Architecture & Interiors.
 
 ## Convenciones de estado
 

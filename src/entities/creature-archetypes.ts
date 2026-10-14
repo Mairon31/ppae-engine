@@ -2,11 +2,13 @@ import {
   AnchorPoint,
   ArtStyleProfile,
   CreatureActionId,
+  CreatureMorphVariantOptions,
   CreatureSpeciesId,
   CreatureSpeciesProfile,
   Direction8,
   PPAE_SCHEMA_VERSION
 } from '../core/contracts';
+import { resolveDetailBudgetForProfile } from '../core/coordinates';
 import { SeededRNG } from '../core/deterministic';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
@@ -162,6 +164,110 @@ export const CREATURE_SPECIES_CATALOG: Readonly<Record<CreatureSpeciesId, Creatu
     outlineHex: '#0c4a6e',
     features: {},
     logicalHitbox: { offsetX: -5, offsetY: -3, width: 10, height: 6, collidable: false }
+  },
+  forest_stag: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'forest_stag',
+    family: 'quadruped', isHostile: false,
+    widthModules: 7, heightModules: 7,
+    primaryHex: '#9a5b32',
+    shadowHex: '#6b3d1e',
+    highlightHex: '#c47d4e',
+    secondaryHex: '#fef3c7',
+    accentHex: '#d6c7b2',
+    outlineHex: '#26150b',
+    features: {"hasAntlers":true,"hasSpots":true,"legPairs":2},
+    logicalHitbox: { offsetX: -9, offsetY: -5, width: 18, height: 10, collidable: true }
+  },
+  wild_boar: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'wild_boar',
+    family: 'quadruped', isHostile: true,
+    widthModules: 6, heightModules: 5,
+    primaryHex: '#574133',
+    shadowHex: '#38281e',
+    highlightHex: '#785b48',
+    secondaryHex: '#291d16',
+    accentHex: '#f8fafc',
+    outlineHex: '#17100b',
+    features: {"hasTusks":true,"legPairs":2},
+    logicalHitbox: { offsetX: -8, offsetY: -5, width: 16, height: 10, collidable: true }
+  },
+  brown_bear: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'brown_bear',
+    family: 'quadruped', isHostile: true,
+    widthModules: 8, heightModules: 6,
+    primaryHex: '#6b4226',
+    shadowHex: '#452815',
+    highlightHex: '#8f5b38',
+    secondaryHex: '#331d0e',
+    accentHex: '#ef4444',
+    outlineHex: '#1a0f07',
+    features: {"hasPointedEars":true,"legPairs":2},
+    logicalHitbox: { offsetX: -11, offsetY: -6, width: 22, height: 12, collidable: true }
+  },
+  desert_viper: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'desert_viper',
+    family: 'serpentine_reptile', isHostile: true,
+    widthModules: 6, heightModules: 4,
+    primaryHex: '#ca8a04',
+    shadowHex: '#854d0e',
+    highlightHex: '#facc15',
+    secondaryHex: '#451a03',
+    accentHex: '#ef4444',
+    outlineHex: '#1c1008',
+    features: {"legPairs":0},
+    logicalHitbox: { offsetX: -7, offsetY: -4, width: 14, height: 8, collidable: true }
+  },
+  horned_beetle: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'horned_beetle',
+    family: 'insectoid', isHostile: true,
+    widthModules: 6, heightModules: 5,
+    primaryHex: '#1e3a8a',
+    shadowHex: '#172554',
+    highlightHex: '#3b82f6',
+    secondaryHex: '#0f172a',
+    accentHex: '#93c5fd',
+    outlineHex: '#090d16',
+    features: {"hasCarapaceHorn":true,"legPairs":3},
+    logicalHitbox: { offsetX: -7, offsetY: -5, width: 14, height: 10, collidable: true }
+  },
+  skeleton_warrior: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'skeleton_warrior',
+    family: 'undead_biped', isHostile: true,
+    widthModules: 6, heightModules: 7,
+    primaryHex: '#e2e8f0',
+    shadowHex: '#94a3b8',
+    highlightHex: '#ffffff',
+    secondaryHex: '#475569',
+    accentHex: '#38bdf8',
+    outlineHex: '#0f172a',
+    features: {"hasExposedRibcage":true,"legPairs":1},
+    logicalHitbox: { offsetX: -6, offsetY: -4, width: 12, height: 8, collidable: true }
+  },
+  forest_goblin: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'forest_goblin',
+    family: 'undead_biped', isHostile: true,
+    widthModules: 5, heightModules: 6,
+    primaryHex: '#4d7c0f',
+    shadowHex: '#365314',
+    highlightHex: '#84cc16',
+    secondaryHex: '#78350f',
+    accentHex: '#facc15',
+    outlineHex: '#142605',
+    features: {"hasPointedEars":true,"legPairs":1},
+    logicalHitbox: { offsetX: -5, offsetY: -4, width: 10, height: 8, collidable: true }
+  },
+  stone_golem: {
+    schemaVersion: PPAE_SCHEMA_VERSION, speciesId: 'stone_golem',
+    family: 'elemental_golem', isHostile: true,
+    widthModules: 8, heightModules: 8,
+    primaryHex: '#64748b',
+    shadowHex: '#334155',
+    highlightHex: '#94a3b8',
+    secondaryHex: '#1e293b',
+    accentHex: '#38bdf8',
+    outlineHex: '#090d16',
+    features: {"legPairs":1},
+    logicalHitbox: { offsetX: -10, offsetY: -6, width: 20, height: 12, collidable: true }
   }
 };
 
@@ -187,32 +293,69 @@ export class CreatureGenerator {
     frameIndex: number,
     totalFrames: number,
     profile: ArtStyleProfile,
-    variantSeed = 101
+    variantSeed = 101,
+    morphOptions?: CreatureMorphVariantOptions
   ): RenderedCreatureFrame {
     const spec = CREATURE_SPECIES_CATALOG[speciesId];
     const mod = profile.moduleSize;
-    const width = spec.widthModules * mod;
-    const height = spec.heightModules * mod;
+    const ageFactor = morphOptions?.ageStage === 'juvenile' ? .78
+      : morphOptions?.ageStage === 'alpha_elder' ? 1.2 : 1;
+    const requestedScale = morphOptions?.sizeScaleMultiplier ?? 1;
+    const customScale = Number.isFinite(requestedScale)
+      ? Math.max(.75, Math.min(1.35, requestedScale)) : 1;
+    const scale = ageFactor * customScale;
+    const width = Math.max(8, Math.round(spec.widthModules * mod * scale));
+    const height = Math.max(8, Math.round(spec.heightModules * mod * scale));
     const buf = new PixelBuffer(width, height);
     const rng = new SeededRNG(variantSeed);
-
+    const u = (mod / 4) * scale;
     const pivotX = Math.floor(width / 2);
-    const pivotY = height - Math.max(2, Math.floor(mod * 0.65));
+    const pivotY = height - Math.max(2, Math.round(mod * .65 * scale));
+    let result: RenderedCreatureFrame;
 
     switch (spec.family) {
       case 'quadruped':
-        return this.solveQuadruped(buf, spec, action, direction, frameIndex, totalFrames, profile, rng, pivotX, pivotY);
+        result = this.solveQuadruped(buf, spec, action, direction, frameIndex, totalFrames, u, rng, pivotX, pivotY);
+        break;
       case 'avian_biped':
-        return this.solveAvianBiped(buf, spec, action, direction, frameIndex, totalFrames, profile, pivotX, pivotY);
+        result = this.solveAvianBiped(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
       case 'gelatinous_slime':
-        return this.solveGelatinousSlime(buf, spec, action, direction, frameIndex, totalFrames, profile, pivotX, pivotY);
+        result = this.solveGelatinousSlime(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
       case 'arachnid':
-        return this.solveArachnid(buf, spec, action, direction, frameIndex, totalFrames, profile, pivotX, pivotY);
+        result = this.solveArachnid(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
       case 'flying_winged':
-        return this.solveFlyingWinged(buf, spec, action, direction, frameIndex, totalFrames, profile, pivotX, pivotY);
+        result = this.solveFlyingWinged(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
       case 'aquatic_swimmer':
-        return this.solveAquaticSwimmer(buf, spec, action, direction, frameIndex, totalFrames, profile, pivotX, pivotY);
+        result = this.solveAquaticSwimmer(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
+      case 'serpentine_reptile':
+        result = this.solveSerpentineReptile(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
+      case 'insectoid':
+        result = this.solveInsectoid(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
+      case 'elemental_golem':
+        result = this.solveElementalGolem(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
+      case 'undead_biped':
+        result = this.solveUndeadBiped(buf, spec, action, direction, frameIndex, totalFrames, u, pivotX, pivotY);
+        break;
     }
+
+    const budget = resolveDetailBudgetForProfile(profile);
+    if (budget.shadingSteps >= 4) {
+      this.applyNativeMaterialDetail(result.buffer, spec, budget.barkAndFacetMicroDetailLevel, pivotY);
+    }
+    if (morphOptions?.healthState === 'corrupted') {
+      this.applyCorruptionOverlay(result.buffer);
+    } else if (morphOptions?.healthState === 'wounded') {
+      this.applyWoundedMarks(result.buffer, pivotX, pivotY - Math.round(4 * u));
+    }
+    return result;
   }
 
   /**
@@ -227,12 +370,11 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     rng: SeededRNG,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const [fx, fy] = direction8ToUnitVector(direction);
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
@@ -334,6 +476,26 @@ export class CreatureGenerator {
       buf.setPixel(headX - headRx, headY - headRy, cAcc);
       buf.setPixel(headX + headRx, headY - headRy, cAcc);
     }
+    if (spec.features.hasAntlers) {
+      for (const side of [-1, 1]) {
+        const rootX = headX + side * Math.round(1.6 * u);
+        const rootY = headY - headRy + 1;
+        const branchX = rootX + side * Math.round(2.7 * u);
+        const branchY = rootY - Math.round(2.9 * u);
+        buf.drawLine(rootX, rootY, branchX, branchY, cAcc, Math.max(1, Math.round(.7 * u)));
+        buf.drawLine(branchX, branchY, branchX + side * Math.round(1.4 * u),
+          branchY - Math.round(1.4 * u), cAcc);
+        buf.drawLine(branchX - side * Math.round(.5 * u), branchY + 1,
+          branchX + side * Math.round(.6 * u), branchY - Math.round(1.7 * u), cAcc);
+      }
+    }
+    if (spec.features.hasTusks && fy >= -.3) {
+      const muzzleX = headX + Math.round(fx * 2 * u);
+      buf.drawLine(muzzleX - Math.round(1.5 * u), headY + 1,
+        muzzleX - Math.round(1.5 * u), headY - Math.round(.8 * u), cAcc);
+      buf.drawLine(muzzleX + Math.round(1.5 * u), headY + 1,
+        muzzleX + Math.round(1.5 * u), headY - Math.round(.8 * u), cAcc);
+    }
     if (spec.features.hasPointedEars) {
       buf.fillRect(headX - 2, headY - headRy - 1, 2, 2, cShad);
       buf.fillRect(headX + 1, headY - headRy - 1, 2, 2, cShad);
@@ -385,11 +547,10 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const [fx, fy] = direction8ToUnitVector(direction);
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
@@ -468,11 +629,10 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const [fx, fy] = direction8ToUnitVector(direction);
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
@@ -575,11 +735,10 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const [fx, fy] = direction8ToUnitVector(direction);
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
@@ -662,11 +821,10 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
     const cMain = hexToRgba(spec.primaryHex);
@@ -731,11 +889,10 @@ export class CreatureGenerator {
     direction: Direction8,
     frameIndex: number,
     totalFrames: number,
-    profile: ArtStyleProfile,
+    u: number,
     pivotX: number,
     pivotY: number
   ): RenderedCreatureFrame {
-    const u = profile.moduleSize === 6 ? 1.5 : 1.0;
     const [fx, fy] = direction8ToUnitVector(direction);
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 
@@ -772,6 +929,307 @@ export class CreatureGenerator {
         ground_pivot: { id: 'ground_pivot', texelX: pivotX, texelY: pivotY, normalizedX: pivotX / buf.width, normalizedY: pivotY / buf.height }
       }
     };
+  }
+
+
+  /** A continuous sinuous spine with articulated dorsal markings and attack hood. */
+  private solveSerpentineReptile(
+    buf: PixelBuffer, spec: CreatureSpeciesProfile, action: CreatureActionId,
+    direction: Direction8, frameIndex: number, totalFrames: number,
+    u: number, pivotX: number, pivotY: number
+  ): RenderedCreatureFrame {
+    const [fx, fy] = direction8ToUnitVector(direction);
+    const phase = (frameIndex / Math.max(1, totalFrames)) * Math.PI * 2;
+    const main = hexToRgba(spec.primaryHex), shad = hexToRgba(spec.shadowHex);
+    const high = hexToRgba(spec.highlightHex), marking = hexToRgba(spec.secondaryHex);
+    const accent = hexToRgba(spec.accentHex), out = hexToRgba(spec.outlineHex);
+    const active = action === 'move' || action === 'sprint_flee' || action === 'swim';
+    const amplitude = active ? (action === 'sprint_flee' ? 2.5 : 1.7) : .55;
+    const crouch = action === 'death' || action === 'sleep';
+    const rise = action === 'jump_pounce'
+      ? Math.round(Math.sin(Math.PI * frameIndex / Math.max(1, totalFrames - 1)) * 2.5 * u) : 0;
+    let previous: readonly [number, number] | undefined;
+    let headX = pivotX, headY = pivotY - Math.round(3 * u);
+    const segments = 10;
+    for (let i = 0; i < segments; i++) {
+      const t = i / (segments - 1);
+      const along = (t - .5) * 8 * u;
+      const wave = Math.sin(phase + t * Math.PI * 2) * amplitude * u;
+      const lift = crouch ? 0 : t > .65 ? (t - .65) * 8 * u : 0;
+      const x = Math.round(pivotX + along * fx - fy * wave);
+      const y = Math.round(pivotY - 2 * u + along * fy * .38 + fx * wave * .38 - lift - rise);
+      const thickness = Math.max(1, Math.round((.8 + Math.sin(Math.PI * t) * 1.5) * u));
+      if (previous) buf.drawLine(previous[0], previous[1], x, y, shad, thickness * 2 + 1);
+      buf.fillEllipse(x, y, thickness, Math.max(1, thickness - 1), i % 3 === 0 ? marking : main);
+      if (i % 2 === 0) buf.setPixel(x, y - 1, high);
+      previous = [x, y];
+      if (i === segments - 1) { headX = x; headY = y; }
+    }
+    const headRx = Math.max(2, Math.round(2.3 * u));
+    buf.fillEllipse(headX, headY, headRx, Math.max(1, Math.round(1.6 * u)), main);
+    if (action === 'attack' || action === 'special_ability') {
+      const targetX = headX + Math.round(fx * 4 * u);
+      const targetY = headY + Math.round(fy * 2.2 * u);
+      buf.drawLine(headX, headY, targetX, targetY, accent);
+      buf.setPixel(targetX - 1, targetY + 1, accent);
+      buf.setPixel(targetX + 1, targetY + 1, accent);
+      buf.fillEllipse(headX, headY - 1, headRx + 1, Math.max(2, Math.round(1.9 * u)), shad);
+      buf.fillEllipse(headX, headY, headRx, Math.max(1, Math.round(1.1 * u)), main);
+    }
+    if (fy >= -.25) buf.setPixel(headX + Math.round(fx * u), headY - 1, accent);
+    buf.applySelectiveOutline(out);
+    if (action === 'hurt') this.flashBuffer(buf);
+    return this.makeNewFamilyFrame(buf, spec, action, direction, frameIndex, pivotX, pivotY,
+      { head_mount: [headX, headY] });
+  }
+
+  /** Hexapod: alternating-tripod gait, separate thorax, split elytra and horn. */
+  private solveInsectoid(
+    buf: PixelBuffer, spec: CreatureSpeciesProfile, action: CreatureActionId,
+    direction: Direction8, frameIndex: number, totalFrames: number,
+    u: number, pivotX: number, pivotY: number
+  ): RenderedCreatureFrame {
+    const [fx, fy] = direction8ToUnitVector(direction);
+    const phase = (frameIndex / Math.max(1, totalFrames)) * Math.PI * 2;
+    const main = hexToRgba(spec.primaryHex), shad = hexToRgba(spec.shadowHex);
+    const high = hexToRgba(spec.highlightHex), sec = hexToRgba(spec.secondaryHex);
+    const shine = hexToRgba(spec.accentHex), out = hexToRgba(spec.outlineHex);
+    const lift = action === 'jump_pounce'
+      ? Math.max(0, Math.round(Math.sin(Math.PI * frameIndex / Math.max(1, totalFrames - 1)) * 3 * u)) : 0;
+    const bodyY = pivotY - Math.round((action === 'sleep' || action === 'death' ? 2.5 : 4.5) * u) - lift;
+    for (let pair = 0; pair < 3; pair++) {
+      const along = (pair - 1) * 2 * u;
+      const ax = pivotX + Math.round(fx * along);
+      const ay = bodyY + Math.round(fy * along * .4);
+      for (const side of [-1, 1]) {
+        const tripod = (pair + (side > 0 ? 1 : 0)) & 1;
+        const gait = action === 'move' || action === 'sprint_flee'
+          ? Math.sin(phase + tripod * Math.PI) * (action === 'sprint_flee' ? 2.5 : 1.6) * u : 0;
+        const kneeX = ax + Math.round(side * 3.5 * u);
+        const kneeY = ay - Math.round((1 + Math.abs(gait) * .3) * u);
+        const tipX = kneeX + Math.round(side * 2 * u + fx * gait);
+        const tipY = pivotY - Math.max(0, Math.round(gait));
+        buf.drawLine(ax, ay, kneeX, kneeY, sec, Math.max(1, Math.round(.7 * u)));
+        buf.drawLine(kneeX, kneeY, tipX, tipY, shad, Math.max(1, Math.round(.7 * u)));
+      }
+    }
+    const shellRx = Math.max(3, Math.round(4.5 * u));
+    const shellRy = Math.max(2, Math.round(3.3 * u));
+    buf.fillEllipse(pivotX, bodyY + 1, shellRx, shellRy, shad);
+    buf.fillEllipse(pivotX, bodyY, shellRx - 1, shellRy - 1, main);
+    buf.fillEllipse(pivotX - Math.round(.9 * u), bodyY - Math.round(1.1 * u),
+      Math.max(2, shellRx - Math.round(1.4 * u)),
+      Math.max(1, shellRy - Math.round(1.3 * u)), high);
+    buf.drawLine(pivotX, bodyY - shellRy + 1, pivotX, bodyY + shellRy - 1, sec);
+    buf.setPixel(pivotX - Math.round(1.5 * u), bodyY - Math.round(1.7 * u), shine);
+    const headX = pivotX + Math.round(fx * 3.5 * u);
+    const headY = bodyY + Math.round(fy * 1.5 * u);
+    buf.fillEllipse(headX, headY, Math.max(2, Math.round(2.2 * u)),
+      Math.max(1, Math.round(1.6 * u)), main);
+    if (spec.features.hasCarapaceHorn) {
+      buf.drawLine(headX, headY - 1, headX + Math.round(fx * 2.8 * u),
+        headY - Math.round(3.7 * u), high, Math.max(1, Math.round(.8 * u)));
+    }
+    if (action === 'special_ability') buf.setPixel(headX, headY - 2, shine);
+    if (fy >= -.25) buf.setPixel(headX + Math.round(fx * u), headY, shine);
+    buf.applySelectiveOutline(out);
+    if (action === 'hurt') this.flashBuffer(buf);
+    return this.makeNewFamilyFrame(buf, spec, action, direction, frameIndex, pivotX, pivotY,
+      { head_mount: [headX, headY] });
+  }
+
+  /** Multiblock stone anatomy: articulated crushers, floating rune core. */
+  private solveElementalGolem(
+    buf: PixelBuffer, spec: CreatureSpeciesProfile, action: CreatureActionId,
+    direction: Direction8, frameIndex: number, totalFrames: number,
+    u: number, pivotX: number, pivotY: number
+  ): RenderedCreatureFrame {
+    const [fx, fy] = direction8ToUnitVector(direction);
+    const phase = (frameIndex / Math.max(1, totalFrames)) * Math.PI * 2;
+    const main = hexToRgba(spec.primaryHex), shad = hexToRgba(spec.shadowHex);
+    const high = hexToRgba(spec.highlightHex), sec = hexToRgba(spec.secondaryHex);
+    const rune = hexToRgba(spec.accentHex), out = hexToRgba(spec.outlineHex);
+    const fall = action === 'death' ? Math.round(4 * u) : 0;
+    const rest = action === 'sleep' ? Math.round(2 * u) : 0;
+    const pulse = (action === 'attack' || action === 'special_ability')
+      ? Math.round(Math.sin(phase) * 3 * u) : 0;
+    const step = action === 'move' ? Math.round(Math.sin(phase) * 1.8 * u) : 0;
+    const ty = pivotY - Math.round(9 * u) + fall + rest;
+    const tw = Math.max(4, Math.round(8 * u)), th = Math.max(4, Math.round(6.5 * u));
+    const legW = Math.max(2, Math.round(2.5 * u));
+    for (const side of [-1, 1]) {
+      const lx = pivotX + Math.round(side * 2.1 * u);
+      buf.fillRect(lx - Math.floor(legW / 2) + side * step,
+        ty + th - 1, legW, Math.max(2, Math.round(3 * u)), side < 0 ? shad : main);
+    }
+    buf.fillRect(pivotX - Math.floor(tw / 2), ty, tw, th, shad);
+    buf.fillRect(pivotX - Math.floor(tw / 2) + 1, ty + 1, tw - 2, th - 2, main);
+    buf.fillRect(pivotX - Math.floor(tw / 2) + 1, ty + 1, tw - 3,
+      Math.max(1, Math.round(1.5 * u)), high);
+    const leftX = pivotX - Math.round(6 * u), rightX = pivotX + Math.round(6 * u);
+    const fistW = Math.max(2, Math.round(2.8 * u));
+    const fistH = Math.max(3, Math.round(5 * u));
+    buf.fillRect(leftX - Math.floor(fistW / 2), ty + Math.round(2 * u) + pulse,
+      fistW, fistH, high);
+    buf.fillRect(rightX - Math.floor(fistW / 2), ty + Math.round(2 * u) - pulse,
+      fistW, fistH, shad);
+    const runeY = ty + Math.round(3 * u);
+    buf.fillEllipse(pivotX, runeY, Math.max(1, Math.round(1.2 * u)),
+      Math.max(1, Math.round(1.2 * u)), rune);
+    if (action === 'special_ability') {
+      buf.drawLine(pivotX - Math.round(2 * u), runeY,
+        pivotX + Math.round(2 * u), runeY, rune);
+    }
+    const hx = pivotX + Math.round(fx * u), hy = ty - Math.round(2 * u);
+    buf.fillRect(hx - Math.round(2 * u), hy,
+      Math.max(3, Math.round(4 * u)), Math.max(2, Math.round(2.7 * u)), high);
+    if (fy >= -.25) {
+      buf.setPixel(hx - Math.round(.8 * u), hy + 1, rune);
+      buf.setPixel(hx + Math.round(.8 * u), hy + 1, rune);
+    }
+    if (th >= 5) buf.drawLine(pivotX - Math.round(2 * u), ty + th - 2,
+      pivotX + Math.round(2 * u), ty + 1, sec);
+    buf.applySelectiveOutline(out);
+    if (action === 'hurt') this.flashBuffer(buf);
+    return this.makeNewFamilyFrame(buf, spec, action, direction, frameIndex, pivotX, pivotY,
+      { head_mount: [hx, hy], core: [pivotX, runeY] });
+  }
+
+  /** Bipedal rib cage / goblin vest, articulated legs and hand-mounted sword. */
+  private solveUndeadBiped(
+    buf: PixelBuffer, spec: CreatureSpeciesProfile, action: CreatureActionId,
+    direction: Direction8, frameIndex: number, totalFrames: number,
+    u: number, pivotX: number, pivotY: number
+  ): RenderedCreatureFrame {
+    const [fx, fy] = direction8ToUnitVector(direction);
+    const phase = (frameIndex / Math.max(1, totalFrames)) * Math.PI * 2;
+    const main = hexToRgba(spec.primaryHex), shad = hexToRgba(spec.shadowHex);
+    const high = hexToRgba(spec.highlightHex), sec = hexToRgba(spec.secondaryHex);
+    const eye = hexToRgba(spec.accentHex), out = hexToRgba(spec.outlineHex);
+    const stride = action === 'move' || action === 'sprint_flee'
+      ? Math.round(Math.sin(phase) * (action === 'sprint_flee' ? 3.3 : 2.1) * u) : 0;
+    const fall = action === 'death' ? Math.round(7 * u)
+      : action === 'sleep' ? Math.round(4 * u) : 0;
+    const pelvisY = pivotY - Math.round(4.5 * u) + fall;
+    const torsoY = pelvisY - Math.round(4.8 * u);
+    const headY = torsoY - Math.round(3.6 * u);
+    const legThick = Math.max(1, Math.round(1.4 * u));
+    for (const side of [-1, 1]) {
+      const hipX = pivotX + Math.round(side * 1.2 * u);
+      const footX = hipX + side * stride;
+      buf.drawLine(hipX, pelvisY, hipX + Math.round((footX - hipX) * .45),
+        pivotY - Math.round(2 * u), shad, legThick);
+      buf.drawLine(hipX + Math.round((footX - hipX) * .45), pivotY - Math.round(2 * u),
+        footX, pivotY, main, legThick);
+    }
+    const half = Math.max(2, Math.round(2.7 * u));
+    buf.fillRect(pivotX - half, torsoY, half * 2 + 1, Math.max(3, Math.round(4.8 * u)),
+      spec.features.hasExposedRibcage ? shad : main);
+    if (spec.features.hasExposedRibcage) {
+      for (let dy = Math.max(1, Math.round(.9 * u));
+        dy < Math.round(4 * u); dy += Math.max(1, Math.round(.9 * u))) {
+        buf.drawLine(pivotX - half + 1, torsoY + dy,
+          pivotX + half - 1, torsoY + dy, high);
+        buf.setPixel(pivotX, torsoY + dy + 1, sec);
+      }
+    } else {
+      buf.fillRect(pivotX - half, pelvisY - Math.round(1.2 * u),
+        half * 2 + 1, Math.max(1, Math.round(1.2 * u)), sec);
+      buf.drawLine(pivotX - half, torsoY + 1,
+        pivotX + half, pelvisY - 1, sec);
+    }
+    const hx = pivotX + Math.round(fx * .8 * u);
+    buf.fillEllipse(hx, headY, Math.max(2, Math.round(2.7 * u)),
+      Math.max(2, Math.round(2.5 * u)), main);
+    if (spec.features.hasPointedEars) {
+      const ear = Math.round(4.7 * u);
+      buf.drawLine(hx - Math.round(2.6 * u), headY,
+        hx - ear, headY - Math.round(1.1 * u), high);
+      buf.drawLine(hx + Math.round(2.6 * u), headY,
+        hx + ear, headY - Math.round(1.1 * u), high);
+    }
+    if (fy >= -.25) {
+      buf.setPixel(hx - Math.round(u), headY, eye);
+      buf.setPixel(hx + Math.round(u), headY, eye);
+    }
+    const swing = action === 'attack' || action === 'jump_pounce'
+      ? Math.round(Math.sin(phase) * 3 * u) : 0;
+    const handX = pivotX + half + Math.round(fx * 1.6 * u);
+    const handY = torsoY + Math.round(3 * u) + swing;
+    buf.drawLine(pivotX + half - 1, torsoY + 1, handX, handY, main, legThick);
+    buf.drawLine(handX, handY, handX + Math.round(fx * 3.5 * u),
+      handY - Math.round(3.8 * u) + swing, high, Math.max(1, Math.round(.7 * u)));
+    buf.drawLine(pivotX - half + 1, torsoY + 1,
+      pivotX - half - Math.round(fx * 1.4 * u), torsoY + Math.round(3.6 * u),
+      shad, legThick);
+    buf.applySelectiveOutline(out);
+    if (action === 'hurt') this.flashBuffer(buf);
+    return this.makeNewFamilyFrame(buf, spec, action, direction, frameIndex, pivotX, pivotY,
+      { head_mount: [hx, headY], weapon_hand: [handX, handY] });
+  }
+
+  private makeNewFamilyFrame(
+    buffer: PixelBuffer, spec: CreatureSpeciesProfile,
+    action: CreatureActionId, direction: Direction8,
+    frameIndex: number, pivotX: number, pivotY: number,
+    extra: Readonly<Record<string, readonly [number, number]>> = {}
+  ): RenderedCreatureFrame {
+    const anchors: Record<string, AnchorPoint> = {};
+    for (const [id, [x, y]] of Object.entries({
+      ground_pivot: [pivotX, pivotY] as readonly [number, number], ...extra
+    })) {
+      anchors[id] = {
+        id, texelX: x, texelY: y,
+        normalizedX: x / buffer.width, normalizedY: y / buffer.height
+      };
+    }
+    return {
+      speciesId: spec.speciesId, family: spec.family, action, direction,
+      frameIndex, buffer, pivotTexel: [pivotX, pivotY], anchors
+    };
+  }
+
+  /** Additional surface tones are generated on native texels, not by enlarging a low-res raster. */
+  private applyNativeMaterialDetail(
+    buf: PixelBuffer, spec: CreatureSpeciesProfile,
+    level: 1 | 2 | 3 | 4, groundY: number
+  ): void {
+    const highlight = hexToRgba(spec.highlightHex);
+    const shadow = hexToRgba(spec.shadowHex);
+    for (let y = 1; y < Math.min(groundY - 1, buf.height - 1); y++) {
+      for (let x = 1; x < buf.width - 1; x++) {
+        const offset = (y * buf.width + x) * 4;
+        if (buf.data[offset + 3] < 200) continue;
+        const grain = ((x * 37) ^ (y * 59) ^ (spec.widthModules * 17)) & 63;
+        if (grain === 1 && level >= 2) buf.setPixel(x, y, highlight);
+        else if (grain === 11 && level >= 3) buf.setPixel(x, y, shadow);
+      }
+    }
+  }
+
+  private applyCorruptionOverlay(buf: PixelBuffer): void {
+    for (let i = 0; i < buf.data.length; i += 4) {
+      if (buf.data[i + 3] < 200) continue;
+      buf.data[i] = Math.round(buf.data[i] * .55 + 147 * .45);
+      buf.data[i + 1] = Math.round(buf.data[i + 1] * .55 + 51 * .45);
+      buf.data[i + 2] = Math.round(buf.data[i + 2] * .55 + 234 * .45);
+    }
+  }
+
+  private applyWoundedMarks(buf: PixelBuffer, cx: number, cy: number): void {
+    const red = hexToRgba('#dc2626');
+    // Find an actual body pixel near the chest; never produce a detached wound.
+    for (let radius = 0; radius <= 6; radius++) {
+      for (const [dx, dy] of [[0, 0], [-radius, 0], [radius, 0], [0, -radius], [0, radius]]) {
+        if (buf.isOpaque(cx + dx, cy + dy)) {
+          buf.setPixel(cx + dx, cy + dy, red);
+          if (buf.isOpaque(cx + dx + 1, cy + dy + 1)) {
+            buf.setPixel(cx + dx + 1, cy + dy + 1, red);
+          }
+          return;
+        }
+      }
+    }
   }
 
   private flashBuffer(buf: PixelBuffer): void {
