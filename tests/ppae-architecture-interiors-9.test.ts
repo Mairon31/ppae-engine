@@ -180,4 +180,22 @@ describe('PPAE 2.0 Phase 9 — Procedural Architecture, Roof & Wall Grammars, In
     expect(thatch.roofOcclusionFootprint).toEqual(timber.roofOcclusionFootprint);
   });
 
+
+  it('renders real tower/sails and wall-height-graded ruins with stable portal metadata', () => {
+    const windmill = DEFAULT_STRUCTURE_CATALOG.grain_windmill_01;
+    const millClosed = structureGen.generateStructure(windmill, profile6, false);
+    const millOpen = structureGen.generateStructure(windmill, profile6, true);
+    expect(millClosed.roofOverlayBuffer.countUniqueOpaqueColors()).toBeGreaterThan(4);
+    expect(Array.from(millClosed.baseAndWallsBuffer.data)).not.toEqual(
+      Array.from(millOpen.baseAndWallsBuffer.data)
+    );
+    expect(Array.from(millClosed.roofOverlayBuffer.data)).toEqual(
+      Array.from(millOpen.roofOverlayBuffer.data)
+    );
+    expect(millClosed.wallCollisionRects).toEqual(millOpen.wallCollisionRects);
+    const ruins = structureGen.generateStructure(DEFAULT_STRUCTURE_CATALOG.ancient_mossy_ruins_01, profile6);
+    expect(ruins.baseAndWallsBuffer.countUniqueOpaqueColors()).toBeGreaterThan(4);
+    expect(ruins.roofOverlayBuffer.countUniqueOpaqueColors()).toBe(0);
+  });
+
 });

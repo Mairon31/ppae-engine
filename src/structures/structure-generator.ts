@@ -240,6 +240,10 @@ export class StructureGenerator {
       return this.generateCaveMouth(def, baseAndWallsBuffer, roofOverlayBuffer, tileTex);
     }
 
+    if (def.archetype === 'windmill') {
+      return this.generateWindmill(def, baseAndWallsBuffer, roofOverlayBuffer, tileTex, isDoorOpen, interiorWindowLit);
+    }
+
     if (def.archetype === 'stone_well') {
       return this.generateStoneWell(def, baseAndWallsBuffer, roofOverlayBuffer, tileTex);
     }
@@ -743,6 +747,130 @@ export class StructureGenerator {
     }
   }
 
+
+  private generateWindmill(
+    def: StructureDefinition,
+    baseBuf: PixelBuffer,
+    roofBuf: PixelBuffer,
+    tileTex: number,
+    isDoorOpen: boolean,
+    interiorWindowLit: boolean
+  ): RenderedStructureArtifact {
+    const w = baseBuf.width;
+    const h = baseBuf.height;
+    const cx = Math.floor(w / 2);
+    const top = Math.floor(h * 0.27);
+    const bottom = h - 3;
+    const stone = hexToRgba(def.wallPrimaryHex);
+    const mortar = shiftTone(stone, -40);
+    const highlight = shiftTone(stone, 24);
+    const shade = shiftTone(stone, -19);
+    const wood = hexToRgba(def.wallSecondaryHex);
+    const course = Math.max(4, Math.floor(tileTex * 0.22));
+    const brick = Math.max(5, Math.floor(tileTex * 0.42));
+
+    // Tapered masonry tower: independent native-size geometry, never a roofed cottage.
+    for (let y = top; y <= bottom; y++) {
+      const taper = (y - top) / Math.max(1, bottom - top);
+      const half = Math.round(tileTex * (0.67 + taper * 0.45));
+      const left = cx - half;
+      const right = cx + half;
+      baseBuf.fillRect(left, y, right - left + 1, 1, stone);
+      baseBuf.fillRect(left, y, Math.max(2, Math.floor(half * 0.22)), 1, shade);
+      baseBuf.setPixel(right, y, mortar);
+      if ((y - top) % course === 0) {
+        baseBuf.fillRect(left + 2, y, right - left - 3, 1, mortar);
+      } else {
+        const row = Math.floor((y - top) / course);
+        const shift = (row % 2) * Math.floor(brick / 2);
+        for (let x = left + 3; x < right - 2; x++) {
+          if ((x + shift) % brick === 0) baseBuf.setPixel(x, y, mortar);
+          else if ((x * 13 + y * 7) % 31 === 0) baseBuf.setPixel(x, y, highlight);
+        }
+      }
+    }
+    // Elevated narrow window and a real door controlled by the original open/close argument.
+    const winX = cx - Math.max(2, Math.floor(tileTex * 0.17));
+    const winY = top + Math.floor((bottom - top) * 0.33);
+    const winW = Math.max(5, Math.floor(tileTex * 0.34));
+    baseBuf.fillRect(winX - 2, winY - 2, winW + 4, Math.floor(tileTex * 0.53), wood);
+    baseBuf.fillRect(winX, winY, winW, Math.floor(tileTex * 0.37),
+      interiorWindowLit ? hexToRgba('#fde68a') : hexToRgba('#1e293b'));
+    baseBuf.drawLine(cx, winY, cx, winY + Math.floor(tileTex * 0.37), wood, 1);
+    const doorW = Math.max(8, Math.floor(tileTex * 0.61));
+    const doorH = Math.max(12, Math.floor(tileTex * 0.97));
+    const doorX = cx - Math.floor(doorW / 2);
+    const doorY = bottom - doorH + 1;
+    baseBuf.fillRect(doorX - 2, doorY - 2, doorW + 4, doorH + 2, mortar);
+    baseBuf.fillRect(doorX, doorY, doorW, doorH,
+      isDoorOpen ? hexToRgba('#090d16') : hexToRgba('#7c3f1e'));
+    if (!isDoorOpen) {
+      for (let x = doorX + 3; x < doorX + doorW; x += Math.max(3, Math.floor(tileTex / 6))) {
+        baseBuf.drawLine(x, doorY, x, bottom, wood, 1);
+      }
+      baseBuf.fillRect(doorX + doorW - 4, doorY + Math.floor(doorH / 2), 2, 2, hexToRgba('#facc15'));
+    }
+    baseBuf.fillRect(cx - Math.round(tileTex * 1.13), bottom - 2,
+      Math.round(tileTex * 2.26), 3, mortar);
+    baseBuf.applySelectiveOutline(hexToRgba('#0f172a'));
+
+    // Independent conical cap and four cloth lattice sails in the occludable roof layer.
+    const roofBottom = top + Math.floor(tileTex * 0.37);
+    const roofTip = Math.max(3, top - Math.floor(tileTex * 0.86));
+    const roofPrimary = hexToRgba(def.roofPrimaryHex);
+    const roofShadow = hexToRgba(def.roofShadowHex);
+    for (let y = roofTip; y <= roofBottom; y++) {
+      const t = (y - roofTip) / Math.max(1, roofBottom - roofTip);
+      const half = Math.max(1, Math.round(t * tileTex * 0.86));
+      roofBuf.fillRect(cx - half, y, half * 2 + 1, 1, y % course === 0 ? roofShadow : roofPrimary);
+      roofBuf.setPixel(cx - half, y, wood);
+      roofBuf.setPixel(cx + half, y, roofShadow);
+    }
+    const hubX = cx;
+    const hubY = Math.floor(h * 0.41);
+    const bladeLength = Math.floor(Math.min(w, h) * 0.31);
+    const sailColor = hexToRgba('#f7edd0');
+    const sailShadow = hexToRgba('#c9b995');
+    for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const endX = hubX + dx * bladeLength;
+      const endY = hubY + dy * bladeLength;
+      roofBuf.drawLine(hubX, hubY, endX, endY, wood, Math.max(2, Math.floor(tileTex / 12)));
+      // The sail spreads perpendicular to each timber spar, with discrete cloth ribs.
+      const perpX = -dy;
+      const perpY = dx;
+      const sailWidth = Math.max(5, Math.floor(tileTex * 0.36));
+      roofBuf.drawLine(hubX + dx * 9 + perpX * sailWidth, hubY + dy * 9 + perpY * sailWidth,
+        endX + perpX * sailWidth, endY + perpY * sailWidth, wood, 1);
+      for (let step = 9; step <= bladeLength - 2; step += Math.max(2, Math.floor(tileTex / 7))) {
+        const px = hubX + dx * step;
+        const py = hubY + dy * step;
+        roofBuf.drawLine(px, py, px + perpX * sailWidth, py + perpY * sailWidth, sailColor, 2);
+        roofBuf.setPixel(px + perpX * sailWidth, py + perpY * sailWidth, sailShadow);
+      }
+    }
+    roofBuf.fillEllipse(hubX, hubY, 3, 3, wood);
+    roofBuf.fillEllipse(hubX, hubY, 1, 1, hexToRgba('#facc15'));
+    roofBuf.applySelectiveOutline(hexToRgba('#0f172a'));
+
+    const logicalW = def.widthInTiles * 16;
+    const logicalH = def.heightInTiles * 16;
+    const doorXLogical = def.doorTileOffsetX * 16;
+    return {
+      structureId: def.structureId,
+      baseAndWallsBuffer: baseBuf,
+      roofOverlayBuffer: roofBuf,
+      pivotTexel: [cx, bottom],
+      wallCollisionRects: [
+        { x: 0, y: 0, width: logicalW, height: logicalH - 16 },
+        { x: 0, y: logicalH - 16, width: doorXLogical, height: 16 },
+        { x: doorXLogical + 16, y: logicalH - 16,
+          width: logicalW - doorXLogical - 16, height: 16 }
+      ],
+      doorCollisionRect: { x: doorXLogical, y: logicalH - 16, width: 16, height: 16 },
+      roofOcclusionFootprint: { x: 0, y: 0, width: logicalW, height: logicalH - 8 }
+    };
+  }
+
   private generateStoneWell(
     def: StructureDefinition,
     baseBuf: PixelBuffer,
@@ -800,6 +928,7 @@ export class StructureGenerator {
     };
   }
 
+
   private generateAncientRuins(
     def: StructureDefinition,
     baseBuf: PixelBuffer,
@@ -808,35 +937,75 @@ export class StructureGenerator {
   ): RenderedStructureArtifact {
     const w = baseBuf.width;
     const h = baseBuf.height;
-    const stoneMain = hexToRgba(def.wallPrimaryHex);
-    const stoneDark = hexToRgba('#334155');
-    const mossCol = hexToRgba(def.wallSecondaryHex);
-    const bottomY = h - 2;
+    const cx = Math.floor(w / 2);
+    const bottom = h - 2;
+    const blockSize = Math.max(4, Math.floor(tileTex * 0.23));
+    const courseSize = Math.max(3, Math.floor(tileTex * 0.19));
+    const gapHalf = Math.max(8, Math.floor(tileTex * 0.53));
+    const stone = hexToRgba(def.wallPrimaryHex);
+    const shadow = shiftTone(stone, -41);
+    const highlight = shiftTone(stone, 30);
+    const moss = hexToRgba(def.wallSecondaryHex);
+    const mossDark = shiftTone(moss, -29);
 
-    // Muros derruidos con perfil escalonado irregular y musgo en las crestas
+    // Collapsed gatehouse walls: broad stepped masonry with a genuine central break.
     for (let x = 3; x < w - 3; x++) {
-      const gapCenter = Math.abs(x - Math.floor(w / 2)) < Math.floor(tileTex * 0.45);
-      if (gapCenter) continue;
-      const wallTop =
-        Math.floor(h * 0.42) + Math.round(Math.sin(x * 0.35) * 6) + ((x * 7) % 5);
-      baseBuf.fillRect(x, wallTop, 1, bottomY - wallTop, (x & 3) === 0 ? stoneDark : stoneMain);
-      baseBuf.fillRect(x, wallTop, 1, 2, mossCol);
+      if (Math.abs(x - cx) < gapHalf) continue;
+      const segment = Math.floor(x / blockSize);
+      const noise = ((segment * 73 + segment * segment * 19) >>> 0) % (blockSize * 3);
+      const nearGap = Math.max(0, 1 - (Math.abs(x - cx) - gapHalf) / Math.max(1, w * 0.23));
+      const top = Math.floor(h * 0.25 + noise + nearGap * h * 0.31);
+      if (top >= bottom) continue;
+      for (let y = top; y < bottom; y++) {
+        const row = Math.floor(y / courseSize);
+        const offset = row % 2 ? Math.floor(blockSize / 2) : 0;
+        const joint = y % courseSize === 0 || (x + offset) % blockSize === 0;
+        let tone = joint ? shadow : stone;
+        if (!joint && ((x * 7 + y * 13) % 29) === 0) tone = highlight;
+        baseBuf.setPixel(x, y, tone);
+      }
+      baseBuf.setPixel(x, top, moss);
+      if ((segment % 3) === 0) {
+        baseBuf.fillRect(x, top + 1, 1, 2, mossDark);
+      }
     }
-    baseBuf.applySelectiveOutline(hexToRgba('#090d16'));
+    // Pillar remnants with chipped tops and cracked lintel stones.
+    for (const side of [-1, 1]) {
+      const bx = cx + side * Math.floor(w * 0.34);
+      const by = Math.floor(h * 0.39);
+      baseBuf.fillRect(bx - 3, by, 7, bottom - by, stone);
+      baseBuf.fillRect(bx - 4, by + 3, 9, 2, shadow);
+      baseBuf.fillRect(bx - 2, by + 6, 1, bottom - by - 6, highlight);
+      baseBuf.fillRect(bx - 4, by - 2, 6, 2, moss);
+      baseBuf.drawLine(bx, by + Math.floor(tileTex * 0.45),
+        bx + side * 2, by + Math.floor(tileTex * 0.85), shadow, 1);
+    }
+    // Fallen masonry rubble in front of the gate; no artificial sinusoidal roof.
+    for (let i = 0; i < 17; i++) {
+      const hash = (i * 101 + i * i * 17) % (w - 12);
+      const x = 6 + hash;
+      const y = bottom - 1 - ((i * 19) % Math.max(4, Math.floor(tileTex * 0.45)));
+      const size = 2 + (i % Math.max(2, Math.floor(tileTex * 0.12)));
+      baseBuf.fillRect(x, y, size + 2, Math.max(2, Math.floor(size / 2)), i % 3 === 0 ? shadow : stone);
+      baseBuf.fillRect(x, y, Math.max(1, Math.floor(size / 2)), 1, highlight);
+      if (i % 4 === 0) baseBuf.setPixel(x, y - 1, moss);
+    }
+    baseBuf.applySelectiveOutline(hexToRgba('#0f172a'));
 
     const totalLogicalW = def.widthInTiles * 16;
     const totalLogicalH = def.heightInTiles * 16;
-
     return {
       structureId: def.structureId,
       baseAndWallsBuffer: baseBuf,
       roofOverlayBuffer: roofBuf,
-      pivotTexel: [Math.floor(w / 2), bottomY],
+      pivotTexel: [cx, bottom],
       wallCollisionRects: [
         { x: 0, y: totalLogicalH - 16, width: 24, height: 16 },
         { x: totalLogicalW - 24, y: totalLogicalH - 16, width: 24, height: 16 }
       ],
-      doorCollisionRect: { x: 24, y: totalLogicalH - 16, width: totalLogicalW - 48, height: 16 },
+      doorCollisionRect: {
+        x: 24, y: totalLogicalH - 16, width: totalLogicalW - 48, height: 16
+      },
       roofOcclusionFootprint: { x: 0, y: 0, width: 0, height: 0 }
     };
   }

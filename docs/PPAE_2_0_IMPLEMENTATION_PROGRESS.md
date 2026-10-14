@@ -360,3 +360,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Chromium QA now captures generated windmill, ruins, slate manor, forge and alchemy screens and validates exported alchemy metadata, in addition to the original 30 sections.
 - README EN/ES/PT-BR updated consistently; coverage matrix documents 10 catalog structures and three real interior layouts.
 - `b185caf68dbfc67f8f6d64304651f458e5225901` passed CI (`npm test`, `npm run build`, `npm run check:package`) and Pages deployment. Phase 9 remains PENDING final verification of this subsequent QA commit and human art-direction review.
+
+### Phase 9 — Visual art-direction correction
+
+- Inspected actual Chromium screenshots: the initial windmill looked like a house with crossed spars; ancient ruins resembled two untextured vertical fences. These are substantive aesthetic defects despite passing CI.
+- Replaced only new archetype implementations: the windmill now renders a tapered cylindrical stone tower, conical roof and four cloth lattice sails with native raster pixels; ruins now rasterize staggered masonry, stepped decay, buttress remnants, moss and rubble. Existing generic structures and portal API are preserved.
+- New phase-9 regression checks open-door invariance of roof and wall collision and transparent ruins roof. New commit requires CI, browser verification and fresh screenshot inspection before claiming visual improvements verified.
