@@ -42,6 +42,7 @@ import { TreeDiversityController } from '../vegetation/tree-diversity-controller
 export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] = [
   {
     benchmarkId: 'golden_tree_oak_mature_6x6',
+    expectedPixelHash: 'a3f5c49a',
     category: 'tree',
     subType: 'oak',
     seed: 202601,
@@ -52,6 +53,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_tree_birch_mature_6x6',
+    expectedPixelHash: 'a99df991',
     category: 'tree',
     subType: 'birch',
     seed: 202602,
@@ -62,6 +64,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_rock_crystal_geode_6x6',
+    expectedPixelHash: '8a0926bb',
     category: 'mineral_rock',
     subType: 'crystal_geode',
     seed: 202603,
@@ -73,6 +76,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_rock_fractured_monolith_6x6',
+    expectedPixelHash: '9c0afbb7',
     category: 'mineral_rock',
     subType: 'fractured_monolith',
     seed: 202604,
@@ -83,6 +87,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_flora_flower_cluster_6x6',
+    expectedPixelHash: 'e7c57e57',
     category: 'bush_flora',
     subType: 'flower_cluster',
     seed: 202605,
@@ -93,6 +98,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_character_hero_south_6x6',
+    expectedPixelHash: 'd26d3ecd',
     category: 'character',
     subType: 'hero_avatar',
     seed: 202606,
@@ -103,6 +109,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_character_hero_south_16x16',
+    expectedPixelHash: '75b3539b',
     category: 'character',
     subType: 'hero_avatar',
     seed: 202607,
@@ -113,6 +120,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_creature_stag_east_6x6',
+    expectedPixelHash: '20cea1df',
     category: 'creature',
     subType: 'forest_stag',
     seed: 202608,
@@ -123,6 +131,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_structure_cottage_4x4',
+    expectedPixelHash: 'c8e5fc62',
     category: 'structure',
     subType: 'village_cottage_01',
     seed: 202609,
@@ -134,6 +143,7 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
   },
   {
     benchmarkId: 'golden_terrain_meadow_6x6',
+    expectedPixelHash: 'd5a7b351',
     category: 'terrain', subType: 'meadow_grass', seed: 202610,
     profileId: 'micro-6x6', minExpectedScore: 78,
     requireAsymmetry: false, maxColorsOverride: 12,

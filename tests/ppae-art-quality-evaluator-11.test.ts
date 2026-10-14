@@ -18,7 +18,7 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     const failures: string[] = [];
     for (const { entry, report, pixelHash } of results) {
       console.info('PHASE11_REFERENCE', JSON.stringify({ id: entry.benchmarkId, pixelHash, score: report.overallScore, minimum: entry.minExpectedScore, defects: report.defects, metrics: report.metrics }));
-      if (entry.expectedPixelHash && pixelHash !== entry.expectedPixelHash) failures.push(entry.benchmarkId + ': hash changed');
+      if (!entry.expectedPixelHash || pixelHash !== entry.expectedPixelHash) failures.push(entry.benchmarkId + ': RGBA fingerprint changed');
       if (!report.passed || report.overallScore < entry.minExpectedScore || report.defects.length) {
         failures.push(entry.benchmarkId + ': ' + report.overallScore + ' ' + report.defects.join(','));
       }
@@ -50,12 +50,17 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
   });
 
   it('certifies seamless 2x2 tile continuity across all base terrain materials', () => {
-    const reports4 = evaluator.auditAllBaseTerrainMaterials(profile4);
-    const reports6 = evaluator.auditAllBaseTerrainMaterials(profile6);
-
-    for (const rep of [...reports4, ...reports6]) {
-      expect(rep.isSeamless).toBe(true);
-      expect(rep.seamRatio).toBeLessThanOrEqual(2.4);
+    for (const id of [
+      'micro-4x4', 'micro-6x6', 'classic-8x8',
+      'standard-16x16', 'detailed-32x32'
+    ] as const) {
+      const profile = DEFAULT_STYLE_PROFILES[id];
+      for (const rep of evaluator.auditAllBaseTerrainMaterials(profile)) {
+        expect(rep.isSeamless, id + ':' + rep.materialId).toBe(true);
+        expect(rep.seamRatio).toBeLessThanOrEqual(2.4);
+        expect(rep.horizontalBoundaryDelta).toBe(0);
+        expect(rep.verticalBoundaryDelta).toBe(0);
+      }
     }
   });
 
@@ -93,6 +98,8 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     const second = evaluator.runGoldenSeedBenchmarkSuite();
     expect(first.map(x => x.pixelHash)).toEqual(second.map(x => x.pixelHash));
     expect(first.some(x => x.entry.category === 'terrain')).toBe(true);
+    expect(new Set(first.map(x => x.entry.expectedPixelHash)).size).toBe(first.length);
+    expect(first.every(x => x.pixelHash === x.entry.expectedPixelHash)).toBe(true);
     for (const result of first) expect(result.pixelHash).toMatch(/^[0-9a-f]{8}$/);
   });
 
@@ -108,6 +115,13 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     });
     expect(report.metrics.directionalLightAlignment).toBeLessThan(-0.15);
     expect(report.defects).toContain('PILLOW_SHADING_DETECTED');
+  });
+
+  it('fingerprints actual RGBA bytes and changes when only one pixel changes', () => {
+    const buffer = new PixelBuffer(4, 4);
+    const original = evaluator.hashPixelBuffer(buffer);
+    buffer.setPixel(2, 1, { r: 1, g: 2, b: 3, a: 255 });
+    expect(evaluator.hashPixelBuffer(buffer)).not.toBe(original);
   });
 
   it('keeps exact empty-silhouette failure instead of giving a passing neutral score', () => {

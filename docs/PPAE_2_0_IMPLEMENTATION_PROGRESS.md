@@ -28,6 +28,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
 | 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
 | 10 — Weather, Lighting & VFX Overhaul | VERIFIED | Sombras solares direccionales, relámpagos ramificados, bancos de niebla orgánicos, 16 emisores y cuatro formas de partícula; QA de navegador dirigida |
+| 11 — Procedural Art Quality Evaluator | IMPLEMENTED — FINAL CI PENDING | Auditoría de sombras/paleta/ruido/siluetas/costuras, diez referencias RGBA; pendiente verificar commit de huellas bloqueadas |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -437,3 +438,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Anti-pillow-shading synthetic regression now checks a centered, brighter nucleus **within the same chroma material**, distinct from uniform tones; empty buffers fail with explicit `EMPTY_SILHOUETTE`.
 
 - **Seed contract correction:** renderer anatomy uses explicit appearance attributes; setting `appearance.seed` alone did not alter hero pixels. Golden hero appearances now derive skin, hair, hair style and scar side from `SeededRNG(entry.seed)` before rendering, making reference seed meaningful rather than only a label. Static structure definitions remain definition-based and currently do not expose procedural seed variation.
+
+### Phase 11 — Fingerprint locking and native-resolution seam coverage
+
+- **Calibrated baseline:** ten registered specimen scores are 92–100 with no defect codes after category-appropriate applicability decisions; measured against the CI logs at https://github.com/Mairon31/ppae-engine/actions/runs/38647633342. These are actual measurements, not arbitrary passing scores.
+- Pinned ten dimension-aware FNV-1a RGBA signatures observed in CI and enforced exact signature matching in tests. Any regeneration change must explicitly update the baseline and documentation after human review.
+- Extended seamlessness audit from 4/6 to every native 4/6/8/16/32 profile; synthetic seam and pixel mutation regressions retained.
+- Public API guidance and limitations in `docs/QUALITY_EVALUATOR.md`, EN/ES/PT-BR README updates. **Final CI and Chromium of this commit PENDING.** Phase 12 (live quality inspector) is user-defined future work.

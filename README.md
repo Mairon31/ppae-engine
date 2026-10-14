@@ -86,6 +86,7 @@ The Playground lets you change **seed, resolution, direction, action, lifecycle 
 | **Animation & export** | Eight-direction spritesheet compilation, per-frame metadata, anchors, hitboxes, animation events, and padded texture atlases. |
 | **VFX & atmosphere** | 16 particle-emitter presets with four native pixel geometries, wind, branched lightning, layered fog, time-of-day solar shadows, and quantized lightmaps. |
 | **UI & equipment** | Procedurally generated equipment icons, inventory/HUD primitives, and nine-slice interface panels. |
+| **Art quality diagnostics** | Quantitative silhouette and palette checks, directional lighting/noise heuristics, tile-seam audits and a versioned 10-specimen reference registry with RGBA fingerprints. |
 
 These systems exist in the current development branch. Visual polish, runtime performance, and feature coverage continue to evolve during alpha development.
 
@@ -283,11 +284,11 @@ The `PhaserPPAEAdapter` provides a canvas-texture registration path for generate
 
 ## Current status & roadmap
 
-PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 10**; new work builds on top of these systems rather than starting a replacement engine.
+PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 11**; new work builds on top of these systems rather than starting a replacement engine.
 
 | Area | Status |
 | :--- | :--- |
-| Procedural generation systems through Phase 10 | Implemented with automated tests |
+| Procedural generation systems through Phase 11 | Implemented with automated tests |
 | Architecture / interiors / caves | Ten structure definitions, three explorable interior layouts, seeded cave formations and separate roof occlusion buffers |
 | Browser-based interactive Playground | Available |
 | Library, type declarations and demo build | Available |
