@@ -19,7 +19,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 3B — Flora Rasterizer and World Integration | VERIFIED | Sustitución de sprites antiguos de vegetación y distribución real |
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
-| 5A — Advanced Character Anatomy Engine | IMPLEMENTED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
+| 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
 | 5B — Character Customization and NPC Anatomy QA | PENDING | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 
 ## Fase 1A — 14 de octubre de 2026
@@ -164,7 +164,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 5A — 14 de octubre de 2026
 
 - **Referencia del lote:** base antigua `217f76b393cda5b9755119a67f8b56d854df4520`; **HEAD real inspeccionado:** `d57ad40da79e3f7e8d9785df2937a64ac13ea3df` de `feat/ppae-2-art-overhaul`, PR #2.
-- **Estado:** IMPLEMENTED; pendiente de validación de CI y de auditoría visual de la rosa de ocho direcciones.
+- **Estado:** VERIFIED técnicamente. Commit de implementación `934d5fb46e610d8bd9fb717d579c62a8a453cbe8`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38599405438: `npm test` **21 suites / 122 pruebas aprobadas** (siete nuevas 5A); `npm run build` completo (TypeScript, declaraciones, biblioteca y demo). Auditoría visual de la rosa de ocho direcciones aún pendiente.
 - **Archivos:** MODIFY `src/core/contracts.ts`, `src/entities/character-rig.ts`, `src/entities/character-generator.ts`; ADD `tests/ppae-character-anatomy-5a.test.ts`; UPDATE este documento.
 - **Rig:** `AnatomicalJointId` aumenta retrocompatiblemente de 11 a **16**: `neck`, `elbow_r`, `elbow_l`, `knee_r`, `knee_l`. `evaluatePose` calcula codos/rodillas con flexión y compresión de perfil lateral sin perder profundidad derecha/izquierda ni anclajes de equipo. Todas las siete acciones y ocho direcciones permanecen disponibles.
 - **Render:** `hair_back` es una capa independiente detrás de la cabeza en vistas frontales y laterales; deja de dibujar un rectángulo sobre los ojos. Cráneo con contorno curvo, mandíbula estrecha, cejas y rostro, expresiones faciales opcionales, barba en mentón y cuello sombreado.
