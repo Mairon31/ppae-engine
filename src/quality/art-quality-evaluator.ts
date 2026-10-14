@@ -606,7 +606,7 @@ export class ProceduralArtQualityEvaluator {
     if (dist < 0.25) {
       // Si el centroide de brillo coincide exactamente con el centroide geométrico,
       // pero la parte superior es más clara que la inferior, damos alineación positiva moderada
-      return 0.15;
+      return 0;
     }
 
     const [lx, ly] = lightDirectionVector;
@@ -645,7 +645,7 @@ export class ProceduralArtQualityEvaluator {
     };
     // Si tiene contorno oscuro selectivo, el contraste de silueta está garantizado >= 2.1
     const rawContrast = computeContrastRatio(avgColor, backdrop);
-    return Number(Math.max(1.85, rawContrast).toFixed(2));
+    return Number(rawContrast.toFixed(2));
   }
 
   private colorManhattanDistance(a: RGBAColor, b: RGBAColor): number {

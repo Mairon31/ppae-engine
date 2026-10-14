@@ -16,6 +16,7 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     const results = evaluator.runGoldenSeedBenchmarkSuite();
 
     for (const { entry, report } of results) {
+      console.info('PHASE11_REFERENCE', JSON.stringify({ id: entry.benchmarkId, score: report.overallScore, minimum: entry.minExpectedScore, defects: report.defects, metrics: report.metrics }));
       expect(report.passed).toBe(true);
       expect(report.overallScore).toBeGreaterThanOrEqual(entry.minExpectedScore);
       expect(report.defects).toEqual([]);
