@@ -1,6 +1,7 @@
 import { ArtStyleProfile, AutotileMask8 } from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
+import { normalizeAutotileMask47 } from './autotiler';
 import { TERRAIN_MATERIALS } from './world-field';
 
 export type LiquidKind = 'shallow_water' | 'deep_water' | 'lava_magma';
@@ -21,6 +22,7 @@ export class LiquidTileGenerator {
     const size = profile.canonicalTileTexels;
     const mat = TERRAIN_MATERIALS[kind];
     const buf = new PixelBuffer(size, size);
+    const mask = normalizeAutotileMask47(autotileMask);
 
     const baseColor = hexToRgba(mat.baseColorHex);
     const shadowColor = hexToRgba(mat.shadowColorHex);
@@ -51,36 +53,54 @@ export class LiquidTileGenerator {
       }
     }
 
-    // Espuma de orilla reactiva a los lados donde el líquido toca tierra firme (según autotileMask)
-    const hasN = (autotileMask & 1) !== 0;
-    const hasE = (autotileMask & 4) !== 0;
-    const hasS = (autotileMask & 16) !== 0;
-    const hasW = (autotileMask & 64) !== 0;
-    const pulse = frameIndex % 2;
+    // A full water neighborhood has no shoreline: keep the animated wave.
+    if(mask===255)return buf;
 
-    if (!hasN) {
-      for (let x = 0; x < size; x++) {
-        buf.setPixel(x, 0, foamColor);
-        if ((x + pulse) % 2 === 0) buf.setPixel(x, 1, foamColor);
-        buf.setPixel(x, 2 + pulse, highlightColor);
-      }
-    }
-    if (!hasS) {
-      for (let x = 0; x < size; x++) {
-        buf.setPixel(x, size - 1, foamColor);
-        if ((x + pulse) % 2 === 0) buf.setPixel(x, size - 2, foamColor);
-      }
-    }
-    if (!hasW) {
-      for (let y = 0; y < size; y++) {
-        buf.setPixel(0, y, foamColor);
-        if ((y + pulse) % 2 === 0) buf.setPixel(1, y, foamColor);
-      }
-    }
-    if (!hasE) {
-      for (let y = 0; y < size; y++) {
-        buf.setPixel(size - 1, y, foamColor);
-        if ((y + pulse) % 2 === 0) buf.setPixel(size - 2, y, foamColor);
+    const n=!!(mask&1),ne=!!(mask&2),e=!!(mask&4),se=!!(mask&8);
+    const s=!!(mask&16),sw=!!(mask&32),w=!!(mask&64),nw=!!(mask&128);
+    const pulse=((frameIndex%totalFrames)+totalFrames)%totalFrames%2;
+    const radius=Math.max(4,profile.moduleSize);
+
+    // One immutable distance field (no rectangular bars or mutating neighbor
+    // reads). Concave missing diagonals get quarter-circle foam; convex pairs
+    // of exposed cardinal edges withdraw the foam from the outermost corner.
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        let d=Infinity;
+        if(!n)d=Math.min(d,y);
+        if(!e)d=Math.min(d,size-1-x);
+        if(!s)d=Math.min(d,size-1-y);
+        if(!w)d=Math.min(d,x);
+
+        // Exterior rounded bends: Euclidean radius intersects exposed edges
+        // at precisely their natural edge endpoints.
+        if(!n&&!w&&x<radius&&y<radius){
+          d=Math.max(d,Math.hypot(radius-x,radius-y)-radius);
+        }
+        if(!n&&!e&&x>=size-radius&&y<radius){
+          d=Math.max(d,Math.hypot(x-(size-1-radius),radius-y)-radius);
+        }
+        if(!s&&!w&&x<radius&&y>=size-radius){
+          d=Math.max(d,Math.hypot(radius-x,y-(size-1-radius))-radius);
+        }
+        if(!s&&!e&&x>=size-radius&&y>=size-radius){
+          d=Math.max(d,Math.hypot(x-(size-1-radius),y-(size-1-radius))-radius);
+        }
+
+        // Interior concave shoreline arcs, missing diagonals despite the
+        // cardinal water cells being connected.
+        if(n&&w&&!nw)d=Math.min(d,Math.hypot(x,y));
+        if(n&&e&&!ne)d=Math.min(d,Math.hypot(size-1-x,y));
+        if(s&&w&&!sw)d=Math.min(d,Math.hypot(x,size-1-y));
+        if(s&&e&&!se)d=Math.min(d,Math.hypot(size-1-x,size-1-y));
+
+        if(d<1.15){
+          buf.setPixel(x,y,foamColor);
+        }else if(d<2.2&&((x+y+pulse)&1)===0){
+          buf.setPixel(x,y,foamColor);
+        }else if(d>=2.2+pulse*.5&&d<3.4+pulse*.5){
+          buf.setPixel(x,y,highlightColor);
+        }
       }
     }
 

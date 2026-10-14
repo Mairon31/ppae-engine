@@ -18,7 +18,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 3A — Flora Morphology and Ecological Patches | VERIFIED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
 | 3B — Flora Rasterizer and World Integration | VERIFIED | Sustitución de sprites antiguos de vegetación y distribución real |
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
-| 4B — Road Junctions and Animated Shorelines | PENDING | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
+| 4B — Road Junctions and Animated Shorelines | IMPLEMENTED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -146,6 +146,18 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas aprobadas:** GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38595247498: `npm test` **19 suites / 108 pruebas aprobadas**, incluidas seis pruebas 4A (256→47 máscaras, ausencia de inundación en las 47 máscaras para 4×4 y 6×6, esquinas internas/externas, 16 variantes, igualdad de bordes opuestos y bordes localizados). `npm run build` completo: TypeScript, declaraciones, biblioteca y demo correctos.
 - **Limitaciones:** la paridad visual con capturas debe revisarse en una demo/screenshot real; las pruebas de código no demuestran ausencia absoluta de costuras al alternar variantes distintas ni resuelven la animación de costas desde el renderer líquido (etapa 4B).
 - **Próximo bloque:** 4B — Renderizador Direccional de Caminos, Orillas Líquidas y Road Junction Regression.
+
+## Fase 4B — 14 de octubre de 2026
+
+- **Referencia original Gemini:** commit `217f76b393cda5b9755119a67f8b56d854df4520`. **HEAD real previo:** `9c0523cb69b3f2575ef063be835be15f440cfc1b`, rama `feat/ppae-2-art-overhaul` y PR #2.
+- **Implementación:** nuevo `src/terrain/road-renderer.ts` (`DirectionalRoadRenderer`), `src/terrain/world-field.ts`, `src/terrain/autotiler.ts`, `src/terrain/liquid-renderer.ts`, `src/index.ts`, `tests/ppae-road-shore-4b.test.ts`.
+- **Conectividad vial:** `dirt_soil` conecta exclusivamente con otros tiles `dirt_soil`; selecciona el sustrato terrestre predominante por cardinales y diagonales, sin depender de `layerPriority` ni del orden de carga. Resto de materiales conserva su cómputo previo de máscaras.
+- **Caminos:** geometría de distancia euclidiana al eje, rectas, codos en arco, finales redondeados, bifurcaciones y cruces; erosión local, dos roderas y guijarros. Los píxeles del camino a lo largo del borde compartido son independientes de la variante. En tiles de hierba contiguos no se dibuja una segunda zanja.
+- **Agua:** normaliza las máscaras de 47 estados y utiliza distancia euclidiana a costas cardinales y esquinas cóncavas/convexas para espuma con pulso animado. Se mantiene el bucle temporal de fotogramas.
+- **Verificación requerida:** `npm test` y `npm run build`; siete regresiones añadidas de caminos, sustrato, esquinas, looping y determinismo entre chunks.
+- **Visual:** los umbrales de pixel tests no sustituyen la auditoría de capturas del mundo y de las uniones entre materiales con distintas variantes. Mantener pendientes las inspecciones visuales antes de asegurar paridad estética.
+- **Estado:** IMPLEMENTED, a la espera de verificación de CI y de registrar SHA exacto del commit.
+- **Siguiente fase:** 5A — Advanced Character Anatomy Engine.
 
 ## Convenciones de estado
 

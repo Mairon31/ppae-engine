@@ -8,6 +8,7 @@ export * from './runtime/texture-cache';
 export * from './engine/ppae-engine';
 export * from './terrain/world-field';
 export * from './terrain/autotiler';
+export * from './terrain/road-renderer';
 export * from './terrain/liquid-renderer';
 export * from './terrain/chunk-renderer';
 export * from './vegetation/nature-generator';

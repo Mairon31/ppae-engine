@@ -8,6 +8,7 @@ import type {
 } from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
+import { DirectionalRoadRenderer } from './road-renderer';
 import { TERRAIN_MATERIALS } from './world-field';
 
 /** Clockwise bit layout N=1, NE=2, E=4, SE=8, S=16, SW=32, W=64, NW=128. */
@@ -59,6 +60,7 @@ export function classifyAutotileMask47(mask: AutotileMask8): AutotileMaskClassif
  * the output buffer is ever used to decide whether another pixel is an edge.
  */
 export class TerrainAutotiler {
+  private readonly roadRenderer = new DirectionalRoadRenderer();
   /**
    * Produce 16 deterministic organic variants. Every cluster wraps toroidally;
    * opposite edges are matched after synthesis to avoid edge pinholes.
@@ -143,7 +145,24 @@ export class TerrainAutotiler {
   ):PixelBuffer{
     const norm=normalizeAutotileMask47(mask);
     const primary=this.generateSeamlessBaseTile(primaryMaterial,profile,variantIndex);
+
+    // Paths are not terrain overlays sorted by layerPriority. Their topology
+    // is resolved against neighboring path cells and rendered over natural soil.
+    if(primaryMaterial==='dirt_soil'){
+      const substrate=(underlayMaterial && underlayMaterial!=='dirt_soil' &&
+        !TERRAIN_MATERIALS[underlayMaterial].isLiquid)
+          ? underlayMaterial:'meadow_grass';
+      const substrateTile=this.generateSeamlessBaseTile(substrate,profile,variantIndex);
+      return this.roadRenderer.renderRoadTile(
+        primaryMaterial,norm,profile,substrateTile,variantIndex
+      ).buffer;
+    }
+
     if(norm===255||!underlayMaterial||underlayMaterial===primaryMaterial)return primary;
+
+    // Natural tiles bordering a road must not cut out their own square trench.
+    // The road tile paints its two eroded shoulders over the shared substrate.
+    if(underlayMaterial==='dirt_soil')return primary;
     const underlay=this.generateSeamlessBaseTile(underlayMaterial,profile,variantIndex);
     const size=profile.canonicalTileTexels;
     const out=new PixelBuffer(size,size);

@@ -333,46 +333,69 @@ export class DeterministicWorldField {
     mask: AutotileMask8;
     transitionNeighborMaterial?: TerrainMaterialId;
   } {
-    const centerPriority = TERRAIN_MATERIALS[centerMaterial].layerPriority;
-    let transitionNeighborMaterial: TerrainMaterialId | undefined;
-    let highestLowerPriority = -1;
+    // Road connectivity uses only neighboring road tiles. Road shoulders must
+    // resolve against the dominant surrounding *land* rather than layerPriority:
+    // grass (50) would otherwise never be the underlay of dirt_soil (40).
+    if (centerMaterial === 'dirt_soil') {
+      const neighbors: readonly [number, number][] = [
+        [0, -1], [1, 0], [0, 1], [-1, 0],
+        [1, -1], [1, 1], [-1, 1], [-1, -1]
+      ];
+      const materials = neighbors.map(([dx,dy])=>
+        this.sampleMaterialOnly(tileX+dx,tileY+dy).material);
+      const n=materials[0]==='dirt_soil';
+      const e=materials[1]==='dirt_soil';
+      const s=materials[2]==='dirt_soil';
+      const w=materials[3]==='dirt_soil';
+      const mask =
+        (n?1:0) | (n&&e&&materials[4]==='dirt_soil'?2:0) |
+        (e?4:0) | (s&&e&&materials[5]==='dirt_soil'?8:0) |
+        (s?16:0) | (s&&w&&materials[6]==='dirt_soil'?32:0) |
+        (w?64:0) | (n&&w&&materials[7]==='dirt_soil'?128:0);
 
-    const isSameOrHigherGroup = (dx: number, dy: number): boolean => {
-      const neighbor = this.sampleMaterialOnly(tileX + dx, tileY + dy).material;
-      if (neighbor === centerMaterial) return true;
-      // Agua profunda y somera comparten continuidad de familia líquida
-      if (centerMaterial === 'shallow_water' && neighbor === 'deep_water') return true;
+      // Cardinal surroundings receive a higher weight. Ties are broken by
+      // terrain priority and a stable material ID so chunk order is irrelevant.
+      const weights = new Map<TerrainMaterialId, number>();
+      for (let i=0;i<materials.length;i++) {
+        const mat=materials[i];
+        if (mat==='dirt_soil' || TERRAIN_MATERIALS[mat].isLiquid)continue;
+        weights.set(mat,(weights.get(mat)??0)+(i<4?2:1));
+      }
+      const dominant=[...weights].sort((a,b)=>
+        b[1]-a[1] ||
+        TERRAIN_MATERIALS[b[0]].layerPriority-TERRAIN_MATERIALS[a[0]].layerPriority ||
+        a[0].localeCompare(b[0]))[0]?.[0];
+      return {mask,transitionNeighborMaterial:dominant ?? 'meadow_grass'};
+    }
 
-      const nPrio = TERRAIN_MATERIALS[neighbor].layerPriority;
-      if (nPrio < centerPriority && nPrio > highestLowerPriority) {
-        highestLowerPriority = nPrio;
-        transitionNeighborMaterial = neighbor;
+    // Preserve the original 47-state corner-gated behavior for nonroad tiles.
+    const centerPriority=TERRAIN_MATERIALS[centerMaterial].layerPriority;
+    let transitionNeighborMaterial:TerrainMaterialId|undefined;
+    let highestLowerPriority=-1;
+    const isSameOrHigherGroup=(dx:number,dy:number):boolean=>{
+      const neighbor=this.sampleMaterialOnly(tileX+dx,tileY+dy).material;
+      if(neighbor===centerMaterial)return true;
+      if(centerMaterial==='shallow_water'&&neighbor==='deep_water')return true;
+      const priority=TERRAIN_MATERIALS[neighbor].layerPriority;
+      if(priority<centerPriority&&priority>highestLowerPriority){
+        highestLowerPriority=priority;
+        transitionNeighborMaterial=neighbor;
       }
       return false;
     };
-
-    const n = isSameOrHigherGroup(0, -1);
-    const e = isSameOrHigherGroup(1, 0);
-    const s = isSameOrHigherGroup(0, 1);
-    const w = isSameOrHigherGroup(-1, 0);
-
-    // Diagonal Corner Gating: la esquina diagonal sólo cuenta si ambos cardinales adyacentes están presentes
-    const ne = n && e && isSameOrHigherGroup(1, -1);
-    const se = s && e && isSameOrHigherGroup(1, 1);
-    const sw = s && w && isSameOrHigherGroup(-1, 1);
-    const nw = n && w && isSameOrHigherGroup(-1, -1);
-
-    const mask =
-      (n ? 1 : 0) |
-      (ne ? 2 : 0) |
-      (e ? 4 : 0) |
-      (se ? 8 : 0) |
-      (s ? 16 : 0) |
-      (sw ? 32 : 0) |
-      (w ? 64 : 0) |
-      (nw ? 128 : 0);
-
-    return { mask, transitionNeighborMaterial };
+    const n=isSameOrHigherGroup(0,-1);
+    const e=isSameOrHigherGroup(1,0);
+    const s=isSameOrHigherGroup(0,1);
+    const w=isSameOrHigherGroup(-1,0);
+    const ne=n&&e&&isSameOrHigherGroup(1,-1);
+    const se=s&&e&&isSameOrHigherGroup(1,1);
+    const sw=s&&w&&isSameOrHigherGroup(-1,1);
+    const nw=n&&w&&isSameOrHigherGroup(-1,-1);
+    return {
+      mask:(n?1:0)|(ne?2:0)|(e?4:0)|(se?8:0)|
+        (s?16:0)|(sw?32:0)|(w?64:0)|(nw?128:0),
+      transitionNeighborMaterial
+    };
   }
 
   /**
