@@ -247,16 +247,22 @@ export class CreatureGenerator {
     buf.fillEllipse(pivotX, pivotY + 1, Math.round(8 * u), Math.round(3 * u), { r: 15, g: 23, b: 42, a: 110 });
 
     const isDead = action === 'death';
-    const isGrazing = action === 'rest_graze';
-    const isAttacking = action === 'attack';
-
-    const stride = action === 'move' ? Math.sin(phase) * 3.0 * u : 0;
+    const isSleeping = action === 'sleep';
+    const isGrazing = action === 'rest_graze' || action === 'eat_feed';
+    const isAttacking = action === 'attack' || action === 'special_ability';
+    const isSprinting = action === 'sprint_flee';
+    const isPouncing = action === 'jump_pounce';
+    const stride = action === 'move' || action === 'swim'
+      ? Math.sin(phase) * 3 * u
+      : isSprinting ? Math.sin(phase) * 4.6 * u : isPouncing ? 3.8 * u : 0;
+    const pounceProgress = frameIndex / Math.max(1, totalFrames - 1);
+    const jumpY = isPouncing ? -Math.round(Math.sin(Math.PI * pounceProgress) * 5 * u) : 0;
     const lungeX = isAttacking ? Math.round(fx * 3.5 * u * Math.sin(phase)) : 0;
     const lungeY = isAttacking ? Math.round(fy * 2.5 * u * Math.sin(phase)) : 0;
-    const bodyCollapseY = isDead ? Math.round(4 * u) : 0;
-
+    const bodyCollapseY = isDead || isSleeping ? Math.round(4 * u)
+      : action === 'swim' ? Math.round(2 * u) : 0;
     const bodyCenterX = pivotX + lungeX;
-    const bodyCenterY = pivotY - Math.round(7 * u) + lungeY + bodyCollapseY;
+    const bodyCenterY = pivotY - Math.round(7 * u) + lungeY + bodyCollapseY + jumpY;
 
     // Eje delantero (pecho) y trasero (grupa) según vector de dirección
     const spineHalfLen = Math.round(4.5 * u);
@@ -266,7 +272,7 @@ export class CreatureGenerator {
     const crupperY = bodyCenterY - Math.round(fy * spineHalfLen * 0.55);
 
     // 4 patas con fase diagonal (Pata Delantera Derecha sincronizada con Trasera Izquierda)
-    if (!isDead) {
+    if (!isDead && !isSleeping) {
       const legLen = Math.round(5.5 * u);
       const liftA = Math.max(0, Math.round(Math.sin(phase) * 2 * u));
       const liftB = Math.max(0, Math.round(-Math.sin(phase) * 2 * u));
@@ -281,7 +287,7 @@ export class CreatureGenerator {
     }
 
     // Barriga/Ubre (si aplica a vaca lechera)
-    if (spec.features.hasUdder && !isDead) {
+    if (spec.features.hasUdder && !isDead && !isSleeping) {
       buf.fillEllipse(crupperX, bodyCenterY + Math.round(3.5 * u), Math.round(2.5 * u), Math.round(1.8 * u), cAcc);
     }
 
@@ -314,7 +320,8 @@ export class CreatureGenerator {
     );
 
     // Cabeza con descenso al pastar (`rest_graze`)
-    const grazeDropY = isGrazing ? Math.round(4.5 * u) : 0;
+    const grazeDropY = isGrazing ? Math.round(4.5 * u)
+      : action === 'special_ability' ? -Math.round(2.5 * u) : 0;
     const headX = chestX + Math.round(fx * 3.5 * u);
     const headY = chestY - Math.round(2.5 * u) + grazeDropY;
     const headRx = Math.round(3.2 * u);
@@ -343,7 +350,8 @@ export class CreatureGenerator {
         Math.round(2 * u),
         spec.features.hasUdder ? cAcc : cShad
       );
-      buf.setPixel(headX + Math.round(fx * 1.2 * u), headY - 1, spec.isHostile ? cAcc : cOut);
+      buf.setPixel(headX + Math.round(fx * 1.2 * u), headY - 1,
+        isSleeping ? cShad : spec.isHostile ? cAcc : cOut);
     }
 
     buf.applySelectiveOutline(cOut);
@@ -394,13 +402,19 @@ export class CreatureGenerator {
 
     buf.fillEllipse(pivotX, pivotY + 1, Math.round(4 * u), Math.round(1.8 * u), { r: 15, g: 23, b: 42, a: 100 });
 
-    const peckOffset = action === 'rest_graze' ? Math.abs(Math.round(Math.sin(phase) * 4 * u)) : 0;
-    const hopY = action === 'move' ? Math.abs(Math.round(Math.sin(phase * 2) * 1.5 * u)) : 0;
-    const bodyY = pivotY - Math.round(4.5 * u) - hopY + (action === 'death' ? Math.round(2.5 * u) : 0);
+    const peckOffset = action === 'rest_graze' || action === 'eat_feed'
+      ? Math.abs(Math.round(Math.sin(phase) * 4 * u)) : 0;
+    const hopY = action === 'move'
+      ? Math.abs(Math.round(Math.sin(phase * 2) * 1.5 * u))
+      : action === 'sprint_flee' || action === 'jump_pounce' || action === 'special_ability'
+      ? Math.abs(Math.round(Math.sin(phase) * 3.8 * u)) : 0;
+    const bodyY = pivotY - Math.round(4.5 * u) - hopY
+      + (action === 'death' || action === 'sleep' ? Math.round(2.5 * u) : 0);
 
     // 2 patas finas amarillas/naranjas
-    if (action !== 'death') {
-      const step = action === 'move' ? Math.round(Math.sin(phase) * 2 * u) : 0;
+    if (action !== 'death' && action !== 'sleep') {
+      const step = action === 'move' || action === 'sprint_flee'
+        ? Math.round(Math.sin(phase) * 2.4 * u) : 0;
       buf.drawLine(pivotX - 1, bodyY + 2, pivotX - 1 + step, pivotY, cBeak, 1);
       buf.drawLine(pivotX + 1, bodyY + 2, pivotX + 1 - step, pivotY, cBeak, 1);
     }
@@ -470,16 +484,16 @@ export class CreatureGenerator {
     const cOut = hexToRgba(spec.outlineHex);
 
     const stretch =
-      action === 'death'
-        ? -0.45
-        : action === 'move' || action === 'attack'
-        ? Math.sin(phase) * 0.32
-        : Math.sin(phase) * 0.12;
-
-    const jumpHeight =
-      action === 'move' || action === 'attack'
-        ? Math.max(0, Math.round(Math.sin(phase) * 4.5 * u))
-        : 0;
+      action === 'death' || action === 'sleep' ? -0.45
+      : action === 'jump_pounce' ? Math.sin(phase) * 0.48
+      : action === 'special_ability' ? -0.35 * Math.sin(phase)
+      : action === 'move' || action === 'sprint_flee' || action === 'attack'
+      ? Math.sin(phase) * 0.32 : Math.sin(phase) * 0.12;
+    const progress = frameIndex / Math.max(1, totalFrames - 1);
+    const jumpHeight = action === 'jump_pounce'
+      ? Math.max(0, Math.round(Math.sin(Math.PI * progress) * 7.5 * u))
+      : action === 'move' || action === 'sprint_flee' || action === 'attack'
+      ? Math.max(0, Math.round(Math.sin(phase) * 4.5 * u)) : 0;
 
     // Conservación aproximada de volumen: cuando sube y se estira en Y, se estrecha en X
     const rx = Math.max(3, Math.round(5.5 * u * (1 - stretch * 0.65)));
@@ -575,14 +589,19 @@ export class CreatureGenerator {
     const cEye = hexToRgba(spec.secondaryHex);
     const cOut = hexToRgba(spec.outlineHex);
 
-    const bodyY = pivotY - Math.round(4 * u);
+    const progress = frameIndex / Math.max(1, totalFrames - 1);
+    const pounceLift = action === 'jump_pounce'
+      ? Math.round(Math.sin(Math.PI * progress) * 4.5 * u) : 0;
+    const bodyY = pivotY - Math.round(4 * u) - pounceLift
+      + (action === 'sleep' || action === 'death' ? Math.round(2 * u) : 0);
     const abX = pivotX - Math.round(fx * 2.5 * u);
     const abY = bodyY - Math.round(fy * 2.0 * u);
 
     // 4 pares de patas articuladas (rodilla elevada -> punta en suelo)
     for (let pair = 0; pair < 4; pair++) {
       const pairAngleOffset = (pair - 1.5) * 2.2 * u;
-      const gaitWave = action === 'move' ? Math.sin(phase + pair * Math.PI) * 1.8 * u : 0;
+      const gaitWave = action === 'move' || action === 'sprint_flee'
+        ? Math.sin(phase + pair * Math.PI) * (action === 'sprint_flee' ? 2.8 : 1.8) * u : 0;
 
       // Lado izquierdo y derecho
       for (const side of [-1, 1]) {
@@ -608,6 +627,12 @@ export class CreatureGenerator {
     // Clúster de ojos arácnidos
     buf.setPixel(headX - 1, headY, cEye);
     buf.setPixel(headX + 1, headY, cEye);
+    if (action === 'special_ability') {
+      // A spun silk filament leaves the arachnid's chelicerae.
+      buf.drawLine(headX, headY,
+        headX + Math.round(fx * 5 * u),
+        headY + Math.round(fy * 5 * u), hexToRgba('#f8fafc'), 1);
+    }
 
     buf.applySelectiveOutline(cOut);
     if (action === 'hurt') this.flashBuffer(buf);
@@ -653,9 +678,16 @@ export class CreatureGenerator {
     // Sombra pequeña en el suelo (pivotY) mientras el cuerpo vuela arriba
     buf.fillEllipse(pivotX, pivotY, Math.round(3.5 * u), Math.round(1.5 * u), { r: 15, g: 23, b: 42, a: 95 });
 
-    const altitude = action === 'death' ? Math.round(2 * u) : Math.round((spec.features.defaultFlightAltitudeTexels ?? 8) * u);
-    const flapY = action === 'death' ? 0 : Math.round(Math.sin(phase) * 4.0 * u);
-    const bodyY = pivotY - altitude + Math.round(Math.cos(phase) * 1.2 * u);
+    const altitude = action === 'death' || action === 'sleep'
+      ? Math.round(2 * u)
+      : Math.round((spec.features.defaultFlightAltitudeTexels ?? 8) * u);
+    const flapY = action === 'death' || action === 'sleep' ? 0
+      : Math.round(Math.sin(phase) * (action === 'sprint_flee' ? 5.2 : 4) * u);
+    const progress = frameIndex / Math.max(1, totalFrames - 1);
+    const diveDrop = action === 'jump_pounce' || action === 'attack'
+      ? Math.round(Math.sin(Math.PI * progress) * 4 * u) : 0;
+    const bodyY = pivotY - altitude + diveDrop
+      + Math.round(Math.cos(phase) * (action === 'sleep' ? 0 : 1.2) * u);
 
     // Alas membranosas izquierda y derecha
     const wingSpan = Math.round(7.5 * u);
@@ -713,7 +745,9 @@ export class CreatureGenerator {
     const cOut = hexToRgba(spec.outlineHex);
 
     const centerY = pivotY - Math.round(3.5 * u);
-    const sway = Math.round(Math.sin(phase) * 2.0 * u);
+    const swayAmp = action === 'sprint_flee' || action === 'swim' ? 3.2
+      : action === 'sleep' || action === 'death' ? 0.4 : 2;
+    const sway = Math.round(Math.sin(phase) * swayAmp * u);
 
     const headX = pivotX + Math.round(fx * 3.5 * u);
     const headY = centerY + Math.round(fy * 2.0 * u);

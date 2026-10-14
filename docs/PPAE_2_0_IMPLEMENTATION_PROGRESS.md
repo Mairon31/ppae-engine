@@ -22,6 +22,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
 | 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 | 6A — Advanced Animation System: 28 Actions | VERIFIED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
+| 6B — Species Animation Capabilities & Creature Atlas | IMPLEMENTED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -198,6 +199,17 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas:** seis tests adicionales de catálogo/8 direcciones/determinismo, poses contextuales, movilidad de manos, eventos FSM, regresión legacy y spritesheets mixtos.
 - **Estado:** VERIFIED técnicamente. Implementación `7183404efc760d8505b122a9dda763ddfa78fee5`; ajustes de regresión `c17c3a01bbe3ff05a686188c6954415e98f25ab5` y `7afb4d03d53b63b0e77d132e85893bb55a41cffa`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38602363584: `npm test` **23 suites / 134 pruebas aprobadas** (6 nuevas 6A); `npm run build` correcto con declaraciones, TypeScript, biblioteca y demo. Auditoría visual del Animation Inspector en 8 direcciones pendiente; no se declara paridad artística basándose solo en tests.
 - **Siguiente fase:** 6B — SpeciesAnimationCapabilityRegistry y spritesheets de criaturas.
+
+## Fase 6B — 14 de octubre de 2026
+
+- **Rama exclusiva y PR:** `feat/ppae-2-art-overhaul`, PR #2 (sin fusionar). HEAD inspeccionado `c3a10deadbd44834b720257f1fd4c91f3d71d214`; la base de Gemini `217f76b393cda5b9755119a67f8b56d854df4520` está obsoleta.
+- **Contratos:** doce `CreatureActionId` retrocompatibles y perfiles `SpeciesAnimationCapabilityProfile`, `LocomotionMedium`, `CreatureAnimationClipDefinition`, y metadatos de atlas/fauna.
+- **Registro:** `SpeciesAnimationCapabilityRegistry`, `DEFAULT_CREATURE_CLIPS`, `FAMILY_ANIMATION_CAPABILITIES`; seis familias con fallback determinista, incluyendo `dairy_cow.jump_pounce -> move` y `river_trout.rest_graze -> swim`. Incompatibles desduplicadas al compilar.
+- **Rigs:** `CreatureGenerator` amplía animaciones de cuadrúpedos, aves, slimes, arácnidos, murciélagos y peces con movimiento rápido, descanso, emboscada, alimentación, habilidades y nado según anatomía.
+- **Spritesheets:** `SpritesheetCompiler.compileCreatureSheet` con extrusión de bordes, pivotes/anclajes ajustados al padding, hitboxes, 8 direcciones, datos y eventos por fotograma.
+- **Pruebas:** seis tests de clips, capacidades, morfología por acción, determinismo en ocho direcciones, atlas y fallback.
+- **Estado:** IMPLEMENTED, pendiente del resultado de `npm test`, `npm run build` y revisión visual. El éxito de tests por sí solo no prueba estilo o calidad artística.
+- **Siguiente:** Fase 7A — arquitectura artística multirresolución.
 
 ## Convenciones de estado
 

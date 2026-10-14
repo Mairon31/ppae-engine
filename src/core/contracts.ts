@@ -860,10 +860,18 @@ export type CreatureFamilyId =
 export type CreatureActionId =
   | 'idle'
   | 'move'
+  | 'sprint_flee'
   | 'rest_graze'
+  | 'eat_feed'
+  | 'sleep'
+  | 'jump_pounce'
+  | 'swim'
   | 'attack'
+  | 'special_ability'
   | 'hurt'
   | 'death';
+
+export type LocomotionMedium = 'terrestrial' | 'aquatic' | 'aerial' | 'amphibious';
 
 export type CreatureSpeciesId =
   | 'dairy_cow'
@@ -900,6 +908,61 @@ export interface CreatureSpeciesProfile {
     readonly defaultFlightAltitudeTexels?: number;
   };
   readonly logicalHitbox: LogicalHitbox;
+}
+
+// Phase 6B — capability-gated creature animation and deterministic sprite atlases.
+export interface CreatureAnimationClipDefinition {
+  readonly schemaVersion: string;
+  readonly action: CreatureActionId;
+  readonly frameCount: number;
+  readonly frameDurationMs: number;
+  readonly loop: boolean;
+  readonly priority: number;
+  readonly interruptible: boolean;
+  readonly events: readonly AnimationFrameEvent[];
+}
+
+export interface SpeciesAnimationCapabilityProfile {
+  readonly schemaVersion: string;
+  readonly family: CreatureFamilyId;
+  readonly locomotionMedia: readonly LocomotionMedium[];
+  readonly supportedActions: readonly CreatureActionId[];
+  readonly fallbackActionMap: Readonly<Partial<Record<CreatureActionId, CreatureActionId>>>;
+}
+
+export interface CreatureSpritesheetFrameMetadata {
+  readonly frameKey: string;
+  readonly speciesId: CreatureSpeciesId;
+  readonly action: CreatureActionId;
+  readonly direction: Direction8;
+  readonly frameIndex: number;
+  readonly atlasX: number;
+  readonly atlasY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly innerX: number;
+  readonly innerY: number;
+  readonly innerWidth: number;
+  readonly innerHeight: number;
+  readonly durationMs: number;
+  readonly pivotTexel: readonly [number, number];
+  readonly anchors: Readonly<Record<string, AnchorPoint>>;
+  readonly hitbox: LogicalHitbox;
+  readonly events: readonly AnimationEventId[];
+}
+
+export interface CompiledCreatureSpritesheetMetadata {
+  readonly schemaVersion: string;
+  readonly speciesId: CreatureSpeciesId;
+  readonly family: CreatureFamilyId;
+  readonly profileId: GranularityProfileId;
+  readonly sheetWidth: number;
+  readonly sheetHeight: number;
+  readonly paddingPx: number;
+  readonly directions: readonly Direction8[];
+  readonly actions: readonly CreatureActionId[];
+  readonly frames: Readonly<Record<string, CreatureSpritesheetFrameMetadata>>;
+  readonly sequenceOrder: Readonly<Record<string, readonly string[]>>;
 }
 
 export type BossPhaseId = 'phase_1_dormant' | 'phase_2_enraged' | 'phase_3_critical';
