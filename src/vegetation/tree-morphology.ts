@@ -155,6 +155,110 @@ const LIFECYCLE_STAGE_RULES: Readonly<Record<TreeLifecycleStage, StageScaleRule>
 };
 
 /**
+ * Fits the *existing* procedural skeleton into its actual raster footprint.
+ * The initial archetype canvas controls botanical proportions, not clipping.
+ * Additional module-aligned space is only added where roots, lobes, silhouettes
+ * or wind would escape the sprite. Geometry, deterministic seeds and attachment
+ * relationships remain unchanged; coordinates and ground pivot translate together.
+ */
+function fitTreeRasterFootprint(
+  skeleton: TreeStructuralSkeleton, distribution: TreeMorphologyArchetype['foliageDistribution'],
+  crown: TreeMorphologyArchetype['crownArchitecture'],
+  width: number, height: number, moduleSize: number, requestedWind: number
+): { skeleton: TreeStructuralSkeleton; width: number; height: number } {
+  const border = Math.max(3, Math.ceil(moduleSize * 0.15));
+  const wind = Math.max(2, Math.ceil(moduleSize / 4), Math.abs(requestedWind));
+  let minX = skeleton.pivotX, maxX = skeleton.pivotX;
+  let minY = skeleton.pivotY, maxY = skeleton.pivotY;
+  const include = (x: number, y: number, extentX = 0, extentY = extentX): void => {
+    minX = Math.min(minX, x - extentX);
+    maxX = Math.max(maxX, x + extentX);
+    minY = Math.min(minY, y - extentY);
+    maxY = Math.max(maxY, y + extentY);
+  };
+
+  // The main trunk, exposed branch ends, roots and the contact shadow also
+  // need room for line thickness, bark outlines and sway.
+  for (const node of skeleton.nodes) include(node.x, node.y, node.radiusPx + wind + 2, node.radiusPx + 2);
+  for (const segment of skeleton.segments) {
+    const radius = Math.max(segment.startRadiusPx, segment.endRadiusPx) + 3;
+    include(segment.startX, segment.startY, radius + wind, radius);
+    include(segment.controlX, segment.controlY, radius + wind, radius);
+    include(segment.endX, segment.endY, radius + wind, radius);
+  }
+  for (const root of skeleton.roots) {
+    include(root.startX, root.startY, root.thicknessPx + 3);
+    include(root.endX, root.endY, root.thicknessPx + 3);
+  }
+  include(skeleton.pivotX, skeleton.pivotY + 1, Math.ceil(width * 0.22) + 2,
+    Math.ceil(moduleSize * 0.45) + 2);
+
+  for (const mass of skeleton.foliageMasses) {
+    let rx: number, ry: number;
+    switch (distribution) {
+      case 'stratified_pads':
+        rx = mass.radiusX * 1.25 + 3;
+        ry = mass.radiusY * 0.65 + 4;
+        break;
+      case 'pendulous_fronds':
+        rx = mass.radiusX + 4;
+        ry = Math.max(mass.radiusY + 3, (mass.dropLengthPx ?? 8) + 5);
+        break;
+      case 'sparse_tufts':
+        rx = mass.radiusX + 4;
+        ry = mass.radiusY + 4;
+        break;
+      case 'vertical_plumes':
+        rx = Math.max(mass.radiusX + 3, 9);
+        ry = Math.max(mass.radiusY + 3, 9);
+        break;
+      default:
+        // Dense billowing consists of orbiting ellipsoids. Each lobe reaches
+        // ~0.5*radius from the mass centre plus up to 0.78*radius itself.
+        rx = mass.radiusX * 1.4 + 5;
+        ry = mass.radiusY * 1.4 + 5;
+        break;
+    }
+    include(mass.centerX, mass.centerY, rx + wind * 1.5, ry);
+  }
+  if (crown === 'radial_fronds') {
+    const hub = skeleton.nodes.find(node => node.nodeId === 'crown_hub');
+    if (hub) include(hub.x, hub.y, moduleSize * 3.1 + wind * 1.5 + 3, moduleSize * 3.2 + 4);
+  }
+
+  const left = Math.max(0, Math.ceil((border - minX) / moduleSize));
+  const right = Math.max(0, Math.ceil((maxX + border - (width - 1)) / moduleSize));
+  const top = Math.max(0, Math.ceil((border - minY) / moduleSize));
+  const bottom = Math.max(0, Math.ceil((maxY + border - (height - 1)) / moduleSize));
+  if (left + right + top + bottom === 0) return { skeleton, width, height };
+
+  const dx = left * moduleSize;
+  const dy = top * moduleSize;
+  return {
+    width: width + (left + right) * moduleSize,
+    height: height + (top + bottom) * moduleSize,
+    skeleton: {
+      pivotX: skeleton.pivotX + dx,
+      pivotY: skeleton.pivotY + dy,
+      nodes: skeleton.nodes.map(node => ({ ...node, x: node.x + dx, y: node.y + dy })),
+      segments: skeleton.segments.map(seg => ({
+        ...seg,
+        startX: seg.startX + dx, startY: seg.startY + dy,
+        controlX: seg.controlX + dx, controlY: seg.controlY + dy,
+        endX: seg.endX + dx, endY: seg.endY + dy
+      })),
+      roots: skeleton.roots.map(root => ({
+        ...root, startX: root.startX + dx, startY: root.startY + dy,
+        endX: root.endX + dx, endY: root.endY + dy
+      })),
+      foliageMasses: skeleton.foliageMasses.map(mass => ({
+        ...mass, centerX: mass.centerX + dx, centerY: mass.centerY + dy
+      }))
+    }
+  };
+}
+
+/**
  * Resolución determinista de los cuatro niveles: familia, arquetipo, individuo
  * estructural y masas de follaje. No modifica el rasterizador existente (fase 1B).
  */
@@ -164,7 +268,8 @@ export class TreeMorphologyResolver {
     stage: TreeLifecycleStage,
     profile: ArtStyleProfile,
     seed: number | string,
-    archetypeIdOverride?: string
+    archetypeIdOverride?: string,
+    windShiftTexels = 0
   ): TreeMorphologyDescriptor {
     const resolvedSeed = typeof seed === 'number'
       ? seed >>> 0
@@ -185,18 +290,25 @@ export class TreeMorphologyResolver {
     const canvasHeightModules = Math.max(3, Math.round(rawHeight * stageRule.heightFactor));
     const canvasWidthTexels = canvasWidthModules * mod;
     const canvasHeightTexels = canvasHeightModules * mod;
-    const skeleton = this.buildStructuralSkeleton(
+    const initialSkeleton = this.buildStructuralSkeleton(
       archetype, stage, stageRule, canvasWidthTexels, canvasHeightTexels, mod, rng
     );
+    // Keep species metrics based on the original morphology, not on transparent
+    // safety padding, so width/asymmetry scoring and ecology remain comparable.
     const metrics = this.computeSilhouetteMetrics(
-      skeleton, archetype, canvasWidthTexels, canvasHeightTexels
+      initialSkeleton, archetype, canvasWidthTexels, canvasHeightTexels
     );
+    const fitted = fitTreeRasterFootprint(initialSkeleton,
+      archetype.foliageDistribution, archetype.crownArchitecture,
+      canvasWidthTexels, canvasHeightTexels, mod, windShiftTexels);
+    const skeleton = fitted.skeleton;
     return {
       schemaVersion: PPAE_SCHEMA_VERSION, seed: resolvedSeed, familyId,
       archetypeId: archetype.archetypeId, stage, crownArchitecture: archetype.crownArchitecture,
       trunkPosture: archetype.trunkPosture, rootStructure: archetype.rootStructure,
       foliageDistribution: stageRule.foliageDensityFactor === 0 ? 'none' : archetype.foliageDistribution,
-      canvasWidthModules, canvasHeightModules, canvasWidthTexels, canvasHeightTexels,
+      canvasWidthModules: fitted.width / mod, canvasHeightModules: fitted.height / mod,
+      canvasWidthTexels: fitted.width, canvasHeightTexels: fitted.height,
       skeleton, metrics
     };
   }
