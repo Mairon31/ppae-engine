@@ -62,3 +62,13 @@ Las capturas del pipeline se guardan como artefacto `ppae-playground-chromium-qa
 
 La landing muestra el motor, no sustituye tests técnicos de rendimiento GPU, integración Phaser ni el proceso de benchmark CPU. La calidad artística precisa revisión visual continua; los 30 sistemas de catálogo no significan que cada combinación de atributos haya recibido una evaluación manual.
 
+
+## Iconografía oficial Pixelarticons (octubre 2026)
+
+**Convención obligatoria de interfaz:** utilizar [Pixelarticons](https://pixelarticons.com/docs/) para iconos funcionales y decorativos en la landing, el estudio y controles generados por TypeScript. No introducir emojis, caracteres Unicode imitadores de iconos, Bootstrap Icons, librerías CSS de pictogramas ni imágenes sintéticas para reemplazarlos.
+
+Se ha integrado una **selección de SVG del conjunto gratuito**, con su geometría original 24×24 y atributos `viewBox` y `currentColor`, directamente en `src/demo/pixelarticons.ts`. La licencia MIT del autor está preservada en `src/demo/PIXELARTICONS_LICENSE.txt`. No hay llamadas al CDN, dependencia de fuentes web de iconos, instalación npm ni riesgo de que un servidor remoto deje de servir los símbolos. Las fuentes tipográficas `Pixelify Sans` y `Press Start 2P` se mantienen para texto y jerarquía visual, pero nunca reemplazan al sistema de iconos.
+
+El HTML marca ranuras `data-px-icon="..." ` y el inicializador las convierte en elementos SVG accesibles con `aria-hidden` para adornos. `pixelIcon()` también sirve los iconos dinámicos de navegación, controles de reproducción y editor de personaje. Los botones con icono siguen teniendo nombre visible o `aria-label`. Se aplican medidas de 24 o 48 píxeles que respetan la retícula original.
+
+El QA de Chromium debe verificar que las ranuras fueron hidratadas, que los iconos tienen trazos SVG reales y que existen en el menú dinámico. Hay además tests preventivos en `tests/ppae-pixelarticons-ui.test.ts`.
