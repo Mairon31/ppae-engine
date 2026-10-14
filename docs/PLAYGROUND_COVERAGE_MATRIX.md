@@ -16,7 +16,7 @@
 
 | Sección (`#hash`) | Procedencia del motor | Variaciones y controles expuestos |
 | --- | --- | --- |
-| `world` | `DeterministicWorldField`, `ChunkWorldRenderer`, `StructureGenerator`, entidades, clima e iluminación | Semillas, perfiles, mundo, fauna, pueblo, hora, clima |
+| `world` | `DeterministicWorldField`, `ChunkWorldRenderer`, `StructureGenerator`, entidades, clima e iluminación | Semillas, perfiles, mundo, fauna, pueblo, hora y clima; sombras direccionales de props reales antes de componer sprites |
 | `characters` | `CharacterAvatarGenerator`, `ProceduralCharacterRig`, `generateAvatarPreset` | 32 identificadores iniciales, regeneración por semilla, 8 direcciones, 28 acciones, color de piel y cabello, ojos, 8 peinados, complexión, altura, barba, expresión, edad, orejas, cuernos, marcas, casco, armadura, capa, botas, guantes, mochila, manos y estado visual |
 | `character-actions` | `DEFAULT_CHARACTER_CLIPS` y `CharacterAvatarGenerator` | 28 acciones con avatar activo editable, 8 direcciones, fotogramas, velocidad y pausa |
 | `npcs` | `CharacterCustomizationService.generateNpcPreset` | 8 profesiones, seed reproducible, dirección y acción |
@@ -41,9 +41,9 @@
 | `equipment` | `InventoryIconGenerator` y `PixelNineSliceLibrary` | Cinco tipos iconográficos, material y desgaste |
 | `equipment-materials` | `EquipmentGenerator.renderEquipmentItem` | Seis materiales × tres clases de objeto = 18 muestras; desgaste |
 | `hud` | `PixelNineSliceLibrary` | Nine-slice y tres barras de progreso con valor ajustable |
-| `particles` | `PixelParticleEngine` | Diez emisores VFX reales, looping y física de partículas, sin SFX |
-| `weather` | `WeatherAndWindSystem` | 11 condiciones registradas y viento |
-| `lighting` | `PixelPerfectLightingEngine`, `AMBIENT_PROFILES_BY_PHASE` | Siete fases lumínicas |
+| `particles` | `PixelParticleEngine` | Dieciséis emisores VFX reales y cuatro formas de partículas con pooling, looping y física, sin SFX |
+| `weather` | `WeatherAndWindSystem` | 11 condiciones registradas, relámpagos ramificados, niebla multicapa y viento; exportación/snapshots |
+| `lighting` | `PixelPerfectLightingEngine`, `AMBIENT_PROFILES_BY_PHASE` | Siete fases lumínicas, roble procedural real con sombra solar Bayer por hora y vector exportado |
 | `palettes` | `PaletteManager.listPalettes / getPalette` | Todas las paletas registradas; rampas RGBA reales, bioma/estación en JSON |
 | `resolution-profiles` | `DEFAULT_STYLE_PROFILES` + `NatureGenerator` | Generación NATIVA del mismo árbol por perfil; no interpolación ni upscale de imagen |
 

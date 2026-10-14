@@ -110,4 +110,47 @@ describe('PPAE 2.0 Phase 10 — Directional Solar Shadows, Branched Lightning, F
     expect(drawn).toBeGreaterThan(10);
     expect(buf.countUniqueOpaqueColors()).toBeGreaterThanOrEqual(4);
   });
+
+  it('rasterizes the shadow silhouette without cumulative self-overdraw black bands', () => {
+    const scene = new PixelBuffer(160, 128);
+    scene.fillRect(0, 0, 160, 128, { r: 200, g: 200, b: 200, a: 255 });
+    const result = lighting.renderDirectionalCastShadows(
+      scene, [{ casterId: 'single_oak', worldX: 40, worldY: 40,
+        baseRadiusTexels: 7, heightTexels: 30 }],
+      { x: 0, y: 0, width: 160, height: 128 }, 6, profile4
+    );
+    expect(result.renderedShadowPixels).toBeGreaterThan(40);
+    let darkest = 255, unchanged = 0;
+    for (let y = 0; y < scene.height; y++) {
+      for (let x = 0; x < scene.width; x++) {
+        const r = scene.getPixel(x, y).r;
+        darkest = Math.min(darkest, r);
+        if (r === 200) unchanged++;
+      }
+    }
+    expect(darkest).toBeGreaterThanOrEqual(120);
+    expect(darkest).toBeLessThan(200);
+    expect(unchanged).toBeGreaterThan(17000);
+  });
+
+  it('generates deterministic layered fog without turning every pixel into an opaque grid', () => {
+    weather.setWeatherState(DEFAULT_WEATHER_STATES.dense_fog);
+    const render = () => weather.renderWeatherOverlay(
+      96, 64, { x: 0, y: 0, width: 64, height: 64 }, profile4,
+      2.25, [], false, 91
+    ).overlayBuffer;
+    const first = render(), again = render();
+    expect(Array.from(first.data)).toEqual(Array.from(again.data));
+    let fogPixels = 0;
+    for (let i = 3; i < first.data.length; i += 4) {
+      if (first.data[i] > 0) fogPixels++;
+    }
+    expect(fogPixels).toBeGreaterThan(100);
+    expect(fogPixels).toBeLessThan(96 * 64);
+    expect(weather.generateLightningBolt(96, 64, 77))
+      .toEqual(weather.generateLightningBolt(96, 64, 77));
+    expect(weather.generateLightningBolt(96, 64, 77))
+      .not.toEqual(weather.generateLightningBolt(96, 64, 78));
+  });
+
 });

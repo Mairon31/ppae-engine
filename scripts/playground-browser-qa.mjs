@@ -140,6 +140,63 @@ try {
   await page.locator('#catalog-search').fill('');
   console.log('PHASE 9 BROWSER OK: windmill/ruins/manor, forge/alchemy, real interior metadata');
 
+
+  // Phase 10: real solar oak-shadow outputs, storm/fog and shaped pixel VFX.
+  await nav.filter({ hasText: 'Lighting' }).click();
+  await page.locator('#catalog-search').fill('dawn');
+  await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+  await page.locator('.asset-card').first().click();
+  await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  const dawnCanvas = await page.locator('#world-stage').evaluate(c => c.toDataURL());
+  await page.screenshot({ path: join(output, '43-phase10-dawn-shadow.png'), fullPage: true });
+  const [dawnFile] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const dawnPath = join(output, 'phase10-dawn-vector.json');
+  await dawnFile.saveAs(dawnPath);
+  if (!(JSON.parse(readFileSync(dawnPath, 'utf8')).solarShadowVector?.dirX < -0.5))
+    throw new Error('Phase 10 dawn solar shadow vector not exported correctly');
+  await page.locator('#catalog-search').fill('dusk');
+  await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+  await page.locator('.asset-card').first().click();
+  await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  const duskCanvas = await page.locator('#world-stage').evaluate(c => c.toDataURL());
+  if (dawnCanvas === duskCanvas) throw new Error('Solar shadow preview did not change between dawn and dusk');
+  await page.screenshot({ path: join(output, '44-phase10-dusk-shadow.png'), fullPage: true });
+  await page.locator('#catalog-search').fill('');
+  await nav.filter({ hasText: 'Weather & Wind' }).click();
+  for (const [name, shot] of [
+    ['thunderstorm', '45-phase10-branched-lightning.png'],
+    ['dense_fog', '46-phase10-layered-fog.png']
+  ]) {
+    await page.locator('#catalog-search').fill(name);
+    await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+    await page.locator('.asset-card').first().click();
+    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.screenshot({ path: join(output, shot), fullPage: true });
+  }
+  await page.locator('#catalog-search').fill('');
+  await nav.filter({ hasText: 'Particles & VFX' }).click();
+  for (const [name, shot] of [
+    ['frost_shards', '47-phase10-frost-shards.png'],
+    ['poison_bubbles', '48-phase10-poison-rings.png']
+  ]) {
+    await page.locator('#catalog-search').fill(name);
+    await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+    await page.locator('.asset-card').first().click();
+    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.screenshot({ path: join(output, shot), fullPage: true });
+  }
+  const [vfxFile] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const vfxPath = join(output, 'phase10-poison-emitter.json');
+  await vfxFile.saveAs(vfxPath);
+  if (JSON.parse(readFileSync(vfxPath, 'utf8')).emitterPreset?.particleShape !== 'hollow_ring')
+    throw new Error('Poison emitter JSON missing its real hollow-ring geometry');
+  await page.locator('#catalog-search').fill('');
+  console.log('PHASE 10 BROWSER OK: real dawn/dusk shadows, lightning, fog, shaped VFX');
+
   await page.locator('#section-nav .nav-link').nth(1).click();
   await page.locator('#direction-select').selectOption('NE');
   await page.locator('#action-select').selectOption('walk');

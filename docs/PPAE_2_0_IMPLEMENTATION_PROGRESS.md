@@ -391,3 +391,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Reworked fog as two independently drifting depth waves; per-axis precomputation avoids trig per texel. Branched lightning uses halo plus sharp core. Hollow rings and motion streaks now have recognizable native-pixel geometry.
 - Existing Lighting lab now draws an actual procedurally generated oak and its computed solar shadow at each day phase. World chunk props cast ground shadows before foreground sprites. Weather and 16 VFX presets are exposed via existing live generator labs; six new catalog labels and all changed descriptions are translated EN/ES/PT-BR. Lighting JSON includes its resolved solar vector.
 - **Status: IMPLEMENTED, verify CI/Chromium and visual output on the new commit before VERIFIED.** Performance claims beyond relative algorithmic complexity remain unbenchmarked.
+
+### Phase 10 — Targeted deterministic and browser QA coverage
+
+- Added self-overdraw regression (single caster is darkened at most once), seeded fog reproducibility and coverage, lightning seed sensitivity.
+- Chromium workflow now captures dawn/dusk generated-oak shadows, branched thunderstorms, dense fog and shaped frost/poison effects; validates actual solar vector and emitter geometry through exported JSON.
+- Updated the Playground coverage matrix for weather, lighting, VFX and live overworld cast shadows. **Status: implementation complete; CI and Chromium on this QA commit PENDING.**
