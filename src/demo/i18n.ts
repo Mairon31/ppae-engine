@@ -48,8 +48,10 @@ export function localizeDocument(root: ParentNode = document): void {
       if (value) element.setAttribute(name, tr(value));
     }
   }
-  for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="description"],meta[property="og:description"]'))
+  for (const meta of document.querySelectorAll<HTMLMetaElement>(
+    'meta[name="description"],meta[property="og:description"],meta[property="og:title"]'))
     meta.content = tr(meta.content);
+  document.title = tr('PPAE Engine — Procedural Pixel Art Engine');
 }
 
 /** Language selection persists across reloads and preserves the active #lab fragment. */
