@@ -39,6 +39,17 @@ try {
     throw new Error('Product landing typography or hero headline did not load: '+JSON.stringify(landingVisual));
   if (await page.locator('#landing-page .lp-showcase-card').count() !== 4)
     throw new Error('Product landing is missing generated engine showcases');
+  const landingIcons = await page.evaluate(() => ({
+    remainingSlots: document.querySelectorAll('[data-px-icon]').length,
+    count: document.querySelectorAll('#landing-page svg.px-icon').length,
+    grid: document.querySelector('.lp-logo-glyph svg.px-icon')?.getAttribute('viewBox'),
+    dimension: document.querySelector('.lp-logo-glyph svg.px-icon')?.getBoundingClientRect().width,
+    paths: document.querySelector('.lp-logo-glyph svg.px-icon')?.querySelectorAll('path').length
+  }));
+  if (landingIcons.remainingSlots !== 0 || landingIcons.count < 18
+      || landingIcons.grid !== '0 0 24 24' || landingIcons.paths < 1)
+    throw new Error('Pixelarticons were not hydrated with original SVG paths: '
+      + JSON.stringify(landingIcons));
   await page.screenshot({path:join(output,'00-product-landing-desktop.png'),fullPage:true});
   console.log('LANDING OK: compiled styles, engine canvas, four real generators');
   await page.locator('.lp-hero .lp-cta-primary').click();
@@ -46,6 +57,12 @@ try {
     && document.getElementById('landing-page')?.hidden);
   const nav = page.locator('#section-nav .nav-link');
   const total = await nav.count();
+  const iconsInNav = await page.locator('#section-nav svg.px-icon').count();
+  if (iconsInNav !== total) throw new Error('Pixelarticons missing from navigation: '
+    + iconsInNav + '/' + total);
+  const playButton = page.locator('#play-toggle');
+  if (await playButton.locator('svg.px-icon').count() !== 1)
+    throw new Error('Player controls must use Pixelarticons SVG, not text glyphs');
   if (total < 30) {
     await page.screenshot({ path: join(output, '00-diagnostic.png'), fullPage: true });
     const pageHtml = (await page.content()).slice(0, 3000);
