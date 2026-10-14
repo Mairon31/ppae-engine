@@ -593,14 +593,18 @@ function paint(): void {
     byId('engine-live').textContent = 'RENDER OK';
     byId('render-stats').textContent =
       p.id + ' · ' + buffer.width + '×' + buffer.height + ' · ' + lastDrawTime.toFixed(0) + ' ms';
-    byId('stage-coordinates').textContent = 'SEED · ' + seedNumber().toString(16).toUpperCase().slice(0, 8);
+    const sourceHash = state.section === 'resolution-profiles'
+      ? fnv1aHash32(state.seed + ':compare-oak-mature')
+      : stableSubjectSeed(state.section, state.selected);
+    byId('stage-coordinates').textContent = 'SEED · ' +
+      sourceHash.toString(16).toUpperCase().slice(0, 8);
     byId('stage-action').textContent = state.section.toUpperCase() + ' / ' +
       (state.section === 'creatures' ? state.creatureAction : state.section === 'characters' || state.section === 'npcs' ? state.action : state.selected).toUpperCase();
     byId('stage-frames').textContent = 'FRAME ' + String(info.frame + 1).padStart(2, '0') +
       ' / ' + String(info.count).padStart(2, '0');
     byId('telemetry').innerHTML =
       '<strong>PRODUCCIÓN LIVE</strong><br/>Perfil: ' + p.id +
-      '<br/>Semilla hash: ' + seedNumber().toString(16) +
+      '<br/>Semilla hash: ' + sourceHash.toString(16) +
       '<br/>Buffer: ' + buffer.width + ' × ' + buffer.height +
       '<br/>Colores opacos: ' + buffer.countUniqueOpaqueColors() +
       '<br/>Render: ' + lastDrawTime.toFixed(1) + ' ms' +
@@ -751,6 +755,16 @@ function appendLabButton(root: HTMLElement, label: string, id: string, action: (
 function refreshLabPreview(): void {
   thumbnailCache.clear(); renderCards(); renderPreviewPending = true;
 }
+const avatarFieldNames: Record<string, string> = {
+  bodyBuild: 'Complexión',
+  hairStyle: 'Peinado', beardStyle: 'Barba',
+  expression: 'Expresión facial', ageGroup: 'Edad',
+  earStyle: 'Orejas', hornStyle: 'Cuernos',
+  faceMarking: 'Marcas faciales', scarSide: 'Lado de la cicatriz',
+  helmet: 'Casco o sombrero', armor: 'Vestimenta / armadura',
+  mainHand: 'Mano principal', offHand: 'Mano secundaria',
+  backpack: 'Mochila'
+};
 function renderLabControls(): void {
   const avatarRoot = byId<HTMLElement>('avatar-lab-controls');
   const systemRoot = byId<HTMLElement>('system-lab-controls');
@@ -781,14 +795,14 @@ function renderLabControls(): void {
     const source = currentCharacter();
     const appearanceFields: readonly (keyof EntityAppearance)[] = [
       'bodyBuild','hairStyle','beardStyle','expression','ageGroup',
-      'earStyle','hornStyle','faceMarking'
+      'earStyle','hornStyle','faceMarking','scarSide'
     ];
     const equipmentFields: readonly (keyof EquipmentLoadout)[] = [
       'helmet','armor','mainHand','offHand','backpack'
     ];
     for (const key of appearanceFields) {
       const values = AVATAR_FIELDS[key as keyof typeof AVATAR_FIELDS] as readonly string[];
-      appendLabSelect(avatarRoot, formatPlaygroundLabel(key), 'avatar-' + key,
+      appendLabSelect(avatarRoot, avatarFieldNames[key] ?? formatPlaygroundLabel(key), 'avatar-' + key,
         values, String(source.appearance[key] ?? values[0]), value => {
           state.avatarAppearance = { ...state.avatarAppearance, [key]: value };
           refreshLabPreview();
@@ -810,7 +824,7 @@ function renderLabControls(): void {
     heightLabel.append(heightValue, heightInput); avatarRoot.append(heightLabel);
     for (const key of equipmentFields) {
       const values = AVATAR_FIELDS[key as keyof typeof AVATAR_FIELDS] as readonly string[];
-      appendLabSelect(avatarRoot, formatPlaygroundLabel(key), 'avatar-' + key,
+      appendLabSelect(avatarRoot, avatarFieldNames[key] ?? formatPlaygroundLabel(key), 'avatar-' + key,
         values, String(source.equipment[key] ?? values[0]), value => {
           state.avatarEquipment = { ...state.avatarEquipment, [key]: value };
           refreshLabPreview();
