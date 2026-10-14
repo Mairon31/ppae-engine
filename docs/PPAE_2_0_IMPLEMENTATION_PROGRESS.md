@@ -433,3 +433,5 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 
 - Calibration detail: a seamless meadow ground tile must match its biome and therefore naturally has low foreground/background contrast against the default meadow backdrop. Such base terrains retain the measured contrast but skip **sprite foreground contrast** gating, while all standalone sprite categories retain the check. Explicit `checkBackdropContrast` options preserve the ability to test truly unreadable sprites.
 - Hero references now forward `entry.seed` into the appearance contract, so an actual seed is tested rather than silently ignored by the benchmark renderer. RGBA fingerprints will be recalculated and locked after this fix.
+
+- Anti-pillow-shading synthetic regression now checks a centered, brighter nucleus **within the same chroma material**, distinct from uniform tones; empty buffers fail with explicit `EMPTY_SILHOUETTE`.

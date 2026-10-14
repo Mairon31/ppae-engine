@@ -652,8 +652,10 @@ export class ProceduralArtQualityEvaluator {
       if (hi < 3 || hi === group.length) continue;
       const dx = hx / hi - centerX, dy = hy / hi - centerY;
       const dist = Math.hypot(dx, dy);
-      // A bright centroid at the center is neutral evidence, not positive.
-      const alignment = dist < 0.3 ? 0 :
+      // A compact, luminous island centered within the same chroma region is
+      // pillow-shading evidence; uniform materials or broad highlights are neutral.
+      const centeredIsland = hi <= group.length * 0.4 && max - min >= 35;
+      const alignment = dist < 0.3 ? (centeredIsland ? -0.45 : 0) :
         (dx * lightDirectionVector[0] + dy * lightDirectionVector[1]) /
         (dist * lightLength);
       const weight = Math.sqrt(group.length) * Math.min(1, (max - min) / 45);

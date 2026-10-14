@@ -96,4 +96,27 @@ describe('PPAE 2.0 Phase 11 — Procedural Art Quality Evaluator, Anti-Pillow-Sh
     for (const result of first) expect(result.pixelHash).toMatch(/^[0-9a-f]{8}$/);
   });
 
+
+  it('detects centered pillow shading in a single coherent material', () => {
+    const sprite = new PixelBuffer(32, 32);
+    sprite.fillEllipse(16, 16, 11, 11, { r: 60, g: 135, b: 65, a: 255 });
+    sprite.fillEllipse(16, 16, 4, 4, { r: 115, g: 225, b: 125, a: 255 });
+    const report = evaluator.evaluateSpriteQuality(sprite, {
+      assetId: 'pillow_concentric', category: 'tree', profile: profile6,
+      backdropColor: { r: 12, g: 23, b: 44, a: 255 },
+      maxColorsOverride: 12
+    });
+    expect(report.metrics.directionalLightAlignment).toBeLessThan(-0.15);
+    expect(report.defects).toContain('PILLOW_SHADING_DETECTED');
+  });
+
+  it('keeps exact empty-silhouette failure instead of giving a passing neutral score', () => {
+    const report = evaluator.evaluateSpriteQuality(new PixelBuffer(8, 8), {
+      assetId: 'empty', category: 'tree', profile: profile4
+    });
+    expect(report.defects).toEqual(['EMPTY_SILHOUETTE']);
+    expect(report.passed).toBe(false);
+    expect(report.overallScore).toBe(0);
+  });
+
 });
