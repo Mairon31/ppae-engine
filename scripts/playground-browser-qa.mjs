@@ -146,7 +146,9 @@ try {
   await page.locator('#catalog-search').fill('dawn');
   await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
   await page.locator('.asset-card').first().click();
-  await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  await page.waitForFunction(() =>
+    document.querySelector('#stage-action')?.textContent === 'LIGHTING / DAWN' &&
+    document.querySelector('#engine-live')?.textContent === 'RENDER OK');
   const dawnCanvas = await page.locator('#world-stage').evaluate(c => c.toDataURL());
   await page.screenshot({ path: join(output, '43-phase10-dawn-shadow.png'), fullPage: true });
   const [dawnFile] = await Promise.all([
@@ -159,7 +161,9 @@ try {
   await page.locator('#catalog-search').fill('dusk');
   await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
   await page.locator('.asset-card').first().click();
-  await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  await page.waitForFunction(() =>
+    document.querySelector('#stage-action')?.textContent === 'LIGHTING / DUSK' &&
+    document.querySelector('#engine-live')?.textContent === 'RENDER OK');
   const duskCanvas = await page.locator('#world-stage').evaluate(c => c.toDataURL());
   if (dawnCanvas === duskCanvas) throw new Error('Solar shadow preview did not change between dawn and dusk');
   await page.screenshot({ path: join(output, '44-phase10-dusk-shadow.png'), fullPage: true });
@@ -172,7 +176,12 @@ try {
     await page.locator('#catalog-search').fill(name);
     await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
     await page.locator('.asset-card').first().click();
-    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.waitForFunction(target =>
+      document.querySelector('#stage-action')?.textContent === target &&
+      document.querySelector('#engine-live')?.textContent === 'RENDER OK',
+      name === 'thunderstorm' || name === 'dense_fog'
+        ? 'WEATHER / ' + name.toUpperCase()
+        : 'PARTICLES / ' + name.toUpperCase());
     await page.screenshot({ path: join(output, shot), fullPage: true });
   }
   await page.locator('#catalog-search').fill('');
@@ -184,7 +193,12 @@ try {
     await page.locator('#catalog-search').fill(name);
     await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
     await page.locator('.asset-card').first().click();
-    await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+    await page.waitForFunction(target =>
+      document.querySelector('#stage-action')?.textContent === target &&
+      document.querySelector('#engine-live')?.textContent === 'RENDER OK',
+      name === 'thunderstorm' || name === 'dense_fog'
+        ? 'WEATHER / ' + name.toUpperCase()
+        : 'PARTICLES / ' + name.toUpperCase());
     await page.screenshot({ path: join(output, shot), fullPage: true });
   }
   const [vfxFile] = await Promise.all([
