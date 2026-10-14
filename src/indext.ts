@@ -6,3 +6,8 @@ export * from './rasterizer/pixel-buffer';
 export * from './art-generator/grammars';
 export * from './runtime/texture-cache';
 export * from './engine/ppae-engine';
+export * from './terrain/world-field';
+export * from './terrain/autotiler';
+export * from './terrain/liquid-renderer';
+export * from './terrain/chunk-renderer';
+export * from './vegetation/nature-generator';
