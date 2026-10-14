@@ -189,7 +189,8 @@ function frameInfo(): { frame: number; count: number; duration: number } {
     return { frame: state.frame % clip.frameCount, count: clip.frameCount, duration: clip.frameDurationMs };
   }
   if (state.section === 'creatures' || state.section === 'creature-variants') {
-    const act = capabilities.resolveSupportedAction(state.selected as CreatureSpeciesId, state.creatureAction);
+    const species = state.selected.split(':')[0] as CreatureSpeciesId;
+    const act = capabilities.resolveSupportedAction(species, state.creatureAction);
     const clip = DEFAULT_CREATURE_CLIPS[act];
     return { frame: state.frame % clip.frameCount, count: clip.frameCount, duration: clip.frameDurationMs };
   }
