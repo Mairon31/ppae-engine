@@ -167,9 +167,18 @@ try {
   if (!JSON.parse(readFileSync(palettePath,'utf8')).palette?.ramps?.foliage)
     throw new Error('Palette section did not export actual registered palette ramps');
   await nav.filter({ hasText: 'Comparador multirresolución' }).click();
+  await page.waitForFunction(() => [...document.querySelectorAll('.asset-thumb canvas')]
+    .every(canvas => canvas.getContext('2d').getImageData(0,0,1,1).data[3] === 255),
+    null, { timeout: 30000 });
+  const before = await page.locator('.asset-thumb canvas').evaluateAll(canvases =>
+    canvases.map(canvas => canvas.toDataURL()));
   await page.locator('.asset-card').last().click();
   if (await page.locator('#engine-live').innerText() !== 'RENDER OK')
     throw new Error('Native resolution comparator failed to render');
+  const after = await page.locator('.asset-thumb canvas').evaluateAll(canvases =>
+    canvases.map(canvas => canvas.toDataURL()));
+  if (before.length !== after.length || before.some((value,index) => value !== after[index]))
+    throw new Error('Selecting a profile changed or cleared existing catalog thumbnails');
   await page.screenshot({ path: join(output, '34-native-profile-comparator.png'), fullPage: true });
   console.log('NATIVE OUTPUT QA OK: catalog pagination, PNG signature, morphology, palette and profile');
   
