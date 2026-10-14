@@ -10,7 +10,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | --- | --- | --- |
 | 1A — Procedural Tree Morphology Architecture | VERIFIED | Contratos, 12 familias, arquetipos, esqueleto y métricas |
 | 1B — Tree Skeleton Rasterization | VERIFIED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
-| 1C — Advanced Canopy / Foliage | IMPLEMENTED | Follaje avanzado y diferenciación por especie |
+| 1C — Advanced Canopy / Foliage | VERIFIED | Follaje avanzado y diferenciación por especie |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -43,13 +43,13 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 1C — 14 de octubre de 2026
 
 - **Base de Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con 1A y 1B supuestamente integrados. La integración real se hace sobre HEAD `2acc48be3c3200dfbe4c3bb0184e59823cfbbbde`, conservando cambios de 1A y 1B.
-- **Commit de implementación:** pendiente de anotar SHA real tras publicación.
+- **Commit de implementación:** `61c5ae800e88a1ec98db4de5ac12f817574747a1`.
 - **Archivos del lote:** ADD `src/vegetation/tree-foliage-rasterizer.ts`, MODIFY `src/index.ts`, ADD `tests/ppae-tree-foliage-1c.test.ts`, MODIFY este seguimiento.
 - **Características:** billowing multilobular, estratos acampanados, cortinas de sauce, penachos porosos de abedul/espino, hojas de bambú y frondas de palmera; estaciones normal/autumn/snowy/blossom; capas de follaje back/mid/front intercaladas con las tres capas del esqueleto; pivote y anclajes normalizados.
 - **Ajustes de integración:** RNG independiente por masa para determinismo ante cambios de orden; dimensiones de capas validadas; el cálculo de madera visible respeta que exposedTips se compone después de midFoliage; no se ha cambiado el rasterizador legado.
-- **Pruebas solicitadas:** `npm test` y `npm run build` en workflow GitHub Actions. Estado: pendiente de CI.
+- **Pruebas ejecutadas:** `npm test` (12 suites, 63 pruebas superadas; 7 tests nuevos 1C) y `npm run build` (TypeScript, declaraciones, paquete de librería y demo) superados en https://github.com/Mairon31/ppae-engine/actions/runs/38588085842.
 - **Validación visual:** pendiente de inspección directa de composiciones reales y comparativa por especie. Los nuevos renderizadores son API separadas; no cambian automáticamente la salida de `NatureGenerator` hasta Fase 1D.
-- **Estado actual:** IMPLEMENTED al publicarse el commit; VERIFIED sólo después de los checks requeridos.
+- **Estado actual:** VERIFIED (implementación y CI). Evaluación visual manual de sprites completos pendiente de 1D.
 - **Siguiente fase:** 1D — Integración de especies, edades y estados en NatureGenerator, ProceduralGrammarExecutor y DeterministicWorldField.
 
 ## Convenciones de estado
