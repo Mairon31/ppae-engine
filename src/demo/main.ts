@@ -16,6 +16,7 @@ import {
   TreeLifecycleStage, TreeSpeciesId, VFXPresetId, WeatherAndWindSystem,
   WeatherConditionId, VisualStatusEffect, EntityAppearance, EquipmentLoadout,
   MATERIAL_TIER_PALETTES, CANONICAL_47_AUTOTILE_MASKS, TERRAIN_MATERIALS,
+  PaletteManager,
   classifyAutotileMask47, VFX_EMITTER_PRESETS,
   createCorruptedTreantBossState, createDefaultColossusBossState
 } from '../index';
@@ -60,6 +61,7 @@ const lighting = new PixelPerfectLightingEngine(8);
 const bosses = new MultiSegmentBossRenderer();
 const compiler = new SpritesheetCompiler();
 const adaptive = new AdaptiveResolutionController();
+const paletteManager = new PaletteManager();
 const characterAsm = new AnimationStateMachine();
 
 type PlaygroundState = {
@@ -510,6 +512,21 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return lighting.applyLightingToScene(sample,
         { x: 0, y: 0, width: 8 * 16, height: 7 * 16 },
         AMBIENT_PROFILES_BY_PHASE[id as TimeOfDayPhase], p, [], elapsed / 1000).litBuffer;
+    }
+    case 'palettes': {
+      // Display exactly the actual stored palette ramps, without invented swatches.
+      const palette = paletteManager.getPalette(id);
+      const ramps = Object.values(palette.ramps);
+      const colors = ['outline', 'shadow', 'midtone', 'highlight', 'accent'] as const;
+      const out = new PixelBuffer(colors.length * 24, Math.max(1, ramps.length) * 20);
+      ramps.forEach((ramp, row) => colors.forEach((key, column) => {
+        out.fillRect(column * 24, row * 20, 24, 20, ramp[key]);
+      }));
+      return out;
+    }
+    case 'resolution-profiles': {
+      const nativeProfile = DEFAULT_STYLE_PROFILES[id as GranularityProfileId];
+      return nature.generateTreeStage('oak', 'mature', nativeProfile, n).buffer;
     }
   }
 }
@@ -1240,6 +1257,13 @@ function exportTechnicalJSON(): void {
       break;
     case 'lighting':
       data.ambient = AMBIENT_PROFILES_BY_PHASE[id as TimeOfDayPhase];
+      break;
+    case 'palettes':
+      data.palette = paletteManager.getPalette(id);
+      break;
+    case 'resolution-profiles':
+      data.artStyleProfile = DEFAULT_STYLE_PROFILES[id as GranularityProfileId];
+      data.generatedNativeProfile = id;
       break;
     case 'world':
       data.worldChunk = showcaseChunk;
