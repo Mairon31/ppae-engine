@@ -102,6 +102,67 @@ try {
   }
 
 
+
+  // Phase 12 — real integrated scene controls, quality reports and exports.
+  await nav.filter({ hasText: 'Production Scene Inspector' }).click();
+  await page.waitForFunction(() =>
+    document.querySelector('#stage-action')?.textContent === 'INTEGRATED-SCENE / INTEGRATED_WORLD' &&
+    document.querySelector('#engine-live')?.textContent === 'RENDER OK' &&
+    document.querySelector('#showcase-live-metrics')?.textContent?.includes('SHADOW PIXELS'));
+  const sceneBeforeHour = await page.locator('#world-stage').evaluate(c => c.toDataURL());
+  await page.screenshot({ path: join(output, '49-phase12-production-scene.png'), fullPage: true });
+  await page.locator('#lab-showcase-hour').evaluate(el => {
+    el.value = '6'; el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.waitForFunction(before => {
+    const stage = document.querySelector('#world-stage');
+    return !!stage && stage.toDataURL() !== before &&
+      document.querySelector('#engine-live')?.textContent === 'RENDER OK';
+  }, sceneBeforeHour);
+  await page.screenshot({ path: join(output, '50-phase12-solar-dawn.png'), fullPage: true });
+  await page.locator('#lab-showcase-structure').selectOption('blue_slate_manor_01');
+  await page.locator('#lab-showcase-roof').check();
+  await page.waitForFunction(() => document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  const [sceneDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const scenePath = join(output, 'phase12-integrated-scene.json');
+  await sceneDownload.saveAs(scenePath);
+  const sceneMeta = JSON.parse(readFileSync(scenePath, 'utf8'));
+  if (sceneMeta.config?.featuredStructureId !== 'blue_slate_manor_01' ||
+      !sceneMeta.config?.isRoofCutaway ||
+      !sceneMeta.telemetry?.heroDimensionSpec?.artCompositionUnits ||
+      sceneMeta.catalog?.goldenSeedsCount < 10 ||
+      !/^[0-9a-f]{8}$/.test(sceneMeta.nativePreview?.rgbaHash ?? ''))
+    throw new Error('Phase 12 integrated scene does not expose real editable metadata: ' +
+      JSON.stringify(sceneMeta).slice(0,900));
+  await nav.filter({ hasText: 'Art Quality Inspector' }).click();
+  await page.waitForFunction(() =>
+    document.querySelector('#stage-action')?.textContent === 'QUALITY-INSPECTOR / HERO' &&
+    document.querySelector('#quality-live-metrics')?.textContent?.includes('detailed-32x32') &&
+    document.querySelector('#engine-live')?.textContent === 'RENDER OK');
+  await page.screenshot({ path: join(output, '51-phase12-native-quality-strip.png'), fullPage: true });
+  await page.locator('#catalog-search').fill('golden_registry');
+  await page.waitForFunction(() => document.querySelectorAll('.asset-card').length === 1);
+  await page.locator('.asset-card').first().click();
+  await page.waitForFunction(() =>
+    document.querySelector('#stage-action')?.textContent === 'QUALITY-INSPECTOR / GOLDEN_REGISTRY' &&
+    document.querySelector('#quality-live-metrics')?.textContent?.includes('golden_tree_birch'));
+  const [qualityDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const qualityPath = join(output, 'phase12-golden-quality.json');
+  await qualityDownload.saveAs(qualityPath);
+  const qualityMeta = JSON.parse(readFileSync(qualityPath, 'utf8'));
+  if (qualityMeta.goldenReferences?.length !== 10 ||
+      qualityMeta.goldenReferences.some(ref => ref.defects.length !== 0 ||
+        ref.rgbaHash !== ref.expectedPixelHash))
+    throw new Error('Phase 12 golden registry JSON does not match the locked baseline');
+  await page.screenshot({ path: join(output, '52-phase12-golden-registry.png'), fullPage: true });
+  await page.locator('#catalog-search').fill('');
+  console.log('PHASE 12 BROWSER OK: real scene, editable sun/roof/structure, live metrics, five native tiers and locked golden exports');
+
+
   // Phase 9 actual new structures and interior layout smoke/PNG evidence.
   await nav.filter({ hasText: 'Structures' }).click();
   for (const [id, filename] of [
