@@ -188,6 +188,7 @@ export class PPAEInteractiveShowcaseController {
 
     const profile = this.resolveEffectiveProfile(cfg);
     const coord = new CoordinateSystem(profile);
+    this.weatherSystem.setWeatherState(DEFAULT_WEATHER_STATES[cfg.weatherCondition] ?? DEFAULT_WEATHER_STATES.clear);
     const chunkSizeTiles = 6;
     const worldField = new DeterministicWorldField(cfg.worldSeed);
     const chunkRenderer = new ChunkWorldRenderer(worldField);
@@ -373,10 +374,6 @@ export class PPAEInteractiveShowcaseController {
     const activeParticlesRendered = particleEngine.renderParticles(sceneBuffer, profile);
 
     // 7. Clima dinámico, niebla multicapa y relámpagos ramificados con supresión bajo techo (Fase 10)
-    const weatherState =
-      DEFAULT_WEATHER_STATES[cfg.weatherCondition] ?? DEFAULT_WEATHER_STATES.clear;
-    this.weatherSystem.setWeatherState(weatherState);
-
     const shelteredRects: readonly LogicalRect[] = [renderedStruct.roofOcclusionFootprint];
     const weatherResult = this.weatherSystem.renderWeatherOverlay(
       sceneW,
@@ -431,7 +428,8 @@ export class PPAEInteractiveShowcaseController {
         profile,
         requireOrganicAsymmetry: true,
         allowMultiFragment: true,
-        maxColorsOverride: 24
+        maxColorsOverride: 24,
+        checkDirectionalLighting: false // Emissive geode: no single solar key light.
       }
     );
 
@@ -496,7 +494,7 @@ export class PPAEInteractiveShowcaseController {
         requireAsymmetry = true;
       } else if (assetKind === 'crystal_geode') {
         buffer = this.natureGen.generateGeologicalResource('crystal_geode', profile, seed).buffer;
-        category = 'mineral';
+        category = 'mineral_rock';
         requireAsymmetry = true;
       } else {
         buffer = this.avatarGen.renderCharacterFrame(
@@ -516,7 +514,8 @@ export class PPAEInteractiveShowcaseController {
         profile,
         requireOrganicAsymmetry: requireAsymmetry,
         allowMultiFragment: assetKind !== 'hero',
-        maxColorsOverride: 32
+        maxColorsOverride: 32,
+        checkDirectionalLighting: assetKind !== 'crystal_geode'
       });
 
       return {

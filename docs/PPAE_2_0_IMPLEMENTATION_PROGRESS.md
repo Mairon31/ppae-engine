@@ -465,3 +465,6 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Status: IMPLEMENTED, pending CI and real interactive Playground integration.** Browser UI must expose a dedicated inspector and actual telemetry before completion. No master edits, no npm release.
 
 - **Baseline integration corrective commit:** `TREE_LIFECYCLE_RULES` was not an exported symbol, `PixelBuffer.clone` and `PixelParticleEngine.reset` did not exist in the actual engine. Added canonical exported tree stages and switched to explicit RGBA buffer copy and frame-local particle pool, avoiding hidden state that breaks deterministic redraw. Capturing comparison tier metrics before enforcing quality gate.
+
+- **Live-scene determinism correction:** weather now applied before wind sampling, avoiding mutated previous-frame weather; a dimension-aware pixel fingerprint verifies full RGBA identity without expanding multi-megabyte arrays.
+- **Material-appropriate light audit:** emissive crystal geodes opt out of solar key-light alignment, matching Phase 11's documented quality registry, while remaining metrics are enforced.

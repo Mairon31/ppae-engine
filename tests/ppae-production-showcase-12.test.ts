@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PPAEInteractiveShowcaseController
+  PPAEInteractiveShowcaseController, ProceduralArtQualityEvaluator
 } from '../src/index';
 
 describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution Inspector & Master Plan Closure', () => {
@@ -65,7 +65,10 @@ describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution In
     });
 
     // Determinismo bit a bit de la escena compuesta completa
-    expect(Array.from(frameA.sceneBuffer.data)).toEqual(Array.from(frameB.sceneBuffer.data));
+    expect(frameA.sceneBuffer.width).toBe(frameB.sceneBuffer.width);
+    expect(frameA.sceneBuffer.height).toBe(frameB.sceneBuffer.height);
+    const qa = new ProceduralArtQualityEvaluator();
+    expect(qa.hashPixelBuffer(frameA.sceneBuffer)).toBe(qa.hashPixelBuffer(frameB.sceneBuffer));
 
     // Verificación de telemetría integrada y auditoría de calidad en vivo
     expect(frameA.telemetry.renderedShadowPixels).toBeGreaterThan(0);
