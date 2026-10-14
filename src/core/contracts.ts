@@ -1707,6 +1707,8 @@ export interface GoldenSeedBenchmarkEntry {
   readonly maxColorsOverride?: number;
   /** False for emissive materials or multi-source architectural lighting. */
   readonly checkDirectionalLighting?: boolean;
+  /** Terrain base materials need seamless auditing, not sprite/background contrast. */
+  readonly checkBackdropContrast?: boolean;
   /** Stable RGBA fingerprint; locked only after the specimen baseline is inspected. */
   readonly expectedPixelHash?: string;
 }

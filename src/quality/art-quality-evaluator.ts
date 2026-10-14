@@ -136,7 +136,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     category: 'terrain', subType: 'meadow_grass', seed: 202610,
     profileId: 'micro-6x6', minExpectedScore: 78,
     requireAsymmetry: false, maxColorsOverride: 12,
-    checkDirectionalLighting: false
+    checkDirectionalLighting: false,
+    checkBackdropContrast: false
   }
 ];
 
@@ -149,6 +150,7 @@ export interface SpriteQualityEvaluationOptions {
   readonly allowMultiFragment?: boolean;
   readonly maxColorsOverride?: number;
   readonly checkDirectionalLighting?: boolean;
+  readonly checkBackdropContrast?: boolean;
 }
 
 /**
@@ -230,7 +232,7 @@ export class ProceduralArtQualityEvaluator {
     }
 
     // 3. Verificación de contraste frente al bioma
-    if (contrastRatioAgainstBackdrop < 1.35) {
+    if (options.checkBackdropContrast !== false && contrastRatioAgainstBackdrop < 1.35) {
       defects.push('LOW_CONTRAST_RATIO');
     }
 
@@ -401,7 +403,7 @@ export class ProceduralArtQualityEvaluator {
           break;
         case 'character':
           buffer = this.avatarGen.renderCharacterFrame(
-            DEFAULT_HERO_APPEARANCE,
+            { ...DEFAULT_HERO_APPEARANCE, seed: entry.seed },
             DEFAULT_HERO_EQUIPMENT,
             'idle',
             'S',
@@ -447,7 +449,8 @@ export class ProceduralArtQualityEvaluator {
         requireOrganicAsymmetry: entry.requireAsymmetry,
         allowMultiFragment,
         maxColorsOverride: entry.maxColorsOverride,
-        checkDirectionalLighting: entry.checkDirectionalLighting
+        checkDirectionalLighting: entry.checkDirectionalLighting,
+        checkBackdropContrast: entry.checkBackdropContrast
       });
       const pixelHash = this.hashPixelBuffer(buffer);
       return { entry, report, pixelHash };
