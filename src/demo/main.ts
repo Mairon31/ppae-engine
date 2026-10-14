@@ -1,3 +1,6 @@
+import './landing.css';
+import './studio-theme.css';
+import { initLanding } from './landing';
 import {
   AdaptiveResolutionController, ALL_DIRECTIONS_8, AMBIENT_PROFILES_BY_PHASE,
   AnimationStateMachine, ArtStyleProfile, CharacterActionId, CharacterAvatarGenerator,
@@ -1072,6 +1075,7 @@ function selectSection(section: PlaygroundSectionId): void {
   byId('stage-mode-label').textContent = section.toUpperCase() + ' / LIVE SCENE';
   window.history.replaceState(null, '', '#' + section);
   document.querySelector('.studio')?.classList.remove('nav-open');
+  closeInspector();
   (byId('toggle-sidebar') as HTMLButtonElement).setAttribute('aria-expanded','false');
   if (section === 'particles') resetParticles();
   refreshControlVisibility(); renderLabControls(); renderNav(); renderCards(); renderPreviewPending = true;
@@ -1309,6 +1313,36 @@ function closeMobileNav(): void {
   document.querySelector('.studio')?.classList.remove('nav-open');
   byId('toggle-sidebar').setAttribute('aria-expanded', 'false');
 }
+function closeInspector(): void {
+  document.querySelector('.studio')?.classList.remove('inspector-open');
+  byId('toggle-inspector').setAttribute('aria-expanded','false');
+}
+function routeToView(): void {
+  const hash = location.hash.replace('#','');
+  const match = PLAYGROUND_SECTIONS.some(section => section.id === hash);
+  const studio = byId<HTMLElement>('playground-app');
+  const landing = byId<HTMLElement>('landing-page');
+  // #home, #features and #showcase belong to the product homepage;
+  // every existing engine section deep-link remains backwards compatible.
+  const showStudio = match || hash === 'playground';
+  studio.hidden = !showStudio; landing.hidden = showStudio;
+  document.body.classList.toggle('view-playground',showStudio);
+  document.body.classList.toggle('view-landing',!showStudio);
+  if (showStudio) {
+    closeMobileNav(); closeInspector();
+    const section = (hash === 'playground' ? 'world' : hash) as PlaygroundSectionId;
+    if (state.section !== section) selectSection(section);
+    renderPreviewPending = true;
+    window.scrollTo(0,0);
+  } else {
+    closeMobileNav(); closeInspector();
+    if (hash === 'features' || hash === 'showcase') {
+      requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView({behavior:'smooth'}));
+    } else {
+      window.scrollTo(0,0);
+    }
+  }
+}
 function connectControls(): void {
   options(byId<HTMLSelectElement>('direction-select'), EIGHT_DIRECTIONS, state.direction);
   byId<HTMLInputElement>('seed-input').addEventListener('change', e => {
@@ -1412,8 +1446,17 @@ function connectControls(): void {
   byId('download-atlas').addEventListener('click', () => exportSheet('png'));
   byId('download-json').addEventListener('click', () => exportTechnicalJSON());
   byId('mobile-nav-scrim').addEventListener('click', closeMobileNav);
+  byId('inspector-scrim').addEventListener('click', closeInspector);
+  byId('close-inspector').addEventListener('click', closeInspector);
+  byId('toggle-inspector').addEventListener('click', () => {
+    closeMobileNav();
+    const studio = document.querySelector('.studio')!;
+    const open = !studio.classList.contains('inspector-open');
+    studio.classList.toggle('inspector-open',open);
+    byId('toggle-inspector').setAttribute('aria-expanded',String(open));
+  });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeMobileNav();
+    if (event.key === 'Escape') { closeMobileNav(); closeInspector(); }
   });
   byId('toggle-sidebar').addEventListener('click', () => {
     const studio = document.querySelector('.studio')!;
@@ -1421,12 +1464,15 @@ function connectControls(): void {
     studio.classList.toggle('nav-open', open);
     byId('toggle-sidebar').setAttribute('aria-expanded',String(open));
   });
-  window.addEventListener('hashchange', () => {
-    const hash = location.hash.replace('#','') as PlaygroundSectionId;
-    if (PLAYGROUND_SECTIONS.some(section => section.id === hash) && state.section !== hash) selectSection(hash);
-  });
+  window.addEventListener('hashchange', routeToView);
 }
 function tick(now: number): void {
+  // Keep the heavyweight gallery/world renderer asleep while on the landing.
+  if (byId<HTMLElement>('playground-app').hidden) {
+    lastTick = now;
+    requestAnimationFrame(tick);
+    return;
+  }
   const dt = Math.min(120, lastTick ? now - lastTick : 16);
   lastTick = now;
   if (state.playing && !document.hidden) {
@@ -1470,8 +1516,17 @@ function tick(now: number): void {
 }
 let lastRender = 0;
 let lastFps = 0;
+const initialHash = location.hash.replace('#','') as PlaygroundSectionId;
+const hasStudioRoute = PLAYGROUND_SECTIONS.some(section => section.id === initialHash);
 connectControls();
-const hash = location.hash.replace('#','') as PlaygroundSectionId;
-selectSection(PLAYGROUND_SECTIONS.some(section => section.id === hash) ? hash : 'world');
+// selectSection initializes existing atlas navigation; restore the root route
+// afterward so a visit to /ppae-engine/ stays on the product landing.
+selectSection(hasStudioRoute ? initialHash : 'world');
+if (!hasStudioRoute) {
+  const originalFragment = initialHash ? '#' + initialHash : '';
+  history.replaceState(null,'',location.pathname + location.search + originalFragment);
+}
+routeToView();
 characterAsm.requestState(state.action, true);
+initLanding();
 requestAnimationFrame(tick);
