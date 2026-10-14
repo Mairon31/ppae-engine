@@ -18,19 +18,24 @@ export const PLAYGROUND_SECTIONS = [
   { id: 'characters', label: 'Creador de personajes', group: 'Entidades', description: '32 avatares y personalización anatómica, rasgos, equipo y colores' },
   { id: 'character-actions', label: 'Acciones de personaje', group: 'Entidades', description: 'Las 28 animaciones con equipo y ocho direcciones' },
   { id: 'npcs', label: 'NPCs y oficios', group: 'Entidades', description: '8 arquetipos profesionales deterministas' },
+  { id: 'npc-variants', label: 'Diversidad de NPCs', group: 'Entidades', description: '64 habitantes: ocho semillas por cada oficio' },
   { id: 'creatures', label: 'Bestiario', group: 'Entidades', description: '16 especies, 10 familias, 12 acciones' },
+  { id: 'creature-variants', label: 'Variantes de criaturas', group: 'Entidades', description: 'Especies combinadas con edad y condición física' },
   { id: 'bosses', label: 'Jefes', group: 'Entidades', description: 'Coloso, señor Ent y segmentos' },
   { id: 'trees', label: 'Árboles', group: 'Naturaleza', description: '12 familias botánicas y ciclos de vida' },
+  { id: 'tree-lifecycle', label: 'Ciclos de árboles', group: 'Naturaleza', description: '12 etapas de vida por familia botánica' },
   { id: 'tree-archetypes', label: 'Arquetipos arbóreos', group: 'Naturaleza', description: 'Todas las morfologías estructurales de las 12 familias' },
   { id: 'flora', label: 'Vegetación menor', group: 'Naturaleza', description: '17 morfologías botánicas' },
   { id: 'geology', label: 'Geología', group: 'Naturaleza', description: '17 formaciones y depósitos' },
   { id: 'terrain', label: 'Materiales del terreno', group: 'Mundo', description: 'Texturas y transiciones de suelo auténticas' },
+  { id: 'terrain-variants', label: 'Variantes tileables', group: 'Mundo', description: 'Dieciséis variantes de cada material con bordes repetibles' },
   { id: 'autotiling', label: 'Autotiling 8 vecinos', group: 'Mundo', description: 'Máscaras de conexión y esquinas de terreno' },
   { id: 'liquids', label: 'Líquidos animados', group: 'Mundo', description: 'Agua superficial, agua profunda, animación y flujo' },
   { id: 'structures', label: 'Arquitectura', group: 'Mundo', description: 'Edificios, puentes, tejados y portales' },
   { id: 'interiors', label: 'Interiores', group: 'Mundo', description: 'Habitaciones, mobiliario y colisiones' },
   { id: 'caves', label: 'Cuevas', group: 'Mundo', description: 'Cámara de cristal y lava' },
   { id: 'farming', label: 'Agricultura', group: 'Mundo', description: 'Cultivos, suelo y etapas de crecimiento' },
+  { id: 'crop-lifecycle', label: 'Ciclos de cultivo', group: 'Mundo', description: 'Todas las variedades y etapas de crecimiento agrícola' },
   { id: 'equipment', label: 'Iconos de equipamiento', group: 'Sistemas', description: 'Materiales y desgaste de ítems procedurales' },
   { id: 'equipment-materials', label: 'Herramientas por material', group: 'Sistemas', description: 'Seis grados de material, armas y armaduras' },
   { id: 'hud', label: 'HUD / Nine-slice', group: 'Sistemas', description: 'Paneles pixel-perfect y barras de progreso paramétricas' },
@@ -62,6 +67,17 @@ export const EIGHT_DIRECTIONS = ['S','SE','E','NE','N','NW','W','SW'] as const;
 export const TREE_ARCHETYPE_OPTIONS = Object.entries(TREE_MORPHOLOGY_ARCHETYPES)
   .flatMap(([family, entries]) => entries.map(entry => family + ':' + entry.archetypeId));
 export const AUTOTILE_MASKS = Array.from({ length: 256 }, (_, i) => String(i));
+export const NPC_VARIANTS = NPC_PROFESSIONS.flatMap(id =>
+  Array.from({ length: 8 }, (_, index) => id + ':' + (index + 1)));
+export const CREATURE_VARIANTS = Object.keys(CREATURE_SPECIES_CATALOG).flatMap(id =>
+  ['juvenile','adult','alpha_elder'].flatMap(age =>
+    ['healthy','wounded','corrupted'].map(health => id + ':' + age + ':' + health)));
+export const TREE_LIFECYCLE_VARIANTS = Object.keys(TREE_SPECIES_CATALOG)
+  .flatMap(id => TREE_STAGES.map(stage => id + ':' + stage));
+export const CROP_LIFECYCLE_VARIANTS = Object.keys(CROP_SPECIES_CATALOG)
+  .flatMap(id => CROP_STAGES.map(stage => id + ':' + stage));
+export const TERRAIN_VARIANTS = Object.keys(TERRAIN_MATERIALS)
+  .flatMap(id => Array.from({ length: 16 }, (_, i) => id + ':' + String(i)));
 export const MATERIAL_VARIANTS = Object.keys(MATERIAL_TIER_PALETTES)
   .flatMap(tier => ['weapon_sword','tool_axe','armor_helmet'].map(category => tier + ':' + category));
 export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly string[]>> = {
@@ -69,19 +85,24 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
   characters: AVATAR_VARIANTS,
   'character-actions': CHARACTER_ACTIONS,
   npcs: NPC_PROFESSIONS,
+  'npc-variants': NPC_VARIANTS,
   creatures: Object.keys(CREATURE_SPECIES_CATALOG),
+  'creature-variants': CREATURE_VARIANTS,
   bosses: BOSS_IDS,
   trees: Object.keys(TREE_SPECIES_CATALOG),
+  'tree-lifecycle': TREE_LIFECYCLE_VARIANTS,
   'tree-archetypes': TREE_ARCHETYPE_OPTIONS,
   flora: Object.keys(FLORA_SPECIES_CATALOG),
   geology: Object.keys(GEOLOGICAL_ARCHETYPE_CATALOG),
   terrain: Object.keys(TERRAIN_MATERIALS),
+  'terrain-variants': TERRAIN_VARIANTS,
   autotiling: AUTOTILE_MASKS,
   liquids: ['shallow_water','deep_water','lava_magma'],
   structures: Object.keys(DEFAULT_STRUCTURE_CATALOG),
   interiors: ['cottage_interior'],
   caves: ['crystal_cavern'],
   farming: Object.keys(CROP_SPECIES_CATALOG),
+  'crop-lifecycle': CROP_LIFECYCLE_VARIANTS,
   equipment: ITEM_TYPES,
   'equipment-materials': MATERIAL_VARIANTS,
   hud: ['hud_panel','health_bar','mana_bar','stamina_bar'],
