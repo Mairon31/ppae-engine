@@ -21,7 +21,7 @@ describe('International PPAE landing and Playground language', () => {
   });
 
   it('localizes every catalog group and category with stable route IDs', () => {
-    expect(PLAYGROUND_SECTIONS).toHaveLength(30);
+    expect(PLAYGROUND_SECTIONS).toHaveLength(32);
     const allowedGroups = new Set(['Worlds','Entities','Nature','World','Systems','Art Diagnostics']);
     for (const section of PLAYGROUND_SECTIONS) {
       expect(allowedGroups.has(section.group), section.id).toBe(true);
@@ -33,7 +33,7 @@ describe('International PPAE landing and Playground language', () => {
     expect(formatPlaygroundLabel('255')).toBe('Mask 255');
   });
 
-  it('translates real marketing, 30 catalog sections and player controls to ES/PT', () => {
+  it('translates real marketing, 32 catalog sections and player controls to ES/PT', () => {
     for (const section of PLAYGROUND_SECTIONS) {
       for (const locale of ['es','pt'] as const) {
         expect(translatedLiteral(section.label,locale),section.id).not.toBe(section.label);

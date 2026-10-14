@@ -17,7 +17,7 @@ describe('PPAE Playground advanced laboratory coverage', () => {
   const p = DEFAULT_STYLE_PROFILES['micro-4x4'];
 
   it('indexes real engine variants without static mockup assets', () => {
-    expect(PLAYGROUND_SECTIONS).toHaveLength(30);
+    expect(PLAYGROUND_SECTIONS).toHaveLength(32);
     expect(AVATAR_VARIANTS).toHaveLength(32);
     expect(PLAYGROUND_OPTIONS.characters).toEqual(AVATAR_VARIANTS);
     expect(PLAYGROUND_OPTIONS['character-actions']).toHaveLength(28);
@@ -30,6 +30,8 @@ describe('PPAE Playground advanced laboratory coverage', () => {
     expect(AUTOTILE_MASKS).toHaveLength(256);
     expect(PLAYGROUND_OPTIONS.palettes).toEqual(new PaletteManager().listPalettes().map(p => p.id));
     expect(PLAYGROUND_OPTIONS['resolution-profiles']).toContain('detailed-32x32');
+    expect(PLAYGROUND_OPTIONS['integrated-scene']).toContain('integrated_world');
+    expect(PLAYGROUND_OPTIONS['quality-inspector']).toContain('golden_registry');
     for (const section of PLAYGROUND_SECTIONS)
       expect(PLAYGROUND_OPTIONS[section.id].length).toBeGreaterThan(0);
   });

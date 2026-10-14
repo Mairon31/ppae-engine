@@ -76,6 +76,11 @@ describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution In
     expect(frameA.telemetry.activeParticlesRendered).toBeGreaterThan(0);
     expect(frameA.telemetry.heroQualityReport.passed).toBe(true);
     expect(frameA.telemetry.featuredTreeQualityReport.passed).toBe(true);
+    console.info('PHASE12_FEATURED_QUALITY', JSON.stringify({
+      hero: frameA.telemetry.heroQualityReport,
+      tree: frameA.telemetry.featuredTreeQualityReport,
+      rock: frameA.telemetry.featuredRockQualityReport
+    }));
     expect(frameA.telemetry.featuredRockQualityReport.passed).toBe(true);
   });
 
