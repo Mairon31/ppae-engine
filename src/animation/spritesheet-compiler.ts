@@ -171,8 +171,16 @@ export class SpritesheetCompiler {
   ): CreatureSpritesheetCompilationResult {
     const species = CREATURE_SPECIES_CATALOG[speciesId];
     const pad = profile.extrudePaddingPx;
-    const frameW = species.widthModules * profile.moduleSize;
-    const frameH = species.heightModules * profile.moduleSize;
+    const ageFactor = morphOptions?.ageStage === 'juvenile' ? .78 :
+      morphOptions?.ageStage === 'alpha_elder' ? 1.2 : 1;
+    const requestedScale = morphOptions?.sizeScaleMultiplier ?? 1;
+    const customScale = Number.isFinite(requestedScale)
+      ? Math.max(.75, Math.min(1.35, requestedScale)) : 1;
+    const scale = ageFactor * customScale;
+    // Atlas cells must match the native variable-sized creature frame, never
+    // crop elders or overrun juvenile buffers while writing atlas pixels.
+    const frameW = Math.max(8, Math.round(species.widthModules * profile.moduleSize * scale));
+    const frameH = Math.max(8, Math.round(species.heightModules * profile.moduleSize * scale));
     const cellW = frameW + pad * 2;
     const cellH = frameH + pad * 2;
 
