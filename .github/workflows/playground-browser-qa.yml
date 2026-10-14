@@ -36,7 +36,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Audit compiled Pages preview in Chromium
         run: |
-          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/ppae-vite-preview.log 2>&1 &
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/ppae-vite-preview.log 2>&1 &
           node scripts/playground-browser-qa.mjs
       - name: Upload screenshots and exported assets
         if: always()
