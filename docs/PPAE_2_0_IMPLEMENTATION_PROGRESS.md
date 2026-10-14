@@ -22,7 +22,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
 | 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 | 6A — Advanced Animation System: 28 Actions | VERIFIED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
-| 6B — Species Animation Capabilities & Creature Atlas | IMPLEMENTED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
+| 6B — Species Animation Capabilities & Creature Atlas | VERIFIED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -208,7 +208,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Rigs:** `CreatureGenerator` amplía animaciones de cuadrúpedos, aves, slimes, arácnidos, murciélagos y peces con movimiento rápido, descanso, emboscada, alimentación, habilidades y nado según anatomía.
 - **Spritesheets:** `SpritesheetCompiler.compileCreatureSheet` con extrusión de bordes, pivotes/anclajes ajustados al padding, hitboxes, 8 direcciones, datos y eventos por fotograma.
 - **Pruebas:** seis tests de clips, capacidades, morfología por acción, determinismo en ocho direcciones, atlas y fallback.
-- **Estado:** IMPLEMENTED, pendiente del resultado de `npm test`, `npm run build` y revisión visual. El éxito de tests por sí solo no prueba estilo o calidad artística.
+- **Estado:** VERIFIED técnicamente. Implementación `fcbe483e03aa2e70382ce49b957470eab589be37`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38603513137: `npm test` **24 suites / 140 pruebas aprobadas** (6 nuevas 6B) y `npm run build` correcto (TypeScript, declaraciones, biblioteca y demo). Auditoría visual de todas las familias y animaciones pendiente; la aprobación técnica no demuestra paridad artística.
 - **Siguiente:** Fase 7A — arquitectura artística multirresolución.
 
 ## Convenciones de estado
