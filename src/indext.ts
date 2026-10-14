@@ -17,3 +17,7 @@ export * from './animation/state-machine';
 export * from './animation/spritesheet-compiler';
 export * from './entities/creature-archetypes';
 export * from './entities/boss-generator';
+export * from './structures/structure-generator';
+export * from './structures/cave-generator';
+export * from './interiors/interior-generator';
+export * from './interiors/portal-system';
