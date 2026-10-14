@@ -200,3 +200,118 @@ export function validateAssetDefinition(def: ProceduralAssetDefinition): void {
     throw new ContractValidationError(`Asset ${def.id} pivotNormalized must be within [0, 1]`);
   }
 }
+// ============================================================================
+// PHASE 2 CONTRACTS: TERRAIN, AUTOTILING, LIQUIDS, NATURE & CHUNK STREAMING
+// ============================================================================
+
+export type TerrainMaterialId =
+  | 'deep_water'
+  | 'shallow_water'
+  | 'sand_beach'
+  | 'dirt_soil'
+  | 'meadow_grass'
+  | 'forest_moss'
+  | 'desert_dune'
+  | 'rock_cliff'
+  | 'snow_frost'
+  | 'volcanic_ash'
+  | 'lava_magma';
+
+export interface TerrainMaterialDefinition {
+  readonly schemaVersion: string;
+  readonly id: TerrainMaterialId;
+  readonly layerPriority: number; // Mayor prioridad superpone su borde sobre prioridades menores
+  readonly isLiquid: boolean;
+  readonly walkable: boolean;
+  readonly baseColorHex: string;
+  readonly shadowColorHex: string;
+  readonly highlightColorHex: string;
+  readonly accentColorHex: string;
+  readonly transitionBorderHex: string;
+  readonly patternType: 'organic_tuft' | 'granular_sand' | 'cracked_stone' | 'liquid_wave' | 'frost_crystalline';
+}
+
+export interface BiomeVisualDefinition {
+  readonly schemaVersion: string;
+  readonly id: BiomeId;
+  readonly primarySurface: TerrainMaterialId;
+  readonly secondarySurface: TerrainMaterialId;
+  readonly shoreSurface: TerrainMaterialId;
+  readonly liquidSurface: TerrainMaterialId;
+  readonly treeDensity: number; // [0, 1]
+  readonly floraDensity: number; // [0, 1]
+  readonly rockDensity: number; // [0, 1]
+}
+
+/**
+ * Bits cardinales y diagonales ya filtrados por Corner Gating (estándar 47-blob)
+ * N=1, NE=2, E=4, SE=8, S=16, SW=32, W=64, NW=128
+ */
+export type AutotileMask8 = number;
+
+export type TreeSpeciesId = 'oak' | 'pine' | 'palm' | 'birch' | 'corrupted_thorn';
+
+export type TreeLifecycleStage =
+  | 'sapling'
+  | 'mature'
+  | 'ancient'
+  | 'dead'
+  | 'burned'
+  | 'stump'
+  | 'fallen_log';
+
+export interface TreeSpeciesDefinition {
+  readonly schemaVersion: string;
+  readonly speciesId: TreeSpeciesId;
+  readonly canopyShape: 'rounded_clusters' | 'conical_tiers' | 'radial_fronds' | 'slender_column' | 'twisted_branches';
+  readonly trunkWidthModules: number;
+  readonly baseHeightModules: number;
+  readonly woodColors: {
+    readonly outline: string;
+    readonly shadow: string;
+    readonly midtone: string;
+    readonly highlight: string;
+  };
+  readonly foliageColors: {
+    readonly outline: string;
+    readonly shadow: string;
+    readonly midtone: string;
+    readonly highlight: string;
+    readonly fruitOrAccent?: string;
+  };
+}
+
+export type SecondaryFloraKind =
+  | 'tall_grass'
+  | 'wild_flower'
+  | 'fern'
+  | 'mushroom_cluster'
+  | 'desert_cactus'
+  | 'water_reed';
+
+export type GeologicalResourceKind =
+  | 'surface_pebbles'
+  | 'mossy_boulder'
+  | 'coal_deposit'
+  | 'copper_vein'
+  | 'iron_vein'
+  | 'gold_vein'
+  | 'crystal_geode';
+
+export interface WorldTileSample {
+  readonly tileX: number;
+  readonly tileY: number;
+  readonly elevation: number; // [-1.0 a 1.0]
+  readonly moisture: number; // [0.0 a 1.0]
+  readonly temperature: number; // [0.0 a 1.0]
+  readonly biome: BiomeId;
+  readonly material: TerrainMaterialId;
+  readonly autotileMask: AutotileMask8;
+  readonly transitionNeighborMaterial?: TerrainMaterialId;
+  readonly propSpawn?: {
+    readonly kind: 'tree' | 'flora' | 'mineral';
+    readonly subType: string;
+    readonly stage?: TreeLifecycleStage;
+    readonly variantSeed: number;
+  };
+}
