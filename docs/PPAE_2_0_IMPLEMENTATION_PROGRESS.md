@@ -12,7 +12,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 1B — Tree Skeleton Rasterization | VERIFIED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
 | 1C — Advanced Canopy / Foliage | VERIFIED | Follaje avanzado y diferenciación por especie |
 | 1D — Production Pipeline and World Ecology | VERIFIED | Árboles morfológicos reales en generadores y distribución ecológica |
-| 1E — Spatial Diversity and Silhouette Metrics | IN_PROGRESS | Evitar clones vecinos y métricas de silueta sobre píxeles |
+| 1E — Spatial Diversity and Silhouette Metrics | VERIFIED | Evitar clones vecinos y métricas de silueta sobre píxeles |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -70,13 +70,13 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 1E — 14 de octubre de 2026
 
 - **Base citada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con fases 1A–1D aplicadas. **Base real de integración:** `0904b7a00ce2f2ff23187a50185602b2372b6ec1`.
-- **Commit de implementación:** pendiente de anotación.
+- **Commit de implementación:** `2d96880ed2b35bca5ec47076238440a7a7733f8e`.
 - **Archivos:** ADD `src/vegetation/tree-diversity-controller.ts` y `tests/ppae-tree-diversity-1e.test.ts`; MODIFY `src/core/contracts.ts`, `src/terrain/world-field.ts`, `src/terrain/chunk-renderer.ts`, `src/index.ts` y este documento.
 - **Funcionalidad:** mediciones reales RGBA de bounding box, perímetro, rugosidad, centro de masa, simetría y perfiles en 8 bandas; distancias raster normalizadas; cohortes de selección determinista con múltiples candidatos; variaciones espaciales O(1) y propagación del arquetipo al renderizador de chunks.
 - **Integración:** el muestreo de mundo y el renderer preservan determinismo entre chunks. La selección usa coloración modular con fase global por familia, eliminando la repetición cardinal inmediata del identificador **cuando la familia tiene dos o más arquetipos**. Familias con un solo arquetipo no pueden alternar IDs; usan semillas únicas por coordenada.
 - **Correcciones respecto al lote Gemini:** la fórmula original incorporaba ruido hash independiente por tile y no podía garantizar rotación local; se cambió a patrón modular coherente. El evaluador no mezcla similitud estructural estimada con distancia real de píxeles y añade rugosidad y simetría a esa distancia. La cohorte compara con **todos** sus árboles ya aceptados, no sólo el anterior; no garantiza superar cualquier umbral geométrico con un número finito de intentos.
-- **Verificación:** `npm test`, `npm run build` y revisión de la suite de regresión 1E mediante GitHub Actions, pendiente.
-- **Verificación visual:** pendiente de comparación de capturas reales del mapa y las galerías; los cálculos de silueta no sustituyen una revisión artística.
+- **Verificación técnica:** VERIFIED. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38590376150: `npm test` (14 suites, 77 tests, 8 nuevos 1E) y `npm run build` (biblioteca, declaraciones de tipos y demo) completaron correctamente.
+- **Verificación visual:** PENDING. No se revisaron capturas reales del mapa y galerías en esta ejecución; las métricas de silueta y las pruebas no certifican similitud artística exacta.
 - **Siguiente fase:** Fase 2A — Arquitectura Geológica Poligonal, Facetas, Fracturas y Catálogo de Rocas y Minerales.
 
 ## Convenciones de estado
