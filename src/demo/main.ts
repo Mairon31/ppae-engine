@@ -530,8 +530,11 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return out;
     }
     case 'resolution-profiles': {
+      // Identical procedural specimen/seed across all native detail budgets:
+      // only the profile changes, never the random tree morphology.
       const nativeProfile = DEFAULT_STYLE_PROFILES[id as GranularityProfileId];
-      return nature.generateTreeStage('oak', 'mature', nativeProfile, n).buffer;
+      const comparisonSeed = fnv1aHash32(state.seed + ':compare-oak-mature');
+      return nature.generateTreeStage('oak', 'mature', nativeProfile, comparisonSeed).buffer;
     }
   }
 }
@@ -580,7 +583,8 @@ function presentBuffer(buffer: PixelBuffer): void {
 function paint(): void {
   const t0 = performance.now();
   try {
-    const p = profile();
+    const p = state.section === 'resolution-profiles'
+      ? DEFAULT_STYLE_PROFILES[state.selected as GranularityProfileId] : profile();
     const info = frameInfo();
     const buffer = renderSubject(state.section, state.selected, p, state.frame);
     presentBuffer(buffer);
@@ -1269,6 +1273,7 @@ function exportTechnicalJSON(): void {
     case 'resolution-profiles':
       data.artStyleProfile = DEFAULT_STYLE_PROFILES[id as GranularityProfileId];
       data.generatedNativeProfile = id;
+      data.comparisonSeed = fnv1aHash32(state.seed + ':compare-oak-mature');
       break;
     case 'world':
       data.worldChunk = showcaseChunk;
@@ -1379,7 +1384,7 @@ function connectControls(): void {
   byId('download-sprite').addEventListener('click', () => {
     const buffer = renderSubject(state.section, state.selected, profile(), state.frame);
     const filename = 'ppae-native-' + state.section + '-' + state.selected.replace(/:/g,'-') +
-      '-' + profile().id + '.png';
+      '-' + (state.section === 'resolution-profiles' ? state.selected : profile().id) + '.png';
     downloadUrl(encodePng(buffer), filename);
   });
   byId('download-png').addEventListener('click', () => {
