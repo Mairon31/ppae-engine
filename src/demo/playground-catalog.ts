@@ -13,6 +13,7 @@ import {
   DEFAULT_STYLE_PROFILES, PaletteManager
 } from '../index';
 import { AVATAR_VARIANTS } from './avatar-lab';
+import { tr } from './i18n';
 
 export const PLAYGROUND_SECTIONS = [
   { id: 'world', label: 'Procedural World', group: 'Worlds', description: 'Deterministic chunks, biomes, props, water, and depth' },
@@ -146,9 +147,9 @@ const LABELS: Record<string, string> = {
 
 export function formatPlaygroundLabel(id: string): string {
   if (id.startsWith('avatar_')) return 'Avatar ' + id.slice(-2);
-  if (id.includes(':')) return id.split(':').map(part => LABELS[part] ?? part.replace(/[_-]/g, ' ')).join(' · ');
-  if (/^\d+$/.test(id)) return 'Mask ' + id.padStart(3, '0');
-  return LABELS[id] ?? id.replace(/[_-]/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+  if (id.includes(':')) return id.split(':').map(part => tr(LABELS[part] ?? part.replace(/[_-]/g, ' '))).join(' · ');
+  if (/^\d+$/.test(id)) return tr('Mask ') + id.padStart(3, '0');
+  return tr(LABELS[id] ?? id.replace(/[_-]/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()));
 }
 
 export function getPlaygroundSection(id: PlaygroundSectionId) {
