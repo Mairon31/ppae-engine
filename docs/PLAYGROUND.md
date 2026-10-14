@@ -101,3 +101,13 @@ The `#structures` lab now exposes ten real exterior definitions, including a win
 The `#interiors` lab exposes three real generated floorplans: cottage, blacksmith workshop and alchemy laboratory. These include furniture geometry, light nodes, collision rectangles and walkability-grid exports. The `#caves` lab renders stalactites, stalagmites and seeded rock columns with logical collisions; crystals and lava remain available. All new catalog labels are localized in English, Spanish and Brazilian Portuguese.
 
 Screenshot/metadata evidence is available in the `ppae-playground-chromium-qa` artifact for https://github.com/Mairon31/ppae-engine/actions/runs/38643851640. The sample screenshots provide targeted visual verification, not a guarantee of art quality for every profile and seed.
+
+## Phase 10 Weather, lighting and VFX
+
+The `#lighting` laboratory renders a procedural oak and a real shadow from `PixelPerfectLightingEngine.renderDirectionalCastShadows` at seven day phases. Dawn casts west, dusk casts east, noon is shorter, and the preview exports the resolved `solarShadowVector` in JSON; the world scene also renders shadows from actual chunk props before compositing their sprite buffers.
+
+The `#weather` laboratory renders `WeatherAndWindSystem` overlays for all 11 weather conditions. Thunderstorms draw seeded branched lightning; fog forms independently drifting, stratified near/far banks with quantized edge dithering. The `#particles` laboratory exposes all 16 real pooled emitter presets, including poison rings, frost cross-sparks and directional magma streaks.
+
+All added catalog labels and section descriptions have English/Spanish/Brazilian Portuguese entries. Existing seed, profile, native PNG and metadata JSON workflows are retained. Browser screenshots `43-phase10-dawn-shadow.png` through `48-phase10-poison-rings.png`, with JSON metadata and all 30 labs, can be found in the `ppae-playground-chromium-qa` artifact from https://github.com/Mairon31/ppae-engine/actions/runs/38645914913.
+
+The visual samples and automated QA demonstrate those selected settings only; full device/resolution/seed combinations and calibrated scene-level performance remain future work.

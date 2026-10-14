@@ -55,7 +55,7 @@ As capturas do Playground serão adicionadas manualmente ao README principal. A 
 | **Terreno e água** | Campos determinísticos, renderização de chunks, autotiling de 47 estados, caminhos, costas, transições, líquidos animados e materiais por bioma. |
 | **Geologia e cenários** | 17 tipos de formações e recursos geológicos, estruturas, telhados, interiores, cavernas, plantações e objetos decorativos. |
 | **Animação e exportação** | Compilação de spritesheets em oito direções, metadados por frame, âncoras, hitboxes, eventos de animação e atlas compactados. |
-| **VFX e atmosfera** | Dez emissores de partículas (fogo, fumaça, faíscas, folhas, ondas e magia), vento, clima e iluminação de acordo com a hora do dia. |
+| **VFX e atmosfera** | Dezesseis emissores de partículas com quatro formatos de pixels, vento, relâmpagos ramificados, neblina em camadas, sombras solares direcionais e iluminação pela hora do dia. |
 | **UI e equipamentos** | Ícones de equipamentos gerados proceduralmente, componentes de inventário/HUD e painéis nine-slice. |
 
 Esses sistemas existem na ramificação de desenvolvimento atual. O refinamento artístico, o desempenho e a cobertura seguem em evolução durante a fase alfa.
@@ -198,7 +198,7 @@ O `PhaserPPAEAdapter` registra texturas Canvas de assets gerados; ele não repre
 
 ## Status atual e roadmap
 
-O PPAE está em **desenvolvimento alfa ativo**. As fases documentadas até **9** têm implementação e testes automatizados, incluindo dez construções, interiores de cabana, ferraria e alquimia e formações de cavernas; a validação artística de todas as sementes e resoluções ainda continua. O Playground e a biblioteca compilada estão disponíveis, e novas integrações, melhorias visuais e otimizações são oportunidades de contribuição.
+O PPAE está em **desenvolvimento alfa ativo**. As fases documentadas até **10** têm implementação e testes automatizados, incluindo dez construções, interiores de cabana, ferraria e alquimia e formações de cavernas; a validação artística de todas as sementes e resoluções ainda continua. O Playground e a biblioteca compilada estão disponíveis, e novas integrações, melhorias visuais e otimizações são oportunidades de contribuição.
 
 **Acompanhe o desenvolvimento:** [Progresso](../PPAE_2_0_IMPLEMENTATION_PROGRESS.md) · [Arquitetura do Playground](../PLAYGROUND.md) · [PR #2](https://github.com/Mairon31/ppae-engine/pull/2).
 

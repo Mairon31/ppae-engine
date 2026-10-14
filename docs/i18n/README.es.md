@@ -55,7 +55,7 @@ Las capturas del Playground se añadirán manualmente al README principal. La [m
 | **Terreno y agua** | Campos deterministas, chunks, autotiling de 47 estados, caminos, costas, transiciones, líquidos animados y materiales por bioma. |
 | **Geología y escenarios** | 17 tipos de recursos geológicos, estructuras, tejados, interiores, cuevas, cultivos y elementos decorativos. |
 | **Animación y exportación** | Spritesheets en ocho direcciones, metadatos por fotograma, anclas, hitboxes, eventos y atlas empaquetados. |
-| **VFX y atmósfera** | Diez emisores de partículas (fuego, humo, chispas, hojas, agua, magia), viento, estados meteorológicos e iluminación por hora. |
+| **VFX y atmósfera** | Dieciséis emisores de partículas con cuatro formas de píxeles, viento, relámpagos ramificados, niebla por capas, sombras solares direccionales e iluminación por hora. |
 | **UI y equipo** | Iconos procedurales de equipamiento, componentes de inventario/HUD y paneles nine-slice. |
 
 Estas capacidades existen en la rama de desarrollo actual. La calidad artística, el rendimiento y la cobertura de casos continúan evolucionando durante la etapa alfa.
@@ -198,7 +198,7 @@ El adaptador `PhaserPPAEAdapter` registra texturas Canvas a partir de assets gen
 
 ## Estado y hoja de ruta
 
-PPAE está en **desarrollo alfa activo**. Las fases documentadas hasta **9** están implementadas con pruebas, incluyendo diez estructuras, interiores de cabaña, herrería y alquimia y formaciones de cuevas, pero la validación visual de todas las semillas y perfiles continúa. El Playground funciona, las exportaciones y declaraciones están compiladas y existen oportunidades para mejorar integración, rendimiento y calidad artística.
+PPAE está en **desarrollo alfa activo**. Las fases documentadas hasta **10** están implementadas con pruebas, incluyendo diez estructuras, interiores de cabaña, herrería y alquimia y formaciones de cuevas, pero la validación visual de todas las semillas y perfiles continúa. El Playground funciona, las exportaciones y declaraciones están compiladas y existen oportunidades para mejorar integración, rendimiento y calidad artística.
 
 **Seguir el desarrollo:** [Progreso de implementación](../PPAE_2_0_IMPLEMENTATION_PROGRESS.md) · [Arquitectura del Playground](../PLAYGROUND.md) · [PR #2](https://github.com/Mairon31/ppae-engine/pull/2).
 

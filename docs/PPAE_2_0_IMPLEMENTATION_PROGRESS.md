@@ -27,6 +27,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
 | 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
+| 10 — Weather, Lighting & VFX Overhaul | VERIFIED | Sombras solares direccionales, relámpagos ramificados, bancos de niebla orgánicos, 16 emisores y cuatro formas de partícula; QA de navegador dirigida |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -403,3 +404,16 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Real browser evidence from https://github.com/Mairon31/ppae-engine/actions/runs/38645492544 showed repeating elliptical clear holes in dense fog, despite passing functional smoke tests.
 - Replaced separable x/y threshold checker pattern with two independent, animated centerline banks, thickness modulation, graded alphas and Bayer dithering restricted to bank edges. Per-column precomputation preserves O(width + height + pixels) runtime without trigonometric calls per pixel.
 - Added bank-stratification assertions to the Phase-10 unit suite. **Pending** CI and updated Chromium screenshot review; phase not yet marked fully verified.
+
+### Phase 10 — Technical and targeted visual verification (14 October 2026)
+
+- **Start SHA:** `156aa9ece2438de703615b18f91cdf71440475d9`; the user-provided Phase-10 patches were based on an older revision and were adapted to current HEAD without resetting Phase 9.
+- **Code commits:** `e2156cabbd8c811c4b2152f95c0615a39e8ea3b2` (typed solar shadows, lightning, fog, VFX), `712bdb08185bbedacb3a646cabe76d4f6b7e8e5d` (shadow raster correction, fog cost, Playground/i18n), `a1bd5aa6d69289feddd2a336d0d88b73693a9cf3` (QA coverage), `509ec84842d6f4a81156ea0a59013ea60f5e9d94` (async screenshot synchronization), `16f7d9aa5617542347666f41941056beb21eadf4` (stratified-fog visual correction).
+- **CI on code SHA `16f7d9aa`:** https://github.com/Mairon31/ppae-engine/actions/runs/38645914922 — `npm test` **34 suites / 191 tests PASS**, `npm run build` PASS, `npm run check:package` PASS. Published package count remains **51**; npm dry-run **129,584 packed bytes / 485,574 unpacked bytes**. No npm publish performed.
+- **Chromium QA on same code SHA:** https://github.com/Mairon31/ppae-engine/actions/runs/38645914913 — all **30** real labs, translated UI/deep links, seed/editor/PNG/JSON exports and responsive smoke PASS. Captures explicitly include dawn/dusk tree shadows, lightning, dense fog, frost and poison VFX, plus exported dawn vector and particle-shape definition.
+- **Public deployment:** https://github.com/Mairon31/ppae-engine/actions/runs/38645915025 — Pages publish + live HTML/JS/CSS MIME smoke checks PASS.
+- **Visual review:** reviewed Chromium screenshots. Dawn shadow extends west and dusk extends east with a native oak sample; bolts are branched; the first fog revision showed repetitive oval voids and was replaced by two continuous wavy depth banks, whose final screenshot has been reviewed. Small VFX particle geometry remains appropriately pixel-scale, and not every combination has been visually assessed.
+- **Compatibility:** existing Phase 6 APIs remain; four particle shapes are optional in the public `ParticleEmitterDefinition`, old presets default to squares; pooling and collision/roof interfaces remain intact. No SFX/audio introduced; Pixelarticons preserved.
+- **Performance:** fog trigonometry now scales with horizontal resolution rather than total pixel count, while the final loop remains O(width×height). No instrumented before/after benchmark or multi-device frame profile was collected; do not claim performance gain in milliseconds.
+- **State:** **VERIFIED** for tested code, Chromium workflows and targeted screenshot QA. Remaining optional QA: exhaustive native 4/6/8/16/32 visual fixtures, art review across seeds, device profiling, larger-scene sun occlusion. No changes to master, no PR merge and no npm release.
+- **Next:** Phase 11 — Procedural Art Quality Evaluator (user-supplied specification required before beginning).
