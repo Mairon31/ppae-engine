@@ -9,7 +9,7 @@ import {
   GeologicalResourceKind
 } from '../core/contracts';
 import { SeededRNG } from '../core/deterministic';
-import { hexToRgba, rgbaToHex } from '../palette/palette-manager';
+import { rgbaToHex } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { BOTANICAL_SPECIES_DEFINITIONS, TreeMorphologyResolver } from '../vegetation/tree-morphology';
 import { TreeSkeletonRasterizer } from '../vegetation/tree-skeleton-rasterizer';
