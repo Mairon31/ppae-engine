@@ -5,7 +5,17 @@
 
 export const PPAE_SCHEMA_VERSION = '1.0.0' as const;
 
-export type GranularityProfileId = 'micro-4x4' | 'micro-6x6' | 'hybrid-24';
+export type GranularityProfileId =
+  | 'micro-4x4'
+  | 'micro-6x6'
+  | 'classic-8x8'
+  | 'standard-16x16'
+  | 'detailed-32x32'
+  | 'hybrid-24'
+  | 'adaptive-auto';
+
+export type ArtModuleSize = 4 | 6 | 8 | 16 | 32;
+export type CanonicalTileTexelSize = 24 | 32 | 48 | 64 | 128;
 
 export type AssetCategory =
   | 'terrain'
@@ -48,17 +58,81 @@ export interface PaletteDefinition {
   readonly ramps: Readonly<Record<string, ColorRamp>>;
 }
 
+// Phase 7A — nine independent resolution dimensions and per-profile complexity.
+export type FacialDetailTier =
+  | 'eyes_only'
+  | 'eyes_and_brows'
+  | 'full_features'
+  | 'expressive_hd';
+
+export type TextureSamplingPolicy = 'nearest-neighbor';
+export type PixelSnappingPolicy = 'integer-grid' | 'subpixel-camera-snap';
+
+export interface ArtisticDetailBudget {
+  readonly profileId: GranularityProfileId;
+  readonly moduleSize: ArtModuleSize;
+  readonly shadingSteps: 2 | 3 | 4 | 5;
+  readonly maxColorsPerSprite: number;
+  readonly facialDetailTier: FacialDetailTier;
+  readonly foliageSubdivisionLevel: 1 | 2 | 3 | 4;
+  readonly barkAndFacetMicroDetailLevel: 1 | 2 | 3 | 4;
+  readonly enableSecondaryJointArticulation: boolean;
+  readonly enableClothFoldsAndSeams: boolean;
+  readonly enableSpecularHighlights: boolean;
+  readonly enableSubTexelClusterDithering: boolean;
+}
+
+export interface MultiResolutionDimensionSpec {
+  readonly logicalWorldUnits: {
+    readonly tileUnits: 16;
+    readonly widthLogical: number;
+    readonly heightLogical: number;
+  };
+  readonly artCompositionUnits: {
+    readonly widthInModules: number;
+    readonly heightInModules: number;
+    readonly moduleSizeTexels: ArtModuleSize;
+  };
+  readonly nativeSpriteTexels: {
+    readonly innerWidthTexels: number;
+    readonly innerHeightTexels: number;
+  };
+  readonly canonicalTileResolution: CanonicalTileTexelSize;
+  readonly runtimeSpriteDimensions: {
+    readonly paddedWidthTexels: number;
+    readonly paddedHeightTexels: number;
+    readonly extrudePaddingPx: number;
+  };
+  readonly cameraScale: number;
+  readonly screenPixelRatio: number;
+  readonly textureSamplingPolicy: TextureSamplingPolicy;
+  readonly pixelSnappingPolicy: PixelSnappingPolicy;
+}
+
+export interface AdaptiveProfileSelectionRequest {
+  readonly category: AssetCategory;
+  readonly cameraZoom: number;
+  readonly viewportHeightPx: number;
+  readonly screenPixelRatio: number;
+  readonly distanceFromCameraTiles: number;
+  readonly visualImportance: 'background' | 'standard' | 'hero_focal' | 'boss_major';
+  readonly currentFrameTimeMs?: number;
+  readonly targetFrameBudgetMs?: number;
+  readonly previousProfileId?: GranularityProfileId;
+}
+
 export interface ArtStyleProfile {
   readonly schemaVersion: string;
   readonly id: GranularityProfileId;
-  readonly moduleSize: 4 | 6;
-  readonly canonicalTileTexels: 24 | 48;
+  readonly moduleSize: ArtModuleSize;
+  readonly canonicalTileTexels: CanonicalTileTexelSize;
   readonly logicalTileUnits: 16;
   readonly outlineMode: 'none' | 'selective-dark' | 'full-silhouette';
-  readonly shadingSteps: 2 | 3 | 4;
+  readonly shadingSteps: 2 | 3 | 4 | 5;
   readonly lightDirectionVector: readonly [number, number]; // Normalizado, ej. [-0.7, -0.7] (Noroeste)
   readonly allowDithering: boolean;
   readonly extrudePaddingPx: number;
+  readonly detailBudget?: ArtisticDetailBudget;
 }
 
 export interface AnchorPoint {
@@ -173,16 +247,32 @@ export function validateArtStyleProfile(profile: ArtStyleProfile): void {
   if (profile.schemaVersion !== PPAE_SCHEMA_VERSION) {
     throw new ContractValidationError(`Unsupported schemaVersion: ${profile.schemaVersion}`);
   }
-  if (profile.moduleSize !== 4 && profile.moduleSize !== 6) {
-    throw new ContractValidationError(`moduleSize must be 4 or 6, received ${profile.moduleSize}`);
+  if (![4, 6, 8, 16, 32].includes(profile.moduleSize)) {
+    throw new ContractValidationError(
+      `moduleSize must be one of 4, 6, 8, 16, or 32; received ${profile.moduleSize}`
+    );
+  }
+  if (![24, 32, 48, 64, 128].includes(profile.canonicalTileTexels)) {
+    throw new ContractValidationError(
+      `canonicalTileTexels must be one of 24, 32, 48, 64, or 128; received ${profile.canonicalTileTexels}`
+    );
   }
   if (profile.canonicalTileTexels % profile.moduleSize !== 0) {
     throw new ContractValidationError(
       `canonicalTileTexels (${profile.canonicalTileTexels}) must be a multiple of moduleSize (${profile.moduleSize})`
     );
   }
-  if (profile.extrudePaddingPx < 0 || profile.extrudePaddingPx > 4) {
+  if (!Number.isInteger(profile.extrudePaddingPx) || profile.extrudePaddingPx < 0 || profile.extrudePaddingPx > 4) {
     throw new ContractValidationError('extrudePaddingPx must be between 0 and 4');
+  }
+  if (profile.detailBudget && (
+    profile.detailBudget.moduleSize !== profile.moduleSize ||
+    profile.detailBudget.shadingSteps !== profile.shadingSteps ||
+    profile.detailBudget.maxColorsPerSprite < 1
+  )) {
+    throw new ContractValidationError(
+      'detailBudget must match the profile moduleSize and shadingSteps and have a positive color budget'
+    );
   }
 }
 

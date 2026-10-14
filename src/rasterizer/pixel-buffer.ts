@@ -1,8 +1,8 @@
-import { RGBAColor } from '../core/contracts';
+import { ArtModuleSize, RGBAColor } from '../core/contracts';
 
 /**
  * Buffer de píxeles RGBA independiente de DOM/Canvas para rasterización determinista.
- * Garantiza 0% antialiasing y soporte nativo para módulos 4x4 y 6x6.
+ * Garantiza 0% antialiasing y módulos 4x4, 6x6, 8x8, 16x16 y 32x32.
  */
 export class PixelBuffer {
   public readonly width: number;
@@ -70,25 +70,69 @@ export class PixelBuffer {
   }
 
   /**
-   * Estampa un módulo de granularidad artística (4x4 o 6x6) usando una máscara binaria o de índices
+   * Stamp a discrete indexed pattern at 4, 6, 8, 16 or 32 texels/module.
+   * Retains exact legacy semantics at 4x4 and 6x6; at higher resolutions,
+   * samples normalized source cells and refines the edges of sub-clusters
+   * deterministically, without blurring or distorting logical dimensions.
    */
   public stampModulePattern(
     moduleGridX: number,
     moduleGridY: number,
-    moduleSize: 4 | 6,
+    moduleSize: ArtModuleSize,
     pattern: readonly number[][],
     paletteMap: Readonly<Record<number, RGBAColor>>
   ): void {
     const baseX = moduleGridX * moduleSize;
     const baseY = moduleGridY * moduleSize;
-    for (let my = 0; my < moduleSize; my++) {
-      const row = pattern[my];
-      if (!row) continue;
-      for (let mx = 0; mx < moduleSize; mx++) {
-        const key = row[mx];
-        if (key !== undefined && key > 0 && paletteMap[key]) {
-          this.setPixel(baseX + mx, baseY + my, paletteMap[key]);
+
+    // Legacy masks may be sparse or only partly filled. Do not change their
+    // historical pixel-level layout for either of the original profiles.
+    if (moduleSize <= 6) {
+      for (let y = 0; y < moduleSize; y++) {
+        const row = pattern[y];
+        if (!row) continue;
+        for (let x = 0; x < moduleSize; x++) {
+          const key = row[x];
+          if (key !== undefined && key > 0 && paletteMap[key]) {
+            this.setPixel(baseX + x, baseY + y, paletteMap[key]);
+          }
         }
+      }
+      return;
+    }
+
+    if (pattern.length === 0) return;
+    const sourceHeight = pattern.length;
+    const sourceWidth = Math.max(...pattern.map(row => row.length));
+    if (sourceWidth === 0) return;
+
+    const sampleKey = (x: number, y: number): number => {
+      const sy = Math.min(sourceHeight - 1, Math.floor(y * sourceHeight / moduleSize));
+      const sx = Math.min(sourceWidth - 1, Math.floor(x * sourceWidth / moduleSize));
+      return pattern[sy]?.[sx] ?? 0;
+    };
+
+    for (let y = 0; y < moduleSize; y++) {
+      for (let x = 0; x < moduleSize; x++) {
+        let key = sampleKey(x, y);
+        if (key <= 0 || !paletteMap[key]) continue;
+        const detail = ((x * 17 + y * 31 + moduleGridX * 7 + moduleGridY * 13) & 7);
+
+        // Perturb only a sampled silhouette boundary. Internal color borders
+        // stay intact, preserving faces and mineral inclusions.
+        const onBoundary = sampleKey(Math.max(0, x - 1), y) === 0 ||
+          sampleKey(Math.min(moduleSize - 1, x + 1), y) === 0 ||
+          sampleKey(x, Math.max(0, y - 1)) === 0 ||
+          sampleKey(x, Math.min(moduleSize - 1, y + 1)) === 0;
+        if (onBoundary && detail === 0 && x > 0 && y > 0 &&
+          x < moduleSize - 1 && y < moduleSize - 1) continue;
+
+        // A secondary palette index is optional and only used where the
+        // source explicitly requested index 2.
+        if (key === 2 && detail === 1 && paletteMap[3] &&
+          y < moduleSize / 2) key = 3;
+
+        this.setPixel(baseX + x, baseY + y, paletteMap[key]);
       }
     }
   }

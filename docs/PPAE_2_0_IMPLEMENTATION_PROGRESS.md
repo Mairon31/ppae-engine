@@ -23,6 +23,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 | 6A — Advanced Animation System: 28 Actions | VERIFIED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
 | 6B — Species Animation Capabilities & Creature Atlas | VERIFIED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
+| 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | IMPLEMENTED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -210,6 +211,18 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas:** seis tests de clips, capacidades, morfología por acción, determinismo en ocho direcciones, atlas y fallback.
 - **Estado:** VERIFIED técnicamente. Implementación `fcbe483e03aa2e70382ce49b957470eab589be37`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38603513137: `npm test` **24 suites / 140 pruebas aprobadas** (6 nuevas 6B) y `npm run build` correcto (TypeScript, declaraciones, biblioteca y demo). Auditoría visual de todas las familias y animaciones pendiente; la aprobación técnica no demuestra paridad artística.
 - **Siguiente:** Fase 7A — arquitectura artística multirresolución.
+
+## Fase 7A — 14 de octubre de 2026
+
+- **Referencia:** Gemini indicó la base obsoleta `217f76b393cda5b9755119a67f8b56d854df4520`; HEAD inspeccionado en rama exclusiva `feat/ppae-2-art-overhaul`: `4a8a160e45c05548f8c7a6d5bd99784098e6052c`. Actualización del PR borrador #2, sin tocar master.
+- **Archivos:** MODIFY `src/core/contracts.ts`, `src/core/coordinates.ts`, `src/rasterizer/pixel-buffer.ts`; ADD `tests/ppae-multiresolution-7a.test.ts`; actualización del progreso.
+- **Contratos:** `ArtModuleSize` 4/6/8/16/32, tamaños de tile canónico, siete perfiles (cinco principales, híbrido histórico y modo de selección adaptativa), `ArtisticDetailBudget` y nueve dimensiones explícitas separadas de física y hitboxes.
+- **Perfiles y presupuesto:** `ARTISTIC_DETAIL_BUDGETS` define presupuesto cromático, pasos de sombreado, detalle facial, hojas/corteza/facetas y capacidades opcionales de ropa y articulaciones; `adaptive-auto` representa un default seguro hasta resolver el perfil concreto mediante el controlador. **El detalle adicional no se sintetiza en todos los generadores hasta 7B.**
+- **LOD:** `AdaptiveResolutionController.selectOptimalProfile` usa zoom, altura de pantalla, DPR, distancia, importancia y coste de cuadro, con limitación de salto entre niveles basada en `previousProfileId`. `CoordinateSystem.resolveNineDimensionSpec` mantiene 16 unidades lógicas por tile y `computeStyleScaleFactor` expone escala módulo/4.
+- **PixelBuffer:** `stampModulePattern` retiene salida legada en 4 y 6 px y permite patrones muestreados con contorno discretizado y detalle interno determinista en 8/16/32.
+- **Pruebas:** nueva suite de siete tests para contratos antiguos/nuevos, presupuesto, nueve dimensiones, LOD, validez, estampado y generación de recursos.
+- **Estado:** IMPLEMENTED; pendiente `npm test`, `npm run build` en GitHub Actions, y validación visual. La CI técnica no certifica por sí sola la calidad artística a resoluciones altas.
+- **Siguiente:** Fase 7B — síntesis morfológica real por resolución y sustitución de escalas internas rígidas.
 
 ## Convenciones de estado
 
