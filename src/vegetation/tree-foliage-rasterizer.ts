@@ -236,10 +236,13 @@ export class TreeCanopyFoliageRasterizer {
         ry: Math.max(2, Math.round(ry * rng.nextRange(0.52, 0.75) * factor))
       });
     }
-    const minX = Math.max(1, cx - rx - 3);
-    const maxX = Math.min(buf.width - 2, cx + rx + 3);
-    const minY = Math.max(1, cy - ry - 3);
-    const maxY = Math.min(buf.height - 2, cy + ry + 3);
+    // Traverse the actual union of orbiting ellipsoids, rather than an
+    // artificial cx±rx rectangle. The former rectangle sliced off the outer
+    // lobes into straight vertical walls even with a sufficiently large sprite.
+    const minX = Math.max(0, Math.floor(Math.min(...centers.map(l => l.x - l.rx - 1))));
+    const maxX = Math.min(buf.width - 1, Math.ceil(Math.max(...centers.map(l => l.x + l.rx + 1))));
+    const minY = Math.max(0, Math.floor(Math.min(...centers.map(l => l.y - l.ry - 1))));
+    const maxY = Math.min(buf.height - 1, Math.ceil(Math.max(...centers.map(l => l.y + l.ry + 1))));
     const [lightX, lightY] = profile.lightDirectionVector;
     const openness = descriptor.metrics.canopyOpennessScore;
     for (let py = minY; py <= maxY; py++) {
