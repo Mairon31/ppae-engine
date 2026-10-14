@@ -450,12 +450,23 @@ export interface TreeMorphologyDescriptor {
 }
 
 export type SecondaryFloraKind =
+  | 'short_grass'
   | 'tall_grass'
+  | 'wild_herb'
+  | 'weed_thistle'
+  | 'low_shrub'
+  | 'flowering_shrub'
   | 'wild_flower'
+  | 'flower_cluster'
   | 'fern'
+  | 'ground_moss'
   | 'mushroom_cluster'
-  | 'desert_cactus'
-  | 'water_reed';
+  | 'water_lily_pad'
+  | 'water_reed'
+  | 'creeping_vine'
+  | 'thorny_bramble'
+  | 'tropical_broadleaf'
+  | 'desert_cactus';
 
 export type GeologicalResourceKind =
   | 'surface_pebbles'
@@ -1184,4 +1195,140 @@ export interface PhaserAdapterConfig {
   readonly textureManagerRef: unknown; // Referencia a Phaser.Textures.TextureManager
   readonly defaultProfileId: string;
   readonly enableBatching: boolean;
+}
+
+// ============================================================================
+// PHASE 3A: Botanical microvegetation / flowering anatomy / ecological patches
+// ============================================================================
+export type FloraGrowthHabit =
+  | 'tuft_graminoid'
+  | 'basal_rosette'
+  | 'erect_forb'
+  | 'woody_cushion'
+  | 'frond_arch'
+  | 'moss_carpet'
+  | 'mycelium_colony'
+  | 'emergent_reed'
+  | 'floating_aquatic'
+  | 'trailing_vine'
+  | 'spiny_succulent'
+  | 'tropical_rosette';
+
+export type FloralCorollaSymmetry =
+  | 'none'
+  | 'radial_daisy'
+  | 'cup_tulip'
+  | 'bell_campanula'
+  | 'spike_inflorescence'
+  | 'umbel_cluster';
+
+export type LeafBladeShape =
+  | 'linear_grass'
+  | 'lanceolate'
+  | 'serrated_fern'
+  | 'ovate_shrub'
+  | 'broad_tropical'
+  | 'floating_pad'
+  | 'thorn_stem';
+
+export interface FloraStemSegment {
+  readonly stemId: string;
+  readonly baseX: number;
+  readonly baseY: number;
+  readonly controlX: number;
+  readonly controlY: number;
+  readonly tipX: number;
+  readonly tipY: number;
+  readonly thicknessPx: number;
+  readonly hasThorns: boolean;
+}
+
+export interface FloraLeafBlade {
+  readonly leafId: string;
+  readonly parentStemId: string;
+  readonly attachX: number;
+  readonly attachY: number;
+  readonly tipX: number;
+  readonly tipY: number;
+  readonly widthPx: number;
+  readonly shape: LeafBladeShape;
+  readonly toneBand: 'shadow' | 'midtone' | 'highlight';
+}
+
+export interface FloraBlossomHead {
+  readonly blossomId: string;
+  readonly parentStemId: string;
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly symmetry: FloralCorollaSymmetry;
+  readonly petalCount: number;
+  readonly petalRadiusPx: number;
+  readonly centerDiskRadiusPx: number;
+  readonly orientationAngleRad: number;
+  readonly petalPrimaryHex: string;
+  readonly petalHighlightHex: string;
+  readonly centerDiskHex: string;
+}
+
+export interface FungalCapNode {
+  readonly capId: string;
+  readonly stemBaseX: number;
+  readonly stemBaseY: number;
+  readonly capCenterX: number;
+  readonly capCenterY: number;
+  readonly capRadiusX: number;
+  readonly capRadiusY: number;
+  readonly hasSpots: boolean;
+  readonly capColorHex: string;
+  readonly spotColorHex: string;
+  readonly stemColorHex: string;
+}
+
+export interface FloraSpeciesArchetype {
+  readonly kind: SecondaryFloraKind;
+  readonly growthHabit: FloraGrowthHabit;
+  readonly corollaSymmetry: FloralCorollaSymmetry;
+  readonly leafShape: LeafBladeShape;
+  readonly widthModulesRange: readonly [number, number];
+  readonly heightModulesRange: readonly [number, number];
+  readonly stemCountRange: readonly [number, number];
+  readonly leafCountPerStemRange: readonly [number, number];
+  readonly blossomCountRange: readonly [number, number];
+  readonly maxStemCurvePx: number;
+  readonly foliagePalette: {
+    readonly outlineHex: string;
+    readonly shadowHex: string;
+    readonly midtoneHex: string;
+    readonly highlightHex: string;
+  };
+  readonly floralPalettes?: ReadonlyArray<{
+    readonly petalPrimaryHex: string;
+    readonly petalHighlightHex: string;
+    readonly centerDiskHex: string;
+  }>;
+}
+
+export interface FloraMorphologyDescriptor {
+  readonly schemaVersion: string;
+  readonly seed: number;
+  readonly kind: SecondaryFloraKind;
+  readonly growthHabit: FloraGrowthHabit;
+  readonly corollaSymmetry: FloralCorollaSymmetry;
+  readonly canvasWidthModules: number;
+  readonly canvasHeightModules: number;
+  readonly canvasWidthTexels: number;
+  readonly canvasHeightTexels: number;
+  readonly pivotTexel: readonly [number, number];
+  readonly stems: readonly FloraStemSegment[];
+  readonly leaves: readonly FloraLeafBlade[];
+  readonly blossoms: readonly FloraBlossomHead[];
+  readonly fungalCaps: readonly FungalCapNode[];
+  readonly metrics: {
+    readonly stemCount: number;
+    readonly leafCount: number;
+    readonly blossomCount: number;
+    readonly horizontalSpreadPx: number;
+    readonly maxHeightPx: number;
+    readonly stemSpacingVariance: number;
+  };
 }
