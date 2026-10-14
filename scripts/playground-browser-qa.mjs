@@ -438,7 +438,7 @@ try {
   await localePage.screenshot({path:join(output,'36-playground-portuguese-mobile.png'),fullPage:true});
   await localePage.locator('#section-nav .nav-link')
     .filter({ hasText: 'Inspetor de qualidade artística' }).click();
-  await localePage.waitForURL(/\\?lang=pt#quality-inspector$/);
+  await localePage.waitForFunction(() => location.search.includes('lang=pt') && location.hash === '#quality-inspector');
   await localePage.waitForFunction(() =>
     document.getElementById('page-title')?.textContent === 'Inspetor de qualidade artística' &&
     document.getElementById('quality-live-metrics')?.textContent?.includes('detailed-32x32'));
