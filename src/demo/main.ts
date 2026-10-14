@@ -414,7 +414,7 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return terrain.composeAutotiledSurface(state.terrainMaterial,
         Number(id), p, state.terrainUnderlay, n % 16);
     case 'liquids':
-      return liquids.generateAnimatedFrame(id as 'shallow_water'|'deep_water',
+      return liquids.generateAnimatedFrame(id as 'shallow_water'|'deep_water'|'lava_magma',
         tick % 8, 8, state.terrainMask, p);
     case 'structures': {
       const result = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p, true, true);
@@ -1039,7 +1039,7 @@ function exportSheet(kind: 'png' | 'json'): void {
       customization.generateNpcPreset(profession as NpcProfessionArchetypeId,
         state.seed + ':npc:' + variation) : currentCharacter();
     const result = compiler.compileCharacterSheet(npc.appearance, npc.equipment, p,
-      [state.action], directions);
+      [state.action], directions, state.avatarStatus);
     if (kind === 'png') downloadUrl(encodePng(result.atlasBuffer), name + '.png');
     else downloadUrl(URL.createObjectURL(new Blob([JSON.stringify(result.metadata, null, 2)],
       { type: 'application/json' })), name + '.json');
