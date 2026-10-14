@@ -134,6 +134,45 @@ try {
   await page.screenshot({ path: join(output, '32-creature-variants.png'), fullPage: true });
   console.log('EXTENDED CATALOG OK: NPC filter, canonical masks, variant atlas');
   
+  await nav.filter({ hasText: 'Ciclos de árboles' }).click();
+  const firstTree = await page.locator('.asset-card strong').first().innerText();
+  await page.locator('#gallery-next').click();
+  const nextTree = await page.locator('.asset-card strong').first().innerText();
+  if (nextTree === firstTree) throw new Error('Large lifecycle catalog pagination did not advance');
+  await page.locator('.asset-card').first().click();
+  const [nativeSprite] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-sprite').click()
+  ]);
+  const nativePath = join(output, 'native-tree-sprite.png');
+  await nativeSprite.saveAs(nativePath);
+  const bytes = readFileSync(nativePath);
+  if (bytes.toString('hex', 0, 8) !== '89504e470d0a1a0a' ||
+      bytes.readUInt32BE(16) === 0 || bytes.readUInt32BE(20) === 0)
+    throw new Error('Native generated PNG is not a valid non-empty PNG');
+  const [metadata] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const metadataPath = join(output, 'tree-morphology-metadata.json');
+  await metadata.saveAs(metadataPath);
+  const payload = JSON.parse(readFileSync(metadataPath, 'utf8'));
+  if (!payload.morphology?.skeleton || !payload.pivotTexel ||
+      payload.section !== 'tree-lifecycle')
+    throw new Error('Engine tree JSON did not expose actual morphology and pivot');
+  await nav.filter({ hasText: 'Paletas del motor' }).click();
+  const [paletteFile] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  const palettePath = join(output, 'engine-palette.json');
+  await paletteFile.saveAs(palettePath);
+  if (!JSON.parse(readFileSync(palettePath,'utf8')).palette?.ramps?.foliage)
+    throw new Error('Palette section did not export actual registered palette ramps');
+  await nav.filter({ hasText: 'Comparador multirresolución' }).click();
+  await page.locator('.asset-card').last().click();
+  if (await page.locator('#engine-live').innerText() !== 'RENDER OK')
+    throw new Error('Native resolution comparator failed to render');
+  await page.screenshot({ path: join(output, '34-native-profile-comparator.png'), fullPage: true });
+  console.log('NATIVE OUTPUT QA OK: catalog pagination, PNG signature, morphology, palette and profile');
+  
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('#toggle-sidebar').click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'true')
