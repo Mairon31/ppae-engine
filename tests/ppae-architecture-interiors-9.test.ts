@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CaveDungeonGenerator,
   DEFAULT_COTTAGE_INTERIOR,
+  DEFAULT_FORGE_INTERIOR,
+  DEFAULT_ALCHEMY_INTERIOR,
   DEFAULT_CRYSTAL_CAVERN,
   DEFAULT_STRUCTURE_CATALOG,
   DEFAULT_STYLE_PROFILES,
@@ -124,4 +126,44 @@ describe('PPAE 2.0 Phase 9 — Procedural Architecture, Roof & Wall Grammars, In
     expect(chamber.chamberBuffer.countUniqueOpaqueColors()).toBeGreaterThanOrEqual(6);
     expect(chamber.bioluminescentNodes.length).toBeGreaterThan(0);
   });
+
+  it('preserves separate roof occlusion and door collision contracts at every native resolution', () => {
+    for (const id of ['micro-4x4', 'micro-6x6', 'classic-8x8', 'standard-16x16', 'detailed-32x32'] as const) {
+      const profile = DEFAULT_STYLE_PROFILES[id];
+      const def = DEFAULT_STRUCTURE_CATALOG.blue_slate_manor_01;
+      const closed = structureGen.generateStructure(def, profile, false);
+      const open = structureGen.generateStructure(def, profile, true);
+      expect(closed.baseAndWallsBuffer.width).toBe(def.widthInTiles * profile.canonicalTileTexels);
+      expect(closed.roofOverlayBuffer.height).toBe(def.heightInTiles * profile.canonicalTileTexels);
+      expect(Array.from(closed.roofOverlayBuffer.data)).toEqual(Array.from(open.roofOverlayBuffer.data));
+      expect(closed.doorCollisionRect).toEqual(open.doorCollisionRect);
+      expect(closed.roofOcclusionFootprint.width).toBe(def.widthInTiles * 16);
+      expect(closed.baseAndWallsBuffer.countUniqueOpaqueColors()).toBeGreaterThan(5);
+    }
+  });
+
+  it('exposes real forge and alchemy interiors without blocking the exit or decorative plants', () => {
+    const forge = interiorGen.renderInterior(DEFAULT_FORGE_INTERIOR, profile4);
+    const alchemy = interiorGen.renderInterior(DEFAULT_ALCHEMY_INTERIOR, profile4);
+    expect(forge.walkabilityGrid[2][3]).toBe(false);
+    expect(alchemy.walkabilityGrid[2][2]).toBe(false);
+    expect(alchemy.walkabilityGrid[4][1]).toBe(true);
+    expect(forge.walkabilityGrid[6][4]).toBe(true);
+    expect(alchemy.walkabilityGrid[6][4]).toBe(true);
+    expect(Array.from(forge.roomBuffer.data)).not.toEqual(Array.from(alchemy.roomBuffer.data));
+  });
+
+  it('places deterministic cave pillars with logical collisions and avoids the exit stairs', () => {
+    const cave = caveGen.generateChamber(DEFAULT_CRYSTAL_CAVERN, profile4);
+    const rerun = caveGen.generateChamber(DEFAULT_CRYSTAL_CAVERN, profile4);
+    expect(Array.from(cave.chamberBuffer.data)).toEqual(Array.from(rerun.chamberBuffer.data));
+    expect(cave.collisionRects).toEqual(rerun.collisionRects);
+    const perimeter = DEFAULT_CRYSTAL_CAVERN.widthInTiles * 2 + DEFAULT_CRYSTAL_CAVERN.heightInTiles * 2 - 4;
+    expect(cave.collisionRects.length).toBeGreaterThan(perimeter + 1);
+    expect(cave.collisionRects.every(rect =>
+      !(rect.x === DEFAULT_CRYSTAL_CAVERN.exitStairsTileX * 16 &&
+        rect.y === DEFAULT_CRYSTAL_CAVERN.exitStairsTileY * 16)
+    )).toBe(true);
+  });
+
 });

@@ -347,3 +347,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Initial implementation: typed material/roof/archetype extensions; exterior facade patterns, roof grammars, windmill/well/ruins catalog entries; detailed interior furniture and cave stalactites; real Playground structure catalog labels with EN/ES/PT-BR translations.
 - Regression suite: `tests/ppae-architecture-interiors-9.test.ts`. Retains existing logical collision, door and roof-occlusion return contracts.
 - **Status: IMPLEMENTED, verification PENDING for this commit.** Do not mark VERIFIED until full `npm test`, `npm run build`, `npm run check:package` and browser QA complete. Manual art-direction evaluation remains pending.
+
+### Phase 9 — Integration increment
+
+- Cave renderer now includes seeded rock pillars (with logical collision rectangles), layered wall strata and stepped stalagmites while retaining exits, lava/crystals and the existing cave API.
+- New `DEFAULT_FORGE_INTERIOR` / `DEFAULT_ALCHEMY_INTERIOR` demonstrate real furniture via the existing Interiors lab; the lab has three selectable layouts, type-safe metadata and localized labels.
+- Added native-resolution roof/door invariants, interior collision/exit tests and cave determinism/pillar coverage. Validation of this increment and visual review remain PENDING until new GitHub Actions runs finish.

@@ -452,6 +452,9 @@ export const CATALOG_TRANSLATIONS: Readonly<Record<string, readonly [string, str
     "Escudo",
     "Escudo"
   ],
+  "Cottage Interior": ["Interior de cabaña", "Interior da cabana"],
+  "Blacksmith Workshop": ["Taller de herrería", "Oficina de ferreiro"],
+  "Alchemy Laboratory": ["Laboratorio de alquimia", "Laboratório de alquimia"],
   "Thatched Peasant Hut": ["Choza campesina de paja", "Cabana camponesa de palha"],
   "Blue Slate Manor": ["Mansión de pizarra azul", "Solar de ardósia azul"],
   "Timber Farm Barn": ["Granero de madera", "Celeiro de madeira"],

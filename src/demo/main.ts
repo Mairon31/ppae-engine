@@ -10,7 +10,7 @@ import {
   CharacterCustomizationService, CHUNK_SIZE_TILES, ChunkWorldRenderer,
   CaveDungeonGenerator, CreatureActionId, CreatureAgeStage, CreatureGenerator,
   CreatureHealthState, CreatureSpeciesId, CropSpeciesId, DEFAULT_CHARACTER_CLIPS, DEFAULT_CREATURE_CLIPS,
-  DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HUD_PANEL_CONFIG, DEFAULT_STRUCTURE_CATALOG,
+  DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_FORGE_INTERIOR, DEFAULT_ALCHEMY_INTERIOR, DEFAULT_HUD_PANEL_CONFIG, DEFAULT_STRUCTURE_CATALOG,
   DEFAULT_STYLE_PROFILES, DEFAULT_WEATHER_STATES, DeterministicWorldField,
   Direction8, EquipmentItemCategory, EquipmentGenerator, FarmingAndCropGenerator, fnv1aHash32,
   GeologicalResourceKind, GranularityProfileId, InteriorGenerator, InventoryIconGenerator,
@@ -55,6 +55,7 @@ const capabilities = new SpeciesAnimationCapabilityRegistry();
 const nature = new NatureGenerator();
 const structures = new StructureGenerator();
 const interiors = new InteriorGenerator();
+const interiorCatalog = { cottage_interior: DEFAULT_COTTAGE_INTERIOR, forge_interior: DEFAULT_FORGE_INTERIOR, alchemy_interior: DEFAULT_ALCHEMY_INTERIOR } as const;
 const caves = new CaveDungeonGenerator();
 const farms = new FarmingAndCropGenerator();
 const icons = new InventoryIconGenerator();
@@ -456,7 +457,7 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       if (state.structureRoof) blend(scene, result.roofOverlayBuffer, 0, 0);
       return scene;
     }
-    case 'interiors': return interiors.renderInterior(DEFAULT_COTTAGE_INTERIOR, p).roomBuffer;
+    case 'interiors': return interiors.renderInterior(interiorCatalog[id as keyof typeof interiorCatalog] ?? DEFAULT_COTTAGE_INTERIOR, p).roomBuffer;
     case 'caves': return caves.generateChamber({
       ...DEFAULT_CRYSTAL_CAVERN, seed: n,
       hasLavaPool: state.caveLava, crystalCount: state.caveCrystals
@@ -1253,8 +1254,9 @@ function exportTechnicalJSON(): void {
       break;
     }
     case 'interiors': {
-      const artifact = interiors.renderInterior(DEFAULT_COTTAGE_INTERIOR, p);
-      data.definition = DEFAULT_COTTAGE_INTERIOR;
+      const definition = interiorCatalog[id as keyof typeof interiorCatalog] ?? DEFAULT_COTTAGE_INTERIOR;
+      const artifact = interiors.renderInterior(definition, p);
+      data.definition = definition;
       data.collisionRects = artifact.collisionRects;
       data.walkabilityGrid = artifact.walkabilityGrid;
       data.lightSourcePositionsTexel = artifact.lightSourcePositionsTexel;

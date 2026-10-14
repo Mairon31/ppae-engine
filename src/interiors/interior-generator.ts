@@ -88,6 +88,41 @@ export const DEFAULT_COTTAGE_INTERIOR: InteriorDefinition = {
   ]
 };
 
+
+/** Demonstration-ready interiors share the same renderer and logical collision grid. */
+export const DEFAULT_FORGE_INTERIOR: InteriorDefinition = {
+  ...DEFAULT_COTTAGE_INTERIOR,
+  interiorId: 'interior_blacksmith_01',
+  parentStructureId: 'blacksmith_forge_01',
+  floorMaterialHex: '#60564b',
+  floorAccentHex: '#383631',
+  furniture: [
+    { id: 'forge_hearth', kind: 'furnace_hearth', tileX: 1, tileY: 1, widthTiles: 1, heightTiles: 1, collidable: true, emitsLight: true },
+    { id: 'work_anvil', kind: 'anvil_station', tileX: 3, tileY: 2, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'work_bench', kind: 'dining_table', tileX: 5, tileY: 2, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'spare_barrel', kind: 'wooden_barrel', tileX: 6, tileY: 5, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'bench_chair', kind: 'wooden_chair', tileX: 2, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'forge_torch', kind: 'wall_torch', tileX: 4, tileY: 0, widthTiles: 1, heightTiles: 1, collidable: false, emitsLight: true }
+  ]
+};
+
+export const DEFAULT_ALCHEMY_INTERIOR: InteriorDefinition = {
+  ...DEFAULT_COTTAGE_INTERIOR,
+  interiorId: 'interior_alchemy_01',
+  parentStructureId: 'blue_slate_manor_01',
+  floorMaterialHex: '#716355',
+  floorAccentHex: '#473a32',
+  furniture: [
+    { id: 'elixir_bench', kind: 'alchemy_bench', tileX: 2, tileY: 2, widthTiles: 3, heightTiles: 1, collidable: true },
+    { id: 'plant_west', kind: 'potted_plant', tileX: 1, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: false },
+    { id: 'plant_east', kind: 'potted_plant', tileX: 6, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: false },
+    { id: 'herbal_books', kind: 'bookshelf', tileX: 5, tileY: 1, widthTiles: 2, heightTiles: 1, collidable: true },
+    { id: 'alchemy_stool', kind: 'wooden_chair', tileX: 3, tileY: 4, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'supplies_barrel', kind: 'wooden_barrel', tileX: 6, tileY: 5, widthTiles: 1, heightTiles: 1, collidable: true },
+    { id: 'alchemy_torch', kind: 'wall_torch', tileX: 1, tileY: 0, widthTiles: 1, heightTiles: 1, collidable: false, emitsLight: true }
+  ]
+};
+
 export interface RenderedInteriorArtifact {
   readonly interiorId: string;
   readonly roomBuffer: PixelBuffer;
