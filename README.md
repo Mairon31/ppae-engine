@@ -15,7 +15,7 @@ Create characters, creatures, environments, animation frames, and visual effects
 [![CI](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml/badge.svg?branch=feat%2Fppae-2-art-overhaul)](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-8CAB72?style=flat-square)](LICENSE)
 
-**[Explore the interactive Playground](https://mairon31.github.io/ppae-engine/)** · **[Read the technical documentation](docs/PLAYGROUND.md)** · **[Contribute on GitHub](https://github.com/Mairon31/ppae-engine/issues)**
+**[Discover PPAE Engine](https://mairon31.github.io/ppae-engine/)** · **[Read the technical documentation](docs/PLAYGROUND.md)** · **[Contribute on GitHub](https://github.com/Mairon31/ppae-engine/issues)**
 
 </div>
 
@@ -37,7 +37,7 @@ PPAE began as a technology project for [PixelProject](https://github.com/Mairon3
 
 PPAE es un motor de generación procedural de pixel art escrito en TypeScript. Permite generar personajes, NPC, criaturas, jefes, árboles, vegetación, terreno, agua, construcciones, animaciones y efectos visuales a partir de reglas y semillas reproducibles. Incluye un **Playground interactivo** para inspeccionar los resultados y exportar sprites y spritesheets. Está pensado para desarrolladores independientes, artistas técnicos y creadores que construyen videojuegos con código o herramientas de IA.
 
-**[Abrir el Playground](https://mairon31.github.io/ppae-engine/)** · **[Ver cómo contribuir](#contributing)**
+**[Visitar la landing de PPAE](https://mairon31.github.io/ppae-engine/)** · **[Ver cómo contribuir](#contributing)**
 
 </details>
 
@@ -45,7 +45,9 @@ PPAE es un motor de generación procedural de pixel art escrito en TypeScript. P
 
 <div align="center">
 
-### [Launch the live Playground →](https://mairon31.github.io/ppae-engine/)
+### [Explore the product landing →](https://mairon31.github.io/ppae-engine/)
+
+**[Launch the 30-lab Playground →](https://mairon31.github.io/ppae-engine/#world)**
 
 **30 interactive laboratories. Hundreds of seeded variants. Real engine-generated assets — no prerecorded mockups.**
 
@@ -76,7 +78,7 @@ SCREENSHOT SHOWCASE — TO BE ADDED MANUALLY.
 
 The Playground lets you change **seed, resolution, direction, action, lifecycle stage, creature age and health, zoom, playback speed, time of day, and weather**, plus editable avatar anatomy, hairstyle, clothing, skin/hair/armor colors, accessories, and status effects. Export **native sprite PNG, viewport screenshots, PNG spritesheets, structured JSON atlases, or per-system metadata**. Browse every section with search and pagination.
 
-[Playground guide →](docs/PLAYGROUND.md) · [Complete 30-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
+[Product landing and Pages deployment →](docs/SITE_LANDING_AND_PAGES.md) · [Playground guide →](docs/PLAYGROUND.md) · [Complete 30-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
 
 ## What can PPAE generate?
 
