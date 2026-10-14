@@ -435,3 +435,5 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Hero references now forward `entry.seed` into the appearance contract, so an actual seed is tested rather than silently ignored by the benchmark renderer. RGBA fingerprints will be recalculated and locked after this fix.
 
 - Anti-pillow-shading synthetic regression now checks a centered, brighter nucleus **within the same chroma material**, distinct from uniform tones; empty buffers fail with explicit `EMPTY_SILHOUETTE`.
+
+- **Seed contract correction:** renderer anatomy uses explicit appearance attributes; setting `appearance.seed` alone did not alter hero pixels. Golden hero appearances now derive skin, hair, hair style and scar side from `SeededRNG(entry.seed)` before rendering, making reference seed meaningful rather than only a label. Static structure definitions remain definition-based and currently do not expose procedural seed variation.

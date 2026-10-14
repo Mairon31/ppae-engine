@@ -24,6 +24,7 @@ import {
   DEFAULT_HERO_EQUIPMENT
 } from '../entities/character-generator';
 import { CreatureGenerator } from '../entities/creature-archetypes';
+import { SeededRNG } from '../core/deterministic';
 import { computeContrastRatio } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import {
@@ -403,7 +404,7 @@ export class ProceduralArtQualityEvaluator {
           break;
         case 'character':
           buffer = this.avatarGen.renderCharacterFrame(
-            { ...DEFAULT_HERO_APPEARANCE, seed: entry.seed },
+            this.generateSeededHeroAppearance(entry.seed),
             DEFAULT_HERO_EQUIPMENT,
             'idle',
             'S',
@@ -457,6 +458,38 @@ export class ProceduralArtQualityEvaluator {
     });
   }
 
+
+  /**
+   * The character renderer receives a complete appearance. Changing only its
+   * 'seed' metadata does not change colors, hair or facial geometry. Golden
+   * character samples therefore derive *actual* appearance parameters from
+   * the canonical seed (same engine contract used for runtime customization).
+   */
+  private generateSeededHeroAppearance(seed: number): typeof DEFAULT_HERO_APPEARANCE {
+    const rng = new SeededRNG(seed);
+    const hairStyles = ['short_crop', 'long_adventure', 'ponytail',
+      'wavy_shoulder', 'braided_crown'] as const;
+    const hairPairs = [
+      ['#5c3317', '#361b09'],
+      ['#27272a', '#09090b'],
+      ['#9a3412', '#5c1d08'],
+      ['#ca8a04', '#854d0e']
+    ] as const;
+    const skinPairs = [
+      ['#f2c29b', '#c98e63'],
+      ['#d99b66', '#a66d3f'],
+      ['#f5d0b5', '#cfa07e']
+    ] as const;
+    const hair = rng.pick(hairPairs), skin = rng.pick(skinPairs);
+    return {
+      ...DEFAULT_HERO_APPEARANCE,
+      seed, entityId: 'golden_hero_' + seed,
+      hairStyle: rng.pick(hairStyles),
+      hairColorHex: hair[0], hairShadowHex: hair[1],
+      skinColorHex: skin[0], skinShadowHex: skin[1],
+      scarSide: rng.chance(0.5) ? 'left' : 'right'
+    };
+  }
 
   /** FNV-1a on dimensions and raw RGBA; independent of locale and execution order. */
   public hashPixelBuffer(buffer: PixelBuffer): string {
