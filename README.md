@@ -98,34 +98,22 @@ These systems exist in the current development branch. Visual polish, runtime pe
 <table>
 <tr>
 <td width="50%" valign="top">
-
-### For indie game creators
-
-Build variations without manually redrawing every asset. Start from structured definitions, regenerate with a seed, and keep art direction consistent across world content.
-
+<h3>For indie game creators</h3>
+<p>Build variations without manually redrawing every asset. Start from structured definitions, regenerate with a seed, and keep art direction consistent across world content.</p>
 </td>
 <td width="50%" valign="top">
-
-### For AI-assisted builders
-
-Work with a typed, inspectable TypeScript API rather than an opaque image service. Let coding agents prototype around deterministic generators while keeping the implementation reviewable.
-
+<h3>For AI-assisted builders</h3>
+<p>Work with a typed, inspectable TypeScript API rather than an opaque image service. Let coding agents prototype around deterministic generators while keeping the implementation reviewable.</p>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-
-### For technical artists
-
-Explore anatomical rules, botanical silhouettes, palette constraints, layer composition, and procedural animation. Contribute better visual systems, not just more assets.
-
+<h3>For technical artists</h3>
+<p>Explore anatomical rules, botanical silhouettes, palette constraints, layer composition, and procedural animation. Contribute better visual systems, not just more assets.</p>
 </td>
 <td width="50%" valign="top">
-
-### For experienced engineers
-
-Help improve raster quality, visual regression testing, caching, profiling, sprite atlases, browser performance, and integration with game frameworks.
-
+<h3>For experienced engineers</h3>
+<p>Help improve raster quality, visual regression testing, caching, profiling, sprite atlases, browser performance, and integration with game frameworks.</p>
 </td>
 </tr>
 </table>
