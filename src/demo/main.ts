@@ -92,6 +92,7 @@ const state: PlaygroundState = {
 
 let worldField = new DeterministicWorldField(state.seed);
 let worldRenderer = new ChunkWorldRenderer(worldField);
+let showcaseChunk = findShowcaseChunk(worldField);
 let cachedWorld = new Map<string, ReturnType<ChunkWorldRenderer['renderChunk']>>();
 let particles = new PixelParticleEngine(450);
 let particleMode = '';
@@ -234,12 +235,40 @@ function baseScene(type: string, p: ArtStyleProfile, tick: number, materialId = 
   }
   return result;
 }
+/**
+ * Choose a real, deterministic 8x8 sample of the user's world with visible land and
+ * some shoreline. The old hard-coded (0,0) chunk was nearly all deep water for
+ * the default seed, hiding the engine's ecological and terrestrial generators.
+ * Scoring only probes cheap field samples; it never pre-renders candidate chunks.
+ */
+function findShowcaseChunk(field: DeterministicWorldField): { x: number; y: number } {
+  let best = { x: 0, y: 0, score: -Infinity };
+  for (let cy = -3; cy <= 3; cy++) {
+    for (let cx = -3; cx <= 3; cx++) {
+      let land = 0, water = 0, forest = 0, meadow = 0, materials = new Set<string>();
+      for (let y = 0; y < CHUNK_SIZE_TILES; y += 2) {
+        for (let x = 0; x < CHUNK_SIZE_TILES; x += 2) {
+          const sample = field.sampleMaterialOnly(cx * CHUNK_SIZE_TILES + x, cy * CHUNK_SIZE_TILES + y);
+          materials.add(sample.material);
+          if (sample.material === 'deep_water' || sample.material === 'shallow_water') water++;
+          else land++;
+          if (sample.material === 'forest_moss') forest++;
+          if (sample.material === 'meadow_grass') meadow++;
+        }
+      }
+      const shore = water > 0 && land > 0 ? 22 + Math.min(land, water) * 3 : 0;
+      const score = land * 2 + forest * 2 + meadow * 2 + shore + materials.size * 3;
+      if (score > best.score) best = { x: cx, y: cy, score };
+    }
+  }
+  return { x: best.x, y: best.y };
+}
 function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected): PixelBuffer {
   const variant = tick % 4;
-  const cacheKey = state.seed + ':' + p.id + ':' + variant;
+  const cacheKey = state.seed + ':' + showcaseChunk.x + ',' + showcaseChunk.y + ':' + p.id + ':' + variant;
   let chunk = cachedWorld.get(cacheKey);
   if (!chunk) {
-    chunk = worldRenderer.renderChunk(0, 0, p, variant, 4);
+    chunk = worldRenderer.renderChunk(showcaseChunk.x, showcaseChunk.y, p, variant, 4);
     if (cachedWorld.size >= 8) cachedWorld.clear();
     cachedWorld.set(cacheKey, chunk);
   }
@@ -476,7 +505,9 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
     toThumbnail(canvas, worldScene(p, 0, id));
   } else if (section === 'particles') {
     const pool = new PixelParticleEngine(128);
-    pool.emitBurst(id as VFXPresetId, 60, 45, seedNumber(id), 60);
+    const wide = ['falling_leaves','forest_fireflies','rain_splash','water_ripple'].includes(id);
+    emitPlaygroundVfx(pool, id as VFXPresetId, 60, wide ? 36 : 45,
+      seedNumber(id), 9, 6, wide ? 94 : 48, wide ? 44 : 18);
     pool.update(120, { vx: .2, vy: 0, canopyPixelShiftX: 0, canopyPixelShiftY: 0, strength: .2 });
     const b = new PixelBuffer(120, 86);
     b.fillRect(0, 0, 120, 86, { r: 20, g: 32, b: 44, a: 255 });
@@ -606,6 +637,8 @@ function renderNav(): void {
 function selectSection(section: PlaygroundSectionId): void {
   state.section = section; state.selected = PLAYGROUND_OPTIONS[section][0];
   state.page = 0; state.frame = 0; elapsed = 0;
+  state.stage = section === 'trees' || section === 'farming' ? 'mature' :
+    section === 'bosses' ? 'phase_2_enraged' : 'intact';
   const definition = getPlaygroundSection(section);
   byId('page-title').textContent = definition.label;
   byId('page-description').textContent = definition.description;
@@ -619,17 +652,36 @@ function selectSection(section: PlaygroundSectionId): void {
   if (section === 'particles') resetParticles();
   refreshControlVisibility(); renderNav(); renderCards(); renderPreviewPending = true;
 }
+/**
+ * Spread real engine bursts across the demo viewport. PixelParticleEngine's
+ * emitBurst starts particles within ~2px of an origin: emitting 85 at once was
+ * virtually a single dot despite correct particle counts in telemetry.
+ */
+function emitPlaygroundVfx(
+  pool: PixelParticleEngine, id: VFXPresetId, x: number, y: number,
+  seed: number, bursts: number, countPerBurst: number, spanX: number, spanY: number
+): void {
+  for (let i = 0; i < bursts; i++) {
+    const h = fnv1aHash32(id + ':' + seed + ':' + i);
+    const px = x + Math.round(((h & 1023) / 1023 - .5) * spanX);
+    const py = y + Math.round((((h >>> 10) & 1023) / 1023 - .5) * spanY);
+    pool.emitBurst(id, px, py, h, countPerBurst);
+  }
+}
 function resetParticles(): void {
   vfxEmissionElapsed = 0;
   vfxBurstIndex = 0;
   particles = new PixelParticleEngine(450);
   particleMode = state.selected;
-  particles.emitBurst(state.selected as VFXPresetId, 120, 90, seedNumber(), 85);
+  const wide = ['falling_leaves','forest_fireflies','rain_splash','water_ripple'].includes(state.selected);
+  emitPlaygroundVfx(particles, state.selected as VFXPresetId, 120,
+    wide ? 72 : 90, seedNumber(), 12, 7, wide ? 158 : 62, wide ? 60 : 28);
 }
 function regenerateWorld(): void {
   thumbnailCache.clear();
   worldField = new DeterministicWorldField(state.seed);
   worldRenderer = new ChunkWorldRenderer(worldField);
+  showcaseChunk = findShowcaseChunk(worldField);
   cachedWorld.clear();
   particleMode = '';
   if (state.section === 'particles') resetParticles();
@@ -806,10 +858,13 @@ function tick(now: number): void {
       particles.update(dtMs, { vx: .17, vy: 0,
         canopyPixelShiftX: 0, canopyPixelShiftY: 0, strength: .17 });
       vfxEmissionElapsed += dtMs;
-      if (vfxEmissionElapsed >= 1150) {
-        vfxEmissionElapsed %= 1150;
-        particles.emitBurst(state.selected as VFXPresetId, 120, 90,
-          seedNumber(String(++vfxBurstIndex)), 60);
+      // Even short-lived impacts/ripples should never disappear for >1 second.
+      if (vfxEmissionElapsed >= 175) {
+        vfxEmissionElapsed %= 175;
+        const wide = ['falling_leaves','forest_fireflies','rain_splash','water_ripple'].includes(state.selected);
+        emitPlaygroundVfx(particles, state.selected as VFXPresetId, 120,
+          wide ? 72 : 90, seedNumber(String(++vfxBurstIndex)), 3, 5,
+          wide ? 158 : 62, wide ? 60 : 28);
       }
     }
   }
