@@ -17,12 +17,13 @@ async function inspect() {
     throw new Error('Pages HTML has invalid Content-Type: ' + page.headers.get('content-type'));
   }
   const html = await page.text();
-  if (!html.includes('id="section-nav"') || !html.includes('PPAE — Playground del motor procedural')) {
-    throw new Error('Public Pages returned legacy/non-Playground HTML; check Settings → Pages → Source = GitHub Actions');
+  if (!html.includes('id="section-nav"') || !html.includes('id="landing-page"')
+      || !html.includes('PPAE Engine — Procedural Pixel Art Engine')) {
+    throw new Error('Public Pages missing compiled product landing / engine studio; check Settings → Pages → Source = GitHub Actions');
   }
   const js = html.match(/src="(\/ppae-engine\/assets\/[^"]+\.js)"/)?.[1];
   const css = html.match(/href="(\/ppae-engine\/assets\/[^"]+\.css)"/)?.[1];
-  if (!js || !css || html.includes('/src/demo/main.ts') || html.includes('/src/demo/playground.css')) {
+  if (!js || !css || html.includes('/src/demo/main.ts') || html.includes('/src/demo/playground.css') || html.includes('/src/demo/landing.css')) {
     throw new Error('Pages HTML does not reference compiled Vite JS/CSS with /ppae-engine/ base');
   }
   for (const [path, mime] of [[js, /javascript/], [css, /text\/css/]]) {
