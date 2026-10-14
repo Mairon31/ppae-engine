@@ -25,7 +25,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 6B — Species Animation Capabilities & Creature Atlas | VERIFIED | 12 acciones, seis familias de rigs y atlas direccionales con fallbacks anatómicos |
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
-| 8A — Advanced Creatures & Bosses | IMPLEMENTED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
+| 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -245,7 +245,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Capacidades:** las cuatro familias nuevas se registran en `SpeciesAnimationCapabilityRegistry`; acciones incompatibles resuelven alternativas seguras y permanecen compatibles los clips/atlas 6B.
 - **Jefes:** `createCorruptedTreantBossState`, paleta corrupta por fase, corteza, ramificaciones y garras de raíces, sin romper estados de cuatro segmentos, puntos débiles, telegrafía ni fases del coloso preexistente.
 - **Pruebas:** `tests/ppae-advanced-creatures-bosses-8a.test.ts` cubre catálogo, render escalado, determinismo en ocho direcciones, variantes, ambos jefes y compilación de atlas.
-- **Estado:** IMPLEMENTED hasta comprobar CI (`npm test`, `npm run build`); inspección visual de las diez familias en 4/6/8/16/32 aún pendiente. Un CI aprobado por sí solo no certifica fidelidad artística.
+- **Estado:** VERIFIED técnicamente. Commits: implementación `a04780f26139387f1881fdd57007f16316042018`, corrección de regresión de pivote slime y expectativa de familias 6B `e79910e00364f20548a31c8fac133723a45f5cae`, anclaje de raíces y compilación TypeScript `dbabf52138de17f6df3434dca1962e40d211b1a5`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38608133738: **27 suites / 157 tests aprobados**, `npm run build` correcto (TypeScript, biblioteca, declaraciones y demo). Inspección visual de las diez familias en 4/6/8/16/32 pendiente: las pruebas técnicas no certifican fidelidad artística.
 - **Siguiente:** Fase 9 — Procedural Architecture & Interiors.
 
 ## Convenciones de estado
