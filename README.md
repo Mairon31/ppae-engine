@@ -47,9 +47,9 @@ PPAE es un motor de generación procedural de pixel art escrito en TypeScript. P
 
 ### [Launch the live Playground →](https://mairon31.github.io/ppae-engine/)
 
-**17 interactive sections. Real engine-generated samples. No prerecorded mockup assets.**
+**30 interactive laboratories. Hundreds of seeded variants. Real engine-generated assets — no prerecorded mockups.**
 
-Explore world generation, characters, NPC professions, the bestiary, bosses, trees, flora, geology, terrain, architecture, interiors, caves, farming, equipment, VFX, weather, and lighting.
+Explore a full player appearance editor with seeded randomization, 28 character actions, NPC diversity, creature morph variations, boss states, plant lifecycles, seamless materials, 256 autotile inputs, liquids, world generation, weather, VFX, native resolution profiles, and biome color palettes.
 
 </div>
 
@@ -74,9 +74,9 @@ SCREENSHOT SHOWCASE — TO BE ADDED MANUALLY.
 </div>
 -->
 
-The Playground lets you change **seed, resolution, direction, action, lifecycle stage, creature age and health, zoom, playback speed, time of day, and weather**. It provides live Canvas previews, an explorable catalog, playback controls, and **PNG / spritesheet PNG / JSON atlas export** where supported.
+The Playground lets you change **seed, resolution, direction, action, lifecycle stage, creature age and health, zoom, playback speed, time of day, and weather**, plus editable avatar anatomy, hairstyle, clothing, skin/hair/armor colors, accessories, and status effects. Export **native sprite PNG, viewport screenshots, PNG spritesheets, structured JSON atlases, or per-system metadata**. Browse every section with search and pagination.
 
-[Playground guide and capabilities →](docs/PLAYGROUND.md)
+[Playground guide →](docs/PLAYGROUND.md) · [Complete 30-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
 
 ## What can PPAE generate?
 
