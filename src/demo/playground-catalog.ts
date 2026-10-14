@@ -9,7 +9,8 @@ import {
   CROP_SPECIES_CATALOG,
   VFX_EMITTER_PRESETS,
   TERRAIN_MATERIALS,
-  DEFAULT_WEATHER_STATES, TREE_MORPHOLOGY_ARCHETYPES, MATERIAL_TIER_PALETTES
+  DEFAULT_WEATHER_STATES, TREE_MORPHOLOGY_ARCHETYPES, MATERIAL_TIER_PALETTES,
+  DEFAULT_STYLE_PROFILES, PaletteManager
 } from '../index';
 import { AVATAR_VARIANTS } from './avatar-lab';
 
@@ -41,7 +42,9 @@ export const PLAYGROUND_SECTIONS = [
   { id: 'hud', label: 'HUD / Nine-slice', group: 'Sistemas', description: 'Paneles pixel-perfect y barras de progreso paramétricas' },
   { id: 'particles', label: 'Partículas', group: 'Sistemas', description: '10 emisores, gravedad y pooling' },
   { id: 'weather', label: 'Clima y viento', group: 'Sistemas', description: '11 estados meteorológicos' },
-  { id: 'lighting', label: 'Iluminación', group: 'Sistemas', description: 'Fases del día y mapas de luz' }
+  { id: 'lighting', label: 'Iluminación', group: 'Sistemas', description: 'Fases del día y mapas de luz' },
+  { id: 'palettes', label: 'Paletas del motor', group: 'Diagnóstico artístico', description: 'Rampas cromáticas reales por bioma y estación' },
+  { id: 'resolution-profiles', label: 'Comparador multirresolución', group: 'Diagnóstico artístico', description: 'Una misma especie generada nativamente a 4, 6, 8, 16 y 32' }
 ] as const;
 
 export type PlaygroundSectionId = (typeof PLAYGROUND_SECTIONS)[number]['id'];
@@ -78,6 +81,9 @@ export const CROP_LIFECYCLE_VARIANTS = Object.keys(CROP_SPECIES_CATALOG)
   .flatMap(id => CROP_STAGES.map(stage => id + ':' + stage));
 export const TERRAIN_VARIANTS = Object.keys(TERRAIN_MATERIALS)
   .flatMap(id => Array.from({ length: 16 }, (_, i) => id + ':' + String(i)));
+export const PALETTE_OPTIONS = new PaletteManager().listPalettes().map(item => item.id);
+export const RESOLUTION_OPTIONS = Object.keys(DEFAULT_STYLE_PROFILES)
+  .filter(id => id !== 'adaptive-auto');
 export const MATERIAL_VARIANTS = Object.keys(MATERIAL_TIER_PALETTES)
   .flatMap(tier => ['weapon_sword','tool_axe','armor_helmet'].map(category => tier + ':' + category));
 export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly string[]>> = {
@@ -108,7 +114,9 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
   hud: ['hud_panel','health_bar','mana_bar','stamina_bar'],
   particles: Object.keys(VFX_EMITTER_PRESETS),
   weather: Object.keys(DEFAULT_WEATHER_STATES),
-  lighting: ['dawn', 'morning', 'noon', 'afternoon', 'dusk', 'night', 'underground_dark']
+  lighting: ['dawn', 'morning', 'noon', 'afternoon', 'dusk', 'night', 'underground_dark'],
+  palettes: PALETTE_OPTIONS,
+  'resolution-profiles': RESOLUTION_OPTIONS
 };
 
 const LABELS: Record<string, string> = {
