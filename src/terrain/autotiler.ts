@@ -1,177 +1,234 @@
-import { ArtStyleProfile, AutotileMask8, TerrainMaterialId } from '../core/contracts';
+import type {
+  ArtStyleProfile,
+  AutotileMask8,
+  AutotileMaskClassification,
+  AutotileTopologyKind,
+  RGBAColor,
+  TerrainMaterialId
+} from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { TERRAIN_MATERIALS } from './world-field';
 
+/** Clockwise bit layout N=1, NE=2, E=4, SE=8, S=16, SW=32, W=64, NW=128. */
+export const CANONICAL_47_AUTOTILE_MASKS: readonly AutotileMask8[] = (() => {
+  const valid: number[] = [];
+  for (let mask=0;mask<256;mask++) {
+    const n=!!(mask&1),e=!!(mask&4),s=!!(mask&16),w=!!(mask&64);
+    if ((mask&2)&&(!n||!e))continue;
+    if ((mask&8)&&(!e||!s))continue;
+    if ((mask&32)&&(!s||!w))continue;
+    if ((mask&128)&&(!w||!n))continue;
+    valid.push(mask);
+  }
+  return valid;
+})();
+const CANONICAL_47_SET: ReadonlySet<number> = new Set(CANONICAL_47_AUTOTILE_MASKS);
+
+/** Project the full 256-case bit space onto the 47 valid blob autotile states. */
+export function normalizeAutotileMask47(rawMask: number): AutotileMask8 {
+  const bits = rawMask & 255;
+  const n=!!(bits&1),e=!!(bits&4),s=!!(bits&16),w=!!(bits&64);
+  return (n?1:0) | (e?4:0) | (s?16:0) | (w?64:0) |
+    (n&&e&&(bits&2)?2:0) |
+    (e&&s&&(bits&8)?8:0) |
+    (s&&w&&(bits&32)?32:0) |
+    (w&&n&&(bits&128)?128:0);
+}
+
+/** Semantic topology, plus whether the supplied mask was already canonical. */
+export function classifyAutotileMask47(mask: AutotileMask8): AutotileMaskClassification {
+  const norm=normalizeAutotileMask47(mask);
+  const n=!!(norm&1),e=!!(norm&4),s=!!(norm&16),w=!!(norm&64);
+  const cardinals=[n,e,s,w].filter(Boolean).length;
+  const diagonals=[2,8,32,128].filter(bit=>(norm&bit)!==0).length;
+  let topology:AutotileTopologyKind='complex_blend';
+  if(norm===255)topology='interior_full';
+  else if(cardinals===0)topology='isolated_island';
+  else if(cardinals===1)topology='end_cap';
+  else if(cardinals===2)topology=(n&&s)||(e&&w)?'corridor_bridge':'outer_corner';
+  else if(cardinals===3)topology=diagonals===2?'straight_edge':'t_junction';
+  else if(cardinals===4)topology=diagonals===0?'cross_junction':'inner_corner';
+  return {mask:norm,isCanonical47:CANONICAL_47_SET.has(mask),
+    topology,cardinalCount:cardinals,diagonalCount:diagonals};
+}
+
 /**
- * Sintetizador de tiles de terreno seamless y transiciones de autotiling de 47 estados.
- * Respeta la retícula canónica (24x24 o 48x48 texels) y los módulos 4x4 y 6x6.
+ * Seamless source texture synthesis and immutable-mask 47-state compositing.
+ * Distances/coverage are derived from a separate exposure field; no pixel in
+ * the output buffer is ever used to decide whether another pixel is an edge.
  */
 export class TerrainAutotiler {
   /**
-   * Genera un tile base 100% seamless en los 4 lados (aritmética modular toroidal)
+   * Produce 16 deterministic organic variants. Every cluster wraps toroidally;
+   * opposite edges are matched after synthesis to avoid edge pinholes.
    */
   public generateSeamlessBaseTile(
     materialId: TerrainMaterialId,
     profile: ArtStyleProfile,
-    variantIndex = 0
-  ): PixelBuffer {
-    const size = profile.canonicalTileTexels;
-    const mat = TERRAIN_MATERIALS[materialId];
-    const buf = new PixelBuffer(size, size);
-
-    const baseColor = hexToRgba(mat.baseColorHex);
-    const shadowColor = hexToRgba(mat.shadowColorHex);
-    const highlightColor = hexToRgba(mat.highlightColorHex);
-    const accentColor = hexToRgba(mat.accentColorHex);
-
-    buf.fillRect(0, 0, size, size, baseColor);
-
-    const wrap = (v: number): number => ((v % size) + size) % size;
-    const setWrapped = (x: number, y: number, c: typeof baseColor): void => {
-      buf.setPixel(wrap(x), wrap(y), c);
+    variantIndex=0
+  ):PixelBuffer{
+    const size=profile.canonicalTileTexels;
+    const mat=TERRAIN_MATERIALS[materialId];
+    const buf=new PixelBuffer(size,size);
+    const base=hexToRgba(mat.baseColorHex);
+    const shadow=hexToRgba(mat.shadowColorHex);
+    const high=hexToRgba(mat.highlightColorHex);
+    const accent=hexToRgba(mat.accentColorHex);
+    buf.fillRect(0,0,size,size,base);
+    const variant=(variantIndex&15);
+    const freq=2*Math.PI/(size-1);
+    const phase=variant*Math.PI/4;
+    const wrap=(x:number)=>(x%size+size)%size;
+    const stamp=(x:number,y:number,c:RGBAColor)=>{
+      buf.setPixel(wrap(x),wrap(y),c);
     };
-
-    // Distribución periódica por módulos (4x4 o 6x6) para garantizar tileabilidad perfecta
-    const modulesPerSide = Math.floor(size / profile.moduleSize);
-    for (let my = 0; my < modulesPerSide; my++) {
-      for (let mx = 0; mx < modulesPerSide; mx++) {
-        // Hash periódico que depende de (mx % modulesPerSide, my % modulesPerSide)
-        const h =
-          ((mx * 73856093) ^ (my * 19349663) ^ (variantIndex * 83492791)) >>> 0;
-        const ox = mx * profile.moduleSize + (h % profile.moduleSize);
-        const oy = my * profile.moduleSize + ((h >>> 4) % profile.moduleSize);
-
-        if (mat.patternType === 'organic_tuft') {
-          // Keep the low-resolution base readable at PixelProject's 16px
-          // logical scale: frequent micro-tufts become visual noise after
-          // nearest-neighbor downsampling from the canonical PPAE surface.
-          if ((h & 7) === 0) {
-            setWrapped(ox, oy, shadowColor);
-            setWrapped(ox, oy - 1, highlightColor);
-            setWrapped(ox + 1, oy - 1, highlightColor);
-          } else if ((h & 31) === 1) {
-            setWrapped(ox, oy, accentColor);
-          }
-        } else if (mat.patternType === 'granular_sand') {
-          if ((h & 3) === 0) {
-            setWrapped(ox, oy, highlightColor);
-            setWrapped(ox + 1, oy, shadowColor);
-          }
-        } else if (mat.patternType === 'cracked_stone') {
-          if ((h & 3) === 0) {
-            setWrapped(ox, oy, shadowColor);
-            setWrapped(ox + 1, oy, shadowColor);
-            setWrapped(ox, oy + 1, highlightColor);
-          }
-        } else if (mat.patternType === 'frost_crystalline') {
-          if ((h & 3) === 0) {
-            setWrapped(ox, oy, highlightColor);
-            setWrapped(ox + 1, oy, accentColor);
-          }
+    // Directional but periodic tonal patches: no per-module dot lattice.
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        const wave=Math.sin(x*freq+phase)*Math.cos(y*freq-phase)+
+          Math.sin((x+y)*freq);
+        const hash=((x*37+y*73+variant*19)&15)/15;
+        if(mat.patternType==='organic_tuft'){
+          if(wave< -1.15&&hash<.35)buf.setPixel(x,y,shadow);
+          else if(wave>1.25&&hash<.25)buf.setPixel(x,y,high);
+        }else if(mat.patternType==='granular_sand'){
+          const ripple=Math.sin(y*freq*2+Math.sin(x*freq)*1.2+phase);
+          if(ripple>.86&&hash<.3)buf.setPixel(x,y,high);
+          else if(ripple<-.86&&hash<.25)buf.setPixel(x,y,shadow);
         }
       }
     }
-
+    const modules=Math.floor(size/profile.moduleSize);
+    for(let my=0;my<modules;my++){
+      for(let mx=0;mx<modules;mx++){
+        const h=((mx*73856093)^(my*19349663)^((variant+1)*83492791))>>>0;
+        // Sparse irregular micro-clusters; independent of chunk loading order.
+        if((h&7)<3)continue;
+        const ox=mx*profile.moduleSize+(h%profile.moduleSize);
+        const oy=my*profile.moduleSize+((h>>>4)%profile.moduleSize);
+        if(mat.patternType==='organic_tuft'){
+          if((h&3)===0){
+            stamp(ox,oy,shadow);stamp(ox-1,oy-1,high);
+            stamp(ox+1,oy-1,high);
+            if(h&16)stamp(ox+1,oy-2,accent);
+          }else if((h&7)===1){
+            stamp(ox,oy,accent);stamp(ox+1,oy,high);
+          }
+        }else if(mat.patternType==='granular_sand'){
+          if((h&3)===0){stamp(ox,oy,high);stamp(ox+1,oy,shadow);}
+          else if((h&7)===2)stamp(ox,oy,accent);
+        }else if(mat.patternType==='cracked_stone'){
+          if((h&3)===0){stamp(ox,oy,shadow);stamp(ox+1,oy,shadow);
+            stamp(ox,oy+1,high);}
+        }else if(mat.patternType==='frost_crystalline'){
+          if((h&3)===0){stamp(ox,oy,high);stamp(ox+1,oy,accent);}
+        }
+      }
+    }
+    // Enforce exact opposite-edge equality for any repeating variant.
+    // Base tones stay opaque and canonical dimension stays unchanged.
+    for(let x=0;x<size;x++)buf.setPixel(x,size-1,buf.getPixel(x,0));
+    for(let y=0;y<size;y++)buf.setPixel(size-1,y,buf.getPixel(0,y));
     return buf;
   }
 
-  /**
-   * Compone un tile con transición orgánica de autotiling (cardinal + esquinas internas/externas)
-   * sobre el material vecino inferior sin usar blur.
-   */
+  /** Compose terrestrial borders and coastal wet sand without flood-fill. */
   public composeAutotiledSurface(
     primaryMaterial: TerrainMaterialId,
     mask: AutotileMask8,
     profile: ArtStyleProfile,
     underlayMaterial?: TerrainMaterialId,
-    variantIndex = 0
-  ): PixelBuffer {
-    const primaryTile = this.generateSeamlessBaseTile(primaryMaterial, profile, variantIndex);
-    if (mask === 255 || !underlayMaterial) {
-      return primaryTile;
-    }
-
-    const underlayTile = this.generateSeamlessBaseTile(underlayMaterial, profile, variantIndex);
-    const size = profile.canonicalTileTexels;
-    const out = new PixelBuffer(size, size);
-
-    const hasN = (mask & 1) !== 0;
-    const hasNE = (mask & 2) !== 0;
-    const hasE = (mask & 4) !== 0;
-    const hasSE = (mask & 8) !== 0;
-    const hasS = (mask & 16) !== 0;
-    const hasSW = (mask & 32) !== 0;
-    const hasW = (mask & 64) !== 0;
-    const hasNW = (mask & 128) !== 0;
-
-    const borderDepth = profile.moduleSize; // 4px o 6px de margen de transición
-    const borderColor = hexToRgba(TERRAIN_MATERIALS[primaryMaterial].transitionBorderHex);
-
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        // Dentado orgánico determinista de 1 texel para evitar líneas rectas artificiales
-        const tooth = ((x * 13 + y * 29) & 3) === 0 ? 1 : 0;
-        const limit = borderDepth + tooth;
-
-        let exposeUnderlay = false;
-
-        // Bordes cardinales
-        if (!hasN && y < limit) exposeUnderlay = true;
-        if (!hasS && y >= size - limit) exposeUnderlay = true;
-        if (!hasW && x < limit) exposeUnderlay = true;
-        if (!hasE && x >= size - limit) exposeUnderlay = true;
-
-        // Redondeo de esquinas externas (cuando dos cardinales adyacentes faltan)
-        if (!hasN && !hasW && x + y < borderDepth * 2 + 2) exposeUnderlay = true;
-        if (!hasN && !hasE && size - 1 - x + y < borderDepth * 2 + 2) exposeUnderlay = true;
-        if (!hasS && !hasW && x + (size - 1 - y) < borderDepth * 2 + 2) exposeUnderlay = true;
-        if (!hasS && !hasE && size - 1 - x + (size - 1 - y) < borderDepth * 2 + 2) {
-          exposeUnderlay = true;
-        }
-
-        // Esquinas internas (cuando ambos cardinales existen pero falta el vecino diagonal)
-        if (hasN && hasW && !hasNW && x + y < borderDepth + 1) exposeUnderlay = true;
-        if (hasN && hasE && !hasNE && size - 1 - x + y < borderDepth + 1) exposeUnderlay = true;
-        if (hasS && hasW && !hasSW && x + (size - 1 - y) < borderDepth + 1) exposeUnderlay = true;
-        if (hasS && hasE && !hasSE && size - 1 - x + (size - 1 - y) < borderDepth + 1) {
-          exposeUnderlay = true;
-        }
-
-        if (exposeUnderlay) {
-          out.setPixel(x, y, underlayTile.getPixel(x, y));
-        } else {
-          out.setPixel(x, y, primaryTile.getPixel(x, y));
-        }
+    variantIndex=0
+  ):PixelBuffer{
+    const norm=normalizeAutotileMask47(mask);
+    const primary=this.generateSeamlessBaseTile(primaryMaterial,profile,variantIndex);
+    if(norm===255||!underlayMaterial||underlayMaterial===primaryMaterial)return primary;
+    const underlay=this.generateSeamlessBaseTile(underlayMaterial,profile,variantIndex);
+    const size=profile.canonicalTileTexels;
+    const out=new PixelBuffer(size,size);
+    const n=!!(norm&1),ne=!!(norm&2),e=!!(norm&4),se=!!(norm&8);
+    const s=!!(norm&16),sw=!!(norm&32),w=!!(norm&64),nw=!!(norm&128);
+    const margin=profile.moduleSize;
+    const cornerRadius=margin+1;
+    // Stage 1: all underlay exposure is calculated and frozen before painting.
+    const exposed=new Uint8Array(size*size);
+    for(let y=0;y<size;y++){
+      const yn=y/(size-1);
+      const waveY=Math.round(Math.sin(yn*Math.PI)*
+        Math.sin(yn*3*Math.PI+variantIndex*1.3)*1.25);
+      for(let x=0;x<size;x++){
+        const xn=x/(size-1);
+        const waveX=Math.round(Math.sin(xn*Math.PI)*
+          Math.cos(xn*3*Math.PI-variantIndex*1.1)*1.25);
+        let show=false;
+        if(!n&&y<margin+waveX)show=true;
+        if(!s&&y>=size-margin-waveX)show=true;
+        if(!w&&x<margin+waveY)show=true;
+        if(!e&&x>=size-margin-waveY)show=true;
+        // Convex exposed corners: Euclidean distance, not Manhattan diamonds.
+        if(!n&&!w&&x<margin+2&&y<margin+2&&
+          Math.hypot(margin+2-x,margin+2-y)>2.35)show=true;
+        if(!n&&!e&&x>=size-margin-2&&y<margin+2&&
+          Math.hypot(x-(size-1-margin-2),margin+2-y)>2.35)show=true;
+        if(!s&&!w&&x<margin+2&&y>=size-margin-2&&
+          Math.hypot(margin+2-x,y-(size-1-margin-2))>2.35)show=true;
+        if(!s&&!e&&x>=size-margin-2&&y>=size-margin-2&&
+          Math.hypot(x-(size-1-margin-2),y-(size-1-margin-2))>2.35)show=true;
+        // Concave notches when the two cardinal neighbors exist but their diagonal does not.
+        if(n&&w&&!nw&&Math.hypot(x,y)<cornerRadius)show=true;
+        if(n&&e&&!ne&&Math.hypot(size-1-x,y)<cornerRadius)show=true;
+        if(s&&w&&!sw&&Math.hypot(x,size-1-y)<cornerRadius)show=true;
+        if(s&&e&&!se&&Math.hypot(size-1-x,size-1-y)<cornerRadius)show=true;
+        exposed[y*size+x]=show?1:0;
       }
     }
 
-    // Labio de borde pixel-art de 1 texel en la frontera entre materiales
-    for (let y = 1; y < size - 1; y++) {
-      for (let x = 1; x < size - 1; x++) {
-        const current = out.getPixel(x, y);
-        const primaryRef = primaryTile.getPixel(x, y);
-        const isPrimary =
-          current.r === primaryRef.r && current.g === primaryRef.g && current.b === primaryRef.b;
-        if (!isPrimary) continue;
-
-        const checkNeighbor = (nx: number, ny: number): boolean => {
-          const np = out.getPixel(nx, ny);
-          const pref = primaryTile.getPixel(nx, ny);
-          return np.r !== pref.r || np.g !== pref.g || np.b !== pref.b;
-        };
-
-        if (
-          checkNeighbor(x, y - 1) ||
-          checkNeighbor(x + 1, y) ||
-          checkNeighbor(x, y + 1) ||
-          checkNeighbor(x - 1, y)
-        ) {
-          out.setPixel(x, y, borderColor);
+    // Stage 2: proximity to the immutable exposure mask, never to painted output.
+    const primaryDef=TERRAIN_MATERIALS[primaryMaterial];
+    const coastal=primaryMaterial==='sand_beach'&&
+      TERRAIN_MATERIALS[underlayMaterial].isLiquid;
+    const dark=hexToRgba(primaryDef.transitionBorderHex);
+    const shadow=hexToRgba(primaryDef.shadowColorHex);
+    const wetOuter=hexToRgba('#9c6d2e');
+    const wetInner=hexToRgba('#b5833d');
+    const foam=hexToRgba('#bae6fd');
+    const distanceTo=(x:number,y:number,target:0|1):number=>{
+      let best=Infinity;
+      for(let dy=-3;dy<=3;dy++){
+        const py=y+dy;if(py<0||py>=size)continue;
+        for(let dx=-3;dx<=3;dx++){
+          const px=x+dx;if(px<0||px>=size)continue;
+          if(exposed[py*size+px]!==target)continue;
+          const distance=Math.hypot(dx,dy);
+          if(distance<best)best=distance;
+        }
+      }
+      return best;
+    };
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        const show=exposed[y*size+x]===1;
+        if(show){
+          if(coastal&&distanceTo(x,y,0)<=1){
+            out.setPixel(x,y,foam);
+          }else{
+            out.setPixel(x,y,underlay.getPixel(x,y));
+          }
+        }else{
+          const d=distanceTo(x,y,1);
+          if(coastal){
+            if(d<=1)out.setPixel(x,y,wetOuter);
+            else if(d<=3)out.setPixel(x,y,wetInner);
+            else out.setPixel(x,y,primary.getPixel(x,y));
+          }else{
+            if(d<=1)out.setPixel(x,y,((x+y)&1)?shadow:dark);
+            else if(d<=2&&((x*7+y*13)&3)===0)out.setPixel(x,y,shadow);
+            else out.setPixel(x,y,primary.getPixel(x,y));
+          }
         }
       }
     }
-
     return out;
   }
 }

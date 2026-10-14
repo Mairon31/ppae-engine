@@ -17,6 +17,8 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 2B — Geological Rasterization and World Integration | VERIFIED | Rasterización de rocas e integración al mundo |
 | 3A — Flora Morphology and Ecological Patches | VERIFIED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
 | 3B — Flora Rasterizer and World Integration | VERIFIED | Sustitución de sprites antiguos de vegetación y distribución real |
+| 4A — Autotiling 47-State & Coast Regression | IMPLEMENTED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
+| 4B — Road Junctions and Animated Shorelines | PENDING | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -131,6 +133,19 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Cobertura ambiental:** nuevos recursos botánicos en tierra de pradera, bosque, costas, desierto y tundra. La selección de nenúfares en aguas someras queda implementada en el resolver 3A, pero el muestreo de props actual descarta líquidos; para mostrar nenúfares en superficies de agua hará falta un pase de props acuáticos específico.
 - **Validación visual:** pendiente de inspeccionar capturas reales en la demo y comprobar riqueza de siluetas y composición por bioma. Los tests no certifican fidelidad artística.
 - **Siguiente fase:** 4A — Terrain Rendering & Autotiling Overhaul; diagnóstico de cuadrados oscuros y transiciones 47-estados.
+
+## Fase 4A — 14 de octubre de 2026
+
+- **Base citada en el lote:** `217f76b393cda5b9755119a67f8b56d854df4520`. **HEAD real utilizado:** `6ef67b8e57fcfd9f10eb5a2e9e8af85e3e89db18`, rama `feat/ppae-2-art-overhaul`, PR #2.
+- **Estado:** IMPLEMENTED; pendiente de CI antes de pasar a VERIFIED.
+- **Archivos:** MODIFY `src/core/contracts.ts`, `src/terrain/autotiler.ts`, `src/terrain/chunk-renderer.ts`; ADD `tests/ppae-terrain-autotiler-4a.test.ts`; UPDATE este progreso. `DeterministicWorldField` no se modifica y conserva máscaras y topología lógica.
+- **Corrección principal:** elimina por completo la comprobación de vecinos sobre el `PixelBuffer` de salida mientras se modifica; calcula una matriz `Uint8Array` de exposición **inmutable** con arcos euclidianos y ondulación de frontera, y después pinta los colores en una segunda pasada independiente. No puede existir inundación en cascada causada por píxeles de borde previamente pintados.
+- **Máscaras:** enumeración, normalización y clasificación semántica de las 47 máscaras válidas con Diagonal Corner Gating; el render acepta también las 209 máscaras crudas no canónicas sin corromperlas.
+- **Costas:** `sand_beach` sobre líquidos usa arena húmeda `#9c6d2e` y `#b5833d` junto con espuma `#bae6fd` y evita `transitionBorderHex` marrón. Los bordes terrestres quedan limitados a una banda local, evitando superficies teñidas enteras.
+- **Variación:** se incorporan 16 variantes para `ChunkWorldRenderer`, ondas tonales deterministas, micro-clusters de pasto, arena, escarcha y roca, y ajuste de bordes opuestos para repetir una variante sin discontinuidades.
+- **Pruebas previstas:** `npm test` + `npm run build` con seis pruebas nuevas 4A: 256→47 máscaras, ausencia de inundación en las 47 máscaras para 4×4 y 6×6, esquinas internas/externas, 16 variantes, igualdad de bordes opuestos y bordes localizados.
+- **Limitaciones:** la paridad visual con capturas debe revisarse en una demo/screenshot real; las pruebas de código no demuestran ausencia absoluta de costuras al alternar variantes distintas ni resuelven la animación de costas desde el renderer líquido (etapa 4B).
+- **Próximo bloque:** 4B — Renderizador Direccional de Caminos, Orillas Líquidas y Road Junction Regression.
 
 ## Convenciones de estado
 

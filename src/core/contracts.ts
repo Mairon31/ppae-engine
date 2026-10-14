@@ -249,6 +249,27 @@ export interface BiomeVisualDefinition {
  */
 export type AutotileMask8 = number;
 
+/** Semantic configuration of one of the 47 corner-gated 8-neighbor blob masks. */
+export type AutotileTopologyKind =
+  | 'interior_full'
+  | 'isolated_island'
+  | 'end_cap'
+  | 'straight_edge'
+  | 'outer_corner'
+  | 'inner_corner'
+  | 'corridor_bridge'
+  | 't_junction'
+  | 'cross_junction'
+  | 'complex_blend';
+
+export interface AutotileMaskClassification {
+  readonly mask: AutotileMask8;
+  readonly isCanonical47: boolean;
+  readonly topology: AutotileTopologyKind;
+  readonly cardinalCount: number;
+  readonly diagonalCount: number;
+}
+
 export type BotanicalFamilyId =
   | 'oak'
   | 'pine'
