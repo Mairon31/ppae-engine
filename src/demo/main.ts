@@ -4,8 +4,7 @@ import {
   CharacterCustomizationService, CHUNK_SIZE_TILES, ChunkWorldRenderer,
   CaveDungeonGenerator, CreatureActionId, CreatureAgeStage, CreatureGenerator,
   CreatureHealthState, CreatureSpeciesId, CropSpeciesId, DEFAULT_CHARACTER_CLIPS, DEFAULT_CREATURE_CLIPS,
-  DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HERO_APPEARANCE,
-  DEFAULT_HERO_EQUIPMENT, DEFAULT_HUD_PANEL_CONFIG, DEFAULT_STRUCTURE_CATALOG,
+  DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HUD_PANEL_CONFIG, DEFAULT_STRUCTURE_CATALOG,
   DEFAULT_STYLE_PROFILES, DEFAULT_WEATHER_STATES, DeterministicWorldField,
   Direction8, EquipmentItemCategory, EquipmentGenerator, FarmingAndCropGenerator, fnv1aHash32,
   GeologicalResourceKind, GranularityProfileId, InteriorGenerator, InventoryIconGenerator,
@@ -324,9 +323,10 @@ function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected
     blend(scene, wolf.buffer, Math.floor(tile * 5 - wolf.pivotTexel[0]), Math.floor(tile * 5 - wolf.pivotTexel[1]));
   }
   const clip = DEFAULT_CHARACTER_CLIPS[state.action];
+  const heroPreset = currentCharacter();
   const hero = avatar.renderCharacterFrame(
-    DEFAULT_HERO_APPEARANCE, DEFAULT_HERO_EQUIPMENT,
-    state.action, state.direction, tick % clip.frameCount, clip.frameCount, p);
+    heroPreset.appearance, heroPreset.equipment,
+    state.action, state.direction, tick % clip.frameCount, clip.frameCount, p, state.avatarStatus);
   blend(scene, hero.buffer, Math.round(tile * 3.8 - hero.pivotTexel[0]), Math.round(tile * 6.3 - hero.pivotTexel[1]));
   if (village) {
     const npc = customization.generateNpcPreset('villager_farmer', state.seed);
