@@ -660,6 +660,199 @@ function options(select: HTMLSelectElement, values: readonly string[], selected:
   }
   if (values.includes(selected)) select.value = selected;
 }
+type ChoiceCallback = (value: string) => void;
+function appendLabSelect(
+  root: HTMLElement, labelText: string, id: string,
+  values: readonly string[], selected: string, onSelect: ChoiceCallback
+): void {
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  const select = document.createElement('select'); select.id = id;
+  for (const value of values) {
+    const opt = document.createElement('option');
+    opt.value = value; opt.textContent = formatPlaygroundLabel(value);
+    select.append(opt);
+  }
+  select.value = selected;
+  select.addEventListener('change', () => onSelect(select.value));
+  label.append(select); root.append(label);
+}
+function appendLabButton(root: HTMLElement, label: string, id: string, action: () => void): void {
+  const button = document.createElement('button');
+  button.type = 'button'; button.id = id; button.className = 'full-button';
+  button.textContent = label;
+  button.addEventListener('click', action);
+  root.append(button);
+}
+function refreshLabPreview(): void {
+  thumbnailCache.clear(); renderCards(); renderPreviewPending = true;
+}
+function renderLabControls(): void {
+  const avatarRoot = byId<HTMLElement>('avatar-lab-controls');
+  const systemRoot = byId<HTMLElement>('system-lab-controls');
+  avatarRoot.replaceChildren(); systemRoot.replaceChildren();
+  const isAvatar = ['characters','character-actions'].includes(state.section);
+  avatarRoot.hidden = !isAvatar;
+  const isSystem = ['trees','tree-archetypes','bosses','autotiling','liquids',
+    'equipment','equipment-materials','hud'].includes(state.section);
+  systemRoot.hidden = !isSystem;
+  if (isAvatar) {
+    const heading = document.createElement('h3'); heading.className = 'lab-heading';
+    heading.textContent = 'PERSONALIZACIÓN DEL JUGADOR';
+    avatarRoot.append(heading);
+    const caption = document.createElement('p'); caption.className = 'lab-description';
+    caption.textContent = 'Los cambios afectan el renderizador de 16 articulaciones y los spritesheets exportados.';
+    avatarRoot.append(caption);
+    appendLabButton(avatarRoot, '↻ Aleatorizar personaje', 'avatar-randomize', () => {
+      state.avatarReroll++;
+      state.avatarAppearance = {}; state.avatarEquipment = {};
+      renderLabControls(); refreshLabPreview();
+    });
+    appendLabButton(avatarRoot, 'Restaurar apariencia base', 'avatar-reset', () => {
+      state.avatarReroll = 0;
+      state.avatarAppearance = {}; state.avatarEquipment = {}; state.avatarStatus = 'none';
+      renderLabControls(); refreshLabPreview();
+    });
+    const source = currentCharacter();
+    const appearanceFields: readonly (keyof EntityAppearance)[] = [
+      'bodyBuild','hairStyle','beardStyle','expression','ageGroup',
+      'earStyle','hornStyle','faceMarking'
+    ];
+    const equipmentFields: readonly (keyof EquipmentLoadout)[] = [
+      'helmet','armor','mainHand','offHand','backpack'
+    ];
+    for (const key of appearanceFields) {
+      const values = AVATAR_FIELDS[key as keyof typeof AVATAR_FIELDS] as readonly string[];
+      appendLabSelect(avatarRoot, formatPlaygroundLabel(key), 'avatar-' + key,
+        values, String(source.appearance[key] ?? values[0]), value => {
+          state.avatarAppearance = { ...state.avatarAppearance, [key]: value };
+          refreshLabPreview();
+        });
+    }
+    const heightLabel = document.createElement('label');
+    heightLabel.textContent = 'Altura anatómica ';
+    const heightValue = document.createElement('strong');
+    heightValue.textContent = source.appearance.heightScale.toFixed(2) + '×';
+    const heightInput = document.createElement('input');
+    heightInput.id = 'avatar-heightScale'; heightInput.type = 'range';
+    heightInput.min = '.9'; heightInput.max = '1.1'; heightInput.step = '.01';
+    heightInput.value = String(source.appearance.heightScale);
+    heightInput.addEventListener('input', () => {
+      const value = Number(heightInput.value);
+      state.avatarAppearance = { ...state.avatarAppearance, heightScale: value };
+      heightValue.textContent = value.toFixed(2) + '×'; refreshLabPreview();
+    });
+    heightLabel.append(heightValue, heightInput); avatarRoot.append(heightLabel);
+    for (const key of equipmentFields) {
+      const values = AVATAR_FIELDS[key as keyof typeof AVATAR_FIELDS] as readonly string[];
+      appendLabSelect(avatarRoot, formatPlaygroundLabel(key), 'avatar-' + key,
+        values, String(source.equipment[key] ?? values[0]), value => {
+          state.avatarEquipment = { ...state.avatarEquipment, [key]: value };
+          refreshLabPreview();
+        });
+    }
+    for (const [id, title, value] of [
+      ['hasCape','Capa',source.equipment.hasCape],
+      ['hasFacialScar','Cicatriz',source.appearance.hasFacialScar]
+    ] as const) {
+      const row = document.createElement('label'); row.className = 'toggle-row';
+      const caption = document.createElement('span'); caption.textContent = title;
+      const box = document.createElement('input');
+      box.type = 'checkbox'; box.id = 'avatar-' + id; box.checked = value;
+      box.addEventListener('change', () => {
+        if (id === 'hasCape') state.avatarEquipment = { ...state.avatarEquipment, hasCape: box.checked };
+        else state.avatarAppearance = { ...state.avatarAppearance, hasFacialScar: box.checked };
+        refreshLabPreview();
+      });
+      row.append(caption, box); avatarRoot.append(row);
+    }
+    for (const [key, title] of [
+      ['skinColorHex','Piel'], ['hairColorHex','Cabello'], ['eyeColorHex','Ojos'],
+      ['armorPrimaryHex','Armadura'], ['armorSecondaryHex','Detalles de armadura'],
+      ['capeColorHex','Capa'], ['helmetPrimaryHex','Casco'],
+      ['bootsColorHex','Botas'], ['glovesColorHex','Guantes'],
+      ['backpackColorHex','Mochila']
+    ] as const) {
+      const label = document.createElement('label'); label.className = 'color-field';
+      label.textContent = title;
+      const input = document.createElement('input'); input.type = 'color';
+      input.id = 'avatar-' + key;
+      const raw = key in source.appearance
+        ? source.appearance[key as keyof EntityAppearance]
+        : source.equipment[key as keyof EquipmentLoadout];
+      input.value = typeof raw === 'string' && /^#[0-9a-f]{6}$/i.test(raw) ? raw : '#64748b';
+      input.addEventListener('input', () => {
+        if (key === 'skinColorHex') state.avatarAppearance = {
+          ...state.avatarAppearance, skinColorHex: input.value, skinShadowHex: shadeHex(input.value) };
+        else if (key === 'hairColorHex') state.avatarAppearance = {
+          ...state.avatarAppearance, hairColorHex: input.value, hairShadowHex: shadeHex(input.value) };
+        else if (key === 'eyeColorHex') state.avatarAppearance = {
+          ...state.avatarAppearance, eyeColorHex: input.value };
+        else state.avatarEquipment = { ...state.avatarEquipment, [key]: input.value };
+        refreshLabPreview();
+      });
+      label.append(input); avatarRoot.append(label);
+    }
+    appendLabSelect(avatarRoot, 'Efecto de estado', 'avatar-status',
+      AVATAR_FIELDS.status, state.avatarStatus, value => {
+        state.avatarStatus = value as VisualStatusEffect; refreshLabPreview();
+      });
+    appendLabButton(avatarRoot, '↓ Exportar definición JSON', 'avatar-export-json', () => {
+      const json = JSON.stringify({
+        seed: state.seed, variant: state.activeAvatarId, ...currentCharacter(),
+        statusEffect: state.avatarStatus
+      }, null, 2);
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      downloadUrl(url, 'ppae-avatar-' + state.activeAvatarId + '.json');
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
+  if (!isSystem) return;
+  const heading = document.createElement('h3'); heading.className = 'lab-heading';
+  heading.textContent = 'PARÁMETROS DEL SISTEMA';
+  systemRoot.append(heading);
+  const choose = (label: string, name: string, vals: readonly string[], current: string,
+    assign: (v: string) => void): void => {
+    appendLabSelect(systemRoot, label, name, vals, current, value => {
+      assign(value); refreshLabPreview();
+    });
+  };
+  if (state.section === 'trees' || state.section === 'tree-archetypes')
+    choose('Estación de follaje', 'lab-tree-env',
+      ['normal','autumn','snowy','blossom'], state.treeEnvironment,
+      value => { state.treeEnvironment = value as typeof state.treeEnvironment; });
+  if (state.section === 'bosses')
+    choose('Telegráfico real', 'lab-boss-telegraph',
+      ['none','radial_slam','frontal_cleave','cross_laser'], state.bossTelegraph,
+      value => { state.bossTelegraph = value as typeof state.bossTelegraph; });
+  if (state.section === 'equipment' || state.section === 'equipment-materials') {
+    choose('Material', 'lab-tier', Object.keys(MATERIAL_TIER_PALETTES), state.materialTier,
+      value => { state.materialTier = value as ItemMaterialTier; });
+    choose('Desgaste', 'lab-wear', ['pristine','worn','damaged'], state.wearState,
+      value => { state.wearState = value as ItemWearState; });
+  }
+  if (state.section === 'autotiling') {
+    choose('Material primario', 'lab-terrain-primary', Object.keys(TERRAIN_MATERIALS),
+      state.terrainMaterial, value => { state.terrainMaterial = value as TerrainMaterialId; });
+    choose('Sustrato', 'lab-terrain-underlay', Object.keys(TERRAIN_MATERIALS),
+      state.terrainUnderlay, value => { state.terrainUnderlay = value as TerrainMaterialId; });
+  }
+  if (state.section === 'liquids')
+    choose('Máscara de costa (47 estados)', 'lab-liquid-mask',
+      CANONICAL_47_AUTOTILE_MASKS.map(String), String(state.terrainMask),
+      value => { state.terrainMask = Number(value); });
+  if (state.section === 'hud') {
+    const label = document.createElement('label'); label.textContent = 'Progreso: ';
+    const val = document.createElement('strong'); val.textContent = state.progress + '%';
+    const input = document.createElement('input'); input.type = 'range';
+    input.id = 'lab-progress'; input.min = '0'; input.max = '100'; input.value = String(state.progress);
+    input.addEventListener('input', () => {
+      state.progress = Number(input.value); val.textContent = state.progress + '%';
+      refreshLabPreview();
+    });
+    label.append(val, input); systemRoot.append(label);
+  }
+}
 function refreshControlVisibility(): void {
   const character = ['characters','character-actions','npcs','world'].includes(state.section);
   const creature = state.section === 'creatures';
