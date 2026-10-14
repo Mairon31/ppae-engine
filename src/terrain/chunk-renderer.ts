@@ -167,7 +167,8 @@ export class ChunkWorldRenderer {
         propSpawn.subType as TreeSpeciesId,
         (propSpawn.stage ?? 'mature') as TreeLifecycleStage,
         profile,
-        propSpawn.variantSeed
+        propSpawn.variantSeed,
+        propSpawn.archetypeId ? { archetypeId: propSpawn.archetypeId } : undefined
       );
     }
     if (propSpawn.kind === 'flora') {

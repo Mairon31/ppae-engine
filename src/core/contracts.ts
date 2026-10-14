@@ -481,6 +481,7 @@ export interface WorldTileSample {
     readonly subType: string;
     readonly stage?: TreeLifecycleStage;
     readonly variantSeed: number;
+    readonly archetypeId?: string;
   };
 }
 // ============================================================================

@@ -9,6 +9,7 @@ import {
   WorldTileSample
 } from '../core/contracts';
 import { fnv1aHash32 } from '../core/deterministic';
+import { TreeDiversityController } from '../vegetation/tree-diversity-controller';
 
 export const TERRAIN_MATERIALS: Readonly<Record<TerrainMaterialId, TerrainMaterialDefinition>> = {
   deep_water: {
@@ -169,6 +170,7 @@ export interface TileOverrideRecord {
 export class DeterministicWorldField {
   private readonly seedNum: number;
   private readonly overrides = new Map<string, TileOverrideRecord>();
+  private readonly treeDiversity = new TreeDiversityController();
 
   constructor(public readonly worldSeed: string | number) {
     this.seedNum = typeof worldSeed === 'number' ? worldSeed >>> 0 : fnv1aHash32(String(worldSeed));
@@ -404,18 +406,28 @@ export class DeterministicWorldField {
           base.biome, base.moisture, base.temperature, speciesRoll, nearWater
         );
         const defaultStage = this.selectEcologicalTreeStage(stageRoll);
+        const stratified = this.treeDiversity.resolveSpatiallyStratifiedTreeVariant(
+          this.seedNum, tileX, tileY, species
+        );
         propSpawn = {
           kind: 'tree',
           subType: species,
           stage: override?.treeStageOverride ?? defaultStage,
-          variantSeed
+          variantSeed: stratified.variantSeed,
+          archetypeId: stratified.archetypeId
         };
       } else if (base.material === 'sand_beach' && spawnRoll < 0.04) {
+        const coastalSpecies: TreeSpeciesId =
+          base.moisture > 0.65 && speciesRoll < 0.35 ? 'mangrove' : 'palm';
+        const stratified = this.treeDiversity.resolveSpatiallyStratifiedTreeVariant(
+          this.seedNum, tileX, tileY, coastalSpecies
+        );
         propSpawn = {
           kind: 'tree',
-          subType: base.moisture > 0.65 && speciesRoll < 0.35 ? 'mangrove' : 'palm',
+          subType: coastalSpecies,
           stage: override?.treeStageOverride ?? this.selectEcologicalTreeStage(stageRoll),
-          variantSeed
+          variantSeed: stratified.variantSeed,
+          archetypeId: stratified.archetypeId
         };
       } else if (base.material === 'desert_dune' && spawnRoll < 0.06) {
         propSpawn = { kind: 'flora', subType: 'desert_cactus', variantSeed };
