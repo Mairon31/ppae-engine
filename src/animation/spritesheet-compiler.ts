@@ -6,6 +6,7 @@ import {
   CompiledSpritesheetMetadata,
   CreatureActionId,
   CreatureSpeciesId,
+  CreatureMorphVariantOptions,
   CreatureSpritesheetFrameMetadata,
   Direction8,
   EntityAppearance,
@@ -165,7 +166,8 @@ export class SpritesheetCompiler {
     profile: ArtStyleProfile,
     requestedActions: readonly CreatureActionId[] = ['idle', 'move', 'attack'],
     directions: readonly Direction8[] = ALL_DIRECTIONS_8,
-    variantSeed = 2026
+    variantSeed = 2026,
+    morphOptions?: CreatureMorphVariantOptions
   ): CreatureSpritesheetCompilationResult {
     const species = CREATURE_SPECIES_CATALOG[speciesId];
     const pad = profile.extrudePaddingPx;
@@ -196,7 +198,7 @@ export class SpritesheetCompiler {
         for (let frameIndex = 0; frameIndex < clip.frameCount; frameIndex++) {
           const rendered = this.creatureGen.renderCreatureFrame(
             speciesId, action, direction, frameIndex, clip.frameCount,
-            profile, variantSeed
+            profile, variantSeed, morphOptions
           );
           const padded = rendered.buffer.withExtrudedPadding(pad);
           const atlasX = frameIndex * cellW;
