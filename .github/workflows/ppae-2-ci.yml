@@ -30,3 +30,5 @@ jobs:
         run: npm test
       - name: Build library, declarations, and demo
         run: npm run build
+      - name: Audit npm distributable (no demo, documentation site or tests)
+        run: npm run check:package
