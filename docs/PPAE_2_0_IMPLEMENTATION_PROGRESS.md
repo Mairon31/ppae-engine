@@ -28,7 +28,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
 | 9 — Procedural Architecture & Interiors | VERIFIED | 10 estructuras, fachadas/tejados diferenciados, 3 interiores, cuevas con pilares, QA Chromium específico; revisión artística exhaustiva pendiente |
 | 10 — Weather, Lighting & VFX Overhaul | VERIFIED | Sombras solares direccionales, relámpagos ramificados, bancos de niebla orgánicos, 16 emisores y cuatro formas de partícula; QA de navegador dirigida |
-| 11 — Procedural Art Quality Evaluator | IMPLEMENTED — FINAL CI PENDING | Auditoría de sombras/paleta/ruido/siluetas/costuras, diez referencias RGBA; pendiente verificar commit de huellas bloqueadas |
+| 11 — Procedural Art Quality Evaluator | VERIFIED | 10 referencias con huellas RGBA fijas, QA de siluetas, luz/materiales, ruido, paletas y costuras; 200 tests y Browser QA en el commit de código |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -445,3 +445,15 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Pinned ten dimension-aware FNV-1a RGBA signatures observed in CI and enforced exact signature matching in tests. Any regeneration change must explicitly update the baseline and documentation after human review.
 - Extended seamlessness audit from 4/6 to every native 4/6/8/16/32 profile; synthetic seam and pixel mutation regressions retained.
 - Public API guidance and limitations in `docs/QUALITY_EVALUATOR.md`, EN/ES/PT-BR README updates. **Final CI and Chromium of this commit PENDING.** Phase 12 (live quality inspector) is user-defined future work.
+
+### Phase 11 — Verified code baseline (14 October 2026)
+
+- **Original Phase 11 input:** `6073d5ab9b4a60a614d339d48af10cbc37bfcf0e` (Phase 10 validated). User-provided patch referenced a historic base and was integrated into this actual branch without new PR or a reset.
+- **Code and locked-baseline HEAD:** `364e0113fddbfd03a7e390f5355384fda62958be`.
+- **GitHub Actions CI:** https://github.com/Mairon31/ppae-engine/actions/runs/38647862464 — **35/35 suites, 200/200 tests**, `npm run build` and `npm run check:package` PASS. Dry-run npm tarball: **52 files, 135,247 packed bytes, 504,774 unpacked bytes**. No npm publish.
+- **Browser regression:** https://github.com/Mairon31/ppae-engine/actions/runs/38647862496 — existing 30 labs and prior visual exports/screenshot QA PASS. Quality evaluation remains a library and CI API; Phase 12 is the planned interactive inspector.
+- **GitHub Pages:** https://github.com/Mairon31/ppae-engine/actions/runs/38647862381 — build and public smoke PASS.
+- **Measured golden reference results:** `golden_tree_oak_mature_6x6` 99; birch 94; crystal geode 92; fractured monolith 97; flower cluster 97; hero 6x6 99; hero 16x16 100; forest stag 100; cottage 99; meadow tile 99. **10 of 10 pass their gates, no reported critical defect** on these samples; actual RGBA hashes locked and tested. User's original nine categories are preserved and a terrain specimen was added.
+- **QA coverage:** synthetic circular/pillow shading, lollipop symmetry, orphan noise, empty silhouette, palette overflow, invisible foreground, broken tile seams, hash mutation, all 5 native-profile terrain edge checks.
+- **Evaluation limitations:** chroma-based lighting and boundary contrast are quantitative heuristics, not an art director. Two specimens opt out of nonapplicable solar light-source assumptions and terrain opts out of sprite-foreground contrast, with raw metrics still visible. Signature match verifies RGBA identity but **not human artwork approval**. Full-gallery manual visual signoff and device profiling are pending.
+- **Status: VERIFIED** for deterministic code, quality gates, CI, browser compatibility and package distribution. Phase 12 not started. `master` unchanged, PR #2 open and not merged.

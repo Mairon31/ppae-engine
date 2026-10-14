@@ -76,3 +76,7 @@ Estas capacidades están presentes en la biblioteca y no deben anunciarse como v
 4. Completar diagnóstico de las APIs internas listadas arriba si se desea una demostración del motor **más allá del arte visible**, y revisar visualmente todas las combinaciones a 4/6/8/16/32.
 5. Seguir implementando únicamente en `feat/ppae-2-art-overhaul` y PR #2, sin modificar ni fusionar `master`.
 
+
+## Phase 11 diagnostics
+
+The exported `ProceduralArtQualityEvaluator` is currently library/CI-only: `evaluateSpriteQuality`, `auditTileSeamlessness`, `auditAllBaseTerrainMaterials` and `runGoldenSeedBenchmarkSuite` consume real `PixelBuffer` outputs and produce quantitative reports. The Playground has no quality-inspector lab in Phase 11; one is planned in Phase 12, and the existing lab coverage and exports are unchanged.

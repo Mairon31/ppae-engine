@@ -22,7 +22,7 @@ Color ceilings for composite reference specimens are explicit in the registry. A
 
 ## Reference baseline and intentional revisions
 
-**Baseline CI:** https://github.com/Mairon31/ppae-engine/actions/runs/38647633342 (35 suites / 199 tests, before hash pins).
+**Verified pinned-baseline CI:** https://github.com/Mairon31/ppae-engine/actions/runs/38647862464 (35 suites / 200 tests).
 
 | Reference | Canonical RGBA hash |
 | --- | --- |
