@@ -73,13 +73,18 @@ export class ProceduralCharacterRig {
     const rx = -fy; // Vector perpendicular derecho en espacio de mundo
     const ry = fx;
 
-    const shoulderSpan =
-      (appearance.bodyBuild === 'sturdy' ? 5 : appearance.bodyBuild === 'slim' ? 3.5 : 4.2) *
+    // Directional foreshortening: shoulder/hip depth remains asymmetric in
+    // zOrder, but their projected horizontal size compresses in side views.
+    const profileCompression = 1 - Math.abs(fx) * 0.22;
+    const baseShoulderSpan =
+      (appearance.bodyBuild === 'sturdy' ? 4.8 : appearance.bodyBuild === 'slim' ? 3.4 : 4.0) *
       scaleUnit;
-    const hipSpan = Math.max(2, shoulderSpan * 0.55);
+    const shoulderSpan = baseShoulderSpan * profileCompression;
+    const hipSpan = Math.max(1.8, baseShoulderSpan * 0.52 * profileCompression);
 
     const legLen = Math.round(6 * scaleUnit * hScale);
     const torsoLen = Math.round(7 * scaleUnit * hScale);
+    const neckLen = Math.max(1, Math.round(1.6 * scaleUnit * hScale));
     const headOffset = Math.round(5 * scaleUnit * hScale);
 
     // 2. Cinemática discreta según la acción activa
@@ -172,6 +177,8 @@ export class ProceduralCharacterRig {
     const pelvisY = -legLen + bobY;
     const torsoX = torsoLeanX;
     const torsoY = pelvisY - torsoLen + torsoLeanY;
+    const neckX = torsoX + Math.round(fx * 0.5);
+    const neckY = torsoY - neckLen;
     const headX = torsoX + Math.round(fx * 0.8);
     const headY = torsoY - headOffset;
 
@@ -190,11 +197,30 @@ export class ProceduralCharacterRig {
     const handLY =
       shoulderLY + Math.round(3.5 * scaleUnit + fy * leftArmForward * 0.6);
 
+    // Two-segment arms; elbows bend away from the torso and backward
+    // relative to the facing direction, including attack/use-tool poses.
+    const elbowOutward = Math.max(1, Math.round(0.8 * scaleUnit));
+    const elbowRX =
+      Math.round((shoulderRX + handRX) * 0.5) +
+      Math.round(rx * elbowOutward - fx * 0.6 * scaleUnit);
+    const elbowRY = Math.round((shoulderRY + handRY) * 0.5) + 1;
+    const elbowLX =
+      Math.round((shoulderLX + handLX) * 0.5) -
+      Math.round(rx * elbowOutward + fx * 0.6 * scaleUnit);
+    const elbowLY = Math.round((shoulderLY + handLY) * 0.5) + 1;
+
     const footRX = Math.round(rx * hipSpan + fx * rightStride);
     const footRY = Math.min(0, Math.round(ry * 1.2 + fy * rightStride * 0.45 - rightFootLift));
 
     const footLX = Math.round(-rx * hipSpan + fx * leftStride);
     const footLY = Math.min(0, Math.round(-ry * 1.2 + fy * leftStride * 0.45 - leftFootLift));
+
+    // Two-segment legs with stride-dependent knee flexion.
+    const kneeForwardBend = Math.round(fx * 0.8 * scaleUnit);
+    const kneeRX = Math.round((rx * hipSpan + footRX) * 0.5) + kneeForwardBend;
+    const kneeRY = Math.round((pelvisY + footRY) * 0.5) - Math.round(rightFootLift * 0.4);
+    const kneeLX = Math.round((-rx * hipSpan + footLX) * 0.5) + kneeForwardBend;
+    const kneeLY = Math.round((pelvisY + footLY) * 0.5) - Math.round(leftFootLift * 0.4);
 
     // Profundidad relativa a la cámara (el eje +Y apunta hacia la cámara en vista top-down 3/4)
     const rightSideDepth = ry * 12 + (rightArmForward > 0 ? fy * 4 : 0);
@@ -208,9 +234,12 @@ export class ProceduralCharacterRig {
     const joints: Record<AnatomicalJointId, JointTransform2D> = {
       root: { jointId: 'root', x: 0, y: 0, zOrder: 0 },
       pelvis: { jointId: 'pelvis', x: 0, y: pelvisY, zOrder: 15 },
+      knee_r: { jointId: 'knee_r', x: kneeRX, y: kneeRY, zOrder: 11 + Math.round(ry * 5) },
+      knee_l: { jointId: 'knee_l', x: kneeLX, y: kneeLY, zOrder: 11 - Math.round(ry * 5) },
       foot_r: { jointId: 'foot_r', x: footRX, y: footRY, zOrder: 10 + Math.round(ry * 5) },
       foot_l: { jointId: 'foot_l', x: footLX, y: footLY, zOrder: 10 - Math.round(ry * 5) },
       torso: { jointId: 'torso', x: torsoX, y: torsoY, zOrder: 20 },
+      neck: { jointId: 'neck', x: neckX, y: neckY, zOrder: 25 },
       shoulder_r: {
         jointId: 'shoulder_r',
         x: shoulderRX,
@@ -222,6 +251,18 @@ export class ProceduralCharacterRig {
         x: shoulderLX,
         y: shoulderLY,
         zOrder: 20 + Math.round(leftSideDepth)
+      },
+      elbow_r: {
+        jointId: 'elbow_r',
+        x: elbowRX,
+        y: elbowRY,
+        zOrder: 22 + Math.round(rightSideDepth)
+      },
+      elbow_l: {
+        jointId: 'elbow_l',
+        x: elbowLX,
+        y: elbowLY,
+        zOrder: 22 + Math.round(leftSideDepth)
       },
       hand_r: {
         jointId: 'hand_r',

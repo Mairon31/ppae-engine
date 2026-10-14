@@ -19,6 +19,8 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 3B — Flora Rasterizer and World Integration | VERIFIED | Sustitución de sprites antiguos de vegetación y distribución real |
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
+| 5A — Advanced Character Anatomy Engine | IMPLEMENTED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
+| 5B — Character Customization and NPC Anatomy QA | PENDING | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -158,6 +160,19 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Visual:** los umbrales de pixel tests no sustituyen la auditoría de capturas del mundo y de las uniones entre materiales con distintas variantes. Mantener pendientes las inspecciones visuales antes de asegurar paridad estética.
 - **Estado:** VERIFIED técnicamente; commit `d4dadc56b1bd9f0b4edceaea0480efd2187d99ef`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38596286956: `npm test` **20 suites / 115 pruebas aprobadas** (7 nuevas 4B), `npm run build` correcto con declaraciones, TypeScript, biblioteca y demo.
 - **Siguiente fase:** 5A — Advanced Character Anatomy Engine.
+
+## Fase 5A — 14 de octubre de 2026
+
+- **Referencia del lote:** base antigua `217f76b393cda5b9755119a67f8b56d854df4520`; **HEAD real inspeccionado:** `d57ad40da79e3f7e8d9785df2937a64ac13ea3df` de `feat/ppae-2-art-overhaul`, PR #2.
+- **Estado:** IMPLEMENTED; pendiente de validación de CI y de auditoría visual de la rosa de ocho direcciones.
+- **Archivos:** MODIFY `src/core/contracts.ts`, `src/entities/character-rig.ts`, `src/entities/character-generator.ts`; ADD `tests/ppae-character-anatomy-5a.test.ts`; UPDATE este documento.
+- **Rig:** `AnatomicalJointId` aumenta retrocompatiblemente de 11 a **16**: `neck`, `elbow_r`, `elbow_l`, `knee_r`, `knee_l`. `evaluatePose` calcula codos/rodillas con flexión y compresión de perfil lateral sin perder profundidad derecha/izquierda ni anclajes de equipo. Todas las siete acciones y ocho direcciones permanecen disponibles.
+- **Render:** `hair_back` es una capa independiente detrás de la cabeza en vistas frontales y laterales; deja de dibujar un rectángulo sobre los ojos. Cráneo con contorno curvo, mandíbula estrecha, cejas y rostro, expresiones faciales opcionales, barba en mentón y cuello sombreado.
+- **Cuerpo:** torso trapezoidal con variación de perfil, cintura, cinturón/hebilla, piernas de muslo-rodilla-pantorrilla y brazos de hombro-codo-mano, guantes, botas y equipo.
+- **Cascos:** geometrías diferenciadas para `straw_hat`, `knight_helm`, `ranger_hood` y `crown`.
+- **Pruebas:** siete nuevas regresiones 5A de rig 16×8×7, escorzo, ojos/nariz, barba y parpadeo, cascos, anclajes y compilación determinista de spritesheets; ejecutar `npm test` y `npm run build` de todos los módulos.
+- **Límite:** los tests de píxeles y la compilación no acreditan automáticamente fidelidad estética frente a las capturas de usuario. Inspección visual con `npm run dev` sigue pendiente.
+- **Siguiente bloque:** 5B — Sistema avanzado de personalización de personajes/NPC y auditoría de continuidad anatómica.
 
 ## Convenciones de estado
 

@@ -675,6 +675,7 @@ export type ArmorStyleId = 'cloth_tunic' | 'leather_vest' | 'iron_plate' | 'mage
 export type MainHandItemId = 'none' | 'iron_sword' | 'woodcutter_axe' | 'mining_pickaxe' | 'oak_staff';
 export type OffHandItemId = 'none' | 'wooden_shield' | 'knight_kite_shield' | 'lantern';
 export type VisualStatusEffect = 'none' | 'hurt_flash' | 'poisoned' | 'frozen' | 'burning';
+export type FacialExpressionId = 'neutral' | 'determined' | 'happy' | 'surprised' | 'blink';
 
 export interface EntityAppearance {
   readonly schemaVersion: string;
@@ -691,6 +692,7 @@ export interface EntityAppearance {
   readonly beardStyle: BeardStyleId;
   readonly hasFacialScar: boolean;
   readonly scarSide: 'left' | 'right'; // Asimetría anatómica real
+  readonly expression?: FacialExpressionId;
 }
 
 export interface EquipmentLoadout {
@@ -711,11 +713,16 @@ export type AnatomicalJointId =
   | 'root'
   | 'pelvis'
   | 'torso'
+  | 'neck'
   | 'head'
   | 'shoulder_r'
   | 'shoulder_l'
+  | 'elbow_r'
+  | 'elbow_l'
   | 'hand_r'
   | 'hand_l'
+  | 'knee_r'
+  | 'knee_l'
   | 'foot_r'
   | 'foot_l'
   | 'weapon_tip';
