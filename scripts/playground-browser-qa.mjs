@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const output = 'artifacts/playground';
@@ -24,7 +24,7 @@ try {
   if (!loaded) throw new Error('Vite preview never served compiled /ppae-engine/ assets');
   const nav = page.locator('#section-nav .nav-link');
   const total = await nav.count();
-  if (total < 17) {
+  if (total < 28) {
     await page.screenshot({ path: join(output, '00-diagnostic.png'), fullPage: true });
     const pageHtml = (await page.content()).slice(0, 3000);
     const failed = errors.join(' | ');
@@ -37,7 +37,7 @@ try {
       previewText: document.getElementById('engine-live')?.textContent,
       mainText: document.body.innerText.slice(0, 800)
     }));
-    throw new Error('Only ' + total + ' navigation sections; expected 17. ' +
+    throw new Error('Only ' + total + ' navigation sections; expected 28. ' +
       'diagnostic=' + JSON.stringify(navigation) + '; browser errors=' + failed +
       '; HTML=' + pageHtml);
   }
@@ -81,18 +81,64 @@ try {
   }
 
   await page.locator('#profile-select').selectOption('micro-6x6');
-  await page.locator('#section-nav .nav-link').nth(3).click();
+  await nav.filter({ hasText: 'Bestiario' }).click();
   await page.locator('#age-select').selectOption('juvenile');
   await page.locator('#health-select').selectOption('wounded');
   await page.locator('#direction-select').selectOption('SW');
   await page.waitForFunction(() => document.querySelector('#stage-action')?.textContent?.startsWith('CREATURES /'), null, { timeout: 30000 });
   await page.screenshot({ path: join(output, '19-creatures-juvenile-wounded-SW.png'), fullPage: true });
 
+  // Actual avatar editor: interactive rig/equipment/color customization, seeded
+  // randomizer, and a downloadable source definition from the edited state.
+  await nav.filter({ hasText: 'Creador de personajes' }).click();
+  if (await page.locator('#play-toggle').getAttribute('aria-pressed') === 'true')
+    await page.locator('#play-toggle').click();
+  await page.locator('#avatar-helmet').selectOption('none');
+  await page.locator('#avatar-hairStyle').selectOption('mohawk');
+  await page.locator('#avatar-armor').selectOption('mage_robe');
+  await page.locator('#avatar-skinColorHex').fill('#b97a45');
+  await page.waitForTimeout(250);
+  const edited = await page.locator('#world-stage').evaluate(canvas => canvas.toDataURL());
+  await page.locator('#avatar-randomize').click();
+  await page.waitForTimeout(250);
+  const rerolled = await page.locator('#world-stage').evaluate(canvas => canvas.toDataURL());
+  if (edited === rerolled) throw new Error('Avatar randomizer did not change generated pixels');
+  const [avatarDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#avatar-export-json').click()
+  ]);
+  const avatarPath = join(output, 'avatar-definition.json');
+  await avatarDownload.saveAs(avatarPath);
+  const avatarJson = JSON.parse(readFileSync(avatarPath, 'utf8'));
+  if (!avatarJson.appearance?.hairStyle || !avatarJson.equipment?.armor)
+    throw new Error('Avatar JSON definition missing appearance or equipment');
+  await page.screenshot({ path: join(output, '29-avatar-customizer.png'), fullPage: true });
+  console.log('AVATAR LAB OK: edited attributes, reroll, definition JSON');
+
+  await nav.filter({ hasText: 'Diversidad de NPCs' }).click();
+  await page.locator('#catalog-search').fill('town_guard');
+  await page.waitForFunction(() => document.querySelector('#gallery-range')?.textContent?.includes('de 8'));
+  if (await page.locator('.asset-card').count() !== 6) throw new Error('Filtered NPC gallery count mismatch');
+  await page.locator('#catalog-search').fill('');
+  await nav.filter({ hasText: 'Autotiling 8 vecinos' }).click();
+  await page.locator('#catalog-search').fill('255');
+  if (await page.locator('.asset-card').count() !== 1) throw new Error('Mask search failed');
+  await page.locator('#catalog-search').fill('');
+
+  await nav.filter({ hasText: 'Variantes de criaturas' }).click();
+  await page.locator('.asset-card').nth(1).click();
+  const [variantExport] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#download-json').click()
+  ]);
+  await variantExport.saveAs(join(output, 'creature-variant-atlas.json'));
+  if (await variantExport.failure()) throw new Error('Variant atlas export failed');
+  await page.screenshot({ path: join(output, '30-creature-variants.png'), fullPage: true });
+  console.log('EXTENDED CATALOG OK: NPC filter, canonical masks, variant atlas');
+  
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('#toggle-sidebar').click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'true')
     throw new Error('Mobile navigation did not open');
-  await page.locator('#section-nav .nav-link').nth(14).click();
+  await nav.filter({ hasText: 'Partículas' }).click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'false')
     throw new Error('Mobile navigation did not close on selection');
   await page.waitForFunction(() => document.querySelector('#stage-action')?.textContent?.startsWith('PARTICLES /'), null, { timeout: 30000 });
@@ -100,7 +146,7 @@ try {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (overflow > 1) throw new Error('Horizontal overflow on mobile: ' + overflow + 'px');
   if (errors.length) throw new Error('Browser errors:\n' + errors.join('\n'));
-  console.log('BROWSER QA PASS: ' + total + ' sections, spritesheet and PNG/JSON exports, 32px, creature variants, 390px mobile');
+  console.log('BROWSER QA PASS: ' + total + ' sections, customizable avatar + JSON, variants and sprite exports, mobile');
 } finally {
   await browser.close();
 }
