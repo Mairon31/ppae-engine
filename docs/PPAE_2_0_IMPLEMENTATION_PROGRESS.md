@@ -13,7 +13,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 1C — Advanced Canopy / Foliage | VERIFIED | Follaje avanzado y diferenciación por especie |
 | 1D — Production Pipeline and World Ecology | VERIFIED | Árboles morfológicos reales en generadores y distribución ecológica |
 | 1E — Spatial Diversity and Silhouette Metrics | VERIFIED | Evitar clones vecinos y métricas de silueta sobre píxeles |
-| 2A — Geological Morphology Architecture | IMPLEMENTED | 17 formaciones, polígonos, facetas, fracturas e inclusiones |
+| 2A — Geological Morphology Architecture | VERIFIED | 17 formaciones, polígonos, facetas, fracturas e inclusiones |
 | 2B — Geological Rasterization and World Integration | PENDING | Rasterización de rocas e integración al mundo |
 
 ## Fase 1A — 14 de octubre de 2026
@@ -84,12 +84,12 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 2A — 14 de octubre de 2026
 
 - **Base entregada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con fases 1A–1E supuestas. **Base real inspeccionada para este lote:** `e1ba92881fe350c6acf17de4629f4f31c1797c4a`.
-- **Commit de implementación:** se registrará el SHA real tras su publicación.
+- **Commit de implementación:** `71773c4e6df7656beabadf403e3c0d5735fc9a6e`.
 - **Operaciones:** MODIFY `src/core/contracts.ts` y `src/index.ts`; ADD `src/vegetation/geology-morphology.ts` y `tests/ppae-geology-morphology-2a.test.ts`; MODIFY este documento.
 - **Alcance:** siete identificadores geológicos originales conservados y diez añadidos; catálogo morfológico de 17 formaciones con litologías, geometrías, paletas y rangos estructurales definidos. Resolver determinista con composición multifragmento, polígonos irregulares, facetas triangulares con normal 3D e iluminación por cara, grietas, sedimentos, musgo e inclusiones de mineral o geoda.
 - **Integración:** contratos/exportaciones de la API ampliados sin alterar generadores, sprites ni rutas heredadas. La rasterización de los polígonos y la sustitución de las rocas elípticas del juego corresponde estrictamente a 2B.
-- **Pruebas:** seis tests de la fase 2A más regresión de fases anteriores; `npm test` y `npm run build` pendientes de resultado de GitHub Actions.
-- **Estado técnico:** IMPLEMENTED una vez publicado el commit; VERIFIED tras CI correcto.
+- **Pruebas ejecutadas:** `npm test` (15 suites, 83 tests aprobados; 6 nuevos de Fase 2A) y `npm run build` (biblioteca, declaraciones TypeScript, typecheck de paquete y demo) correctos. Evidencia: https://github.com/Mairon31/ppae-engine/actions/runs/38591408285.
+- **Estado técnico:** VERIFIED (código publicado y CI correcto).
 - **Validación visual:** pendiente y no aplicable al resolver de datos por sí solo; las capturas del nuevo arte geológico deberán revisarse tras 2B.
 - **Siguiente fase:** Fase 2B — GeologicalFormationRasterizer e integración en NatureGenerator, ProceduralGrammarExecutor y DeterministicWorldField.
 
