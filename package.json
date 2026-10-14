@@ -11,7 +11,12 @@
       "import": "./dist/library/index.js"
     }
   },
-  "files": ["dist/library", "dist/**/*.d.ts", "LICENSE", "README.md"],
+  "files": [
+    "dist/library",
+    "dist/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
@@ -20,7 +25,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:package": "tsc -p tsconfig.package-node.json",
     "build:lib": "tsc -p tsconfig.build.json && node scripts/fix-declaration-extensions.mjs && vite build --config vite.config.lib.ts",
-    "build:demo": "vite build",
+    "build:demo": "vite build && node scripts/verify-pages-output.mjs",
     "build": "npm run build:lib && npm run typecheck:package && npm run build:demo",
     "test": "vitest run",
     "test:watch": "vitest"
