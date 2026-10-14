@@ -657,15 +657,23 @@ function selectSection(section: PlaygroundSectionId): void {
  * emitBurst starts particles within ~2px of an origin: emitting 85 at once was
  * virtually a single dot despite correct particle counts in telemetry.
  */
+function scatterHash(text: string): number {
+  // FNV alone has correlated output for adjacent decimal suffixes. Avalanche
+  // fully before mapping to 2D coordinates for spatially distinct emitters.
+  let h = fnv1aHash32(text);
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x846ca68b);
+  return (h ^ (h >>> 16)) >>> 0;
+}
 function emitPlaygroundVfx(
   pool: PixelParticleEngine, id: VFXPresetId, x: number, y: number,
   seed: number, bursts: number, countPerBurst: number, spanX: number, spanY: number
 ): void {
   for (let i = 0; i < bursts; i++) {
-    // Hashing sequential indices once produces correlated high bits (all emitters
-    // align on the same Y row). Use independent, salted deterministic streams.
-    const hx = fnv1aHash32('vfx-x:' + id + ':' + seed + ':' + i);
-    const hy = fnv1aHash32('vfx-y:' + id + ':' + seed + ':' + i);
+    const hx = scatterHash('vfx-x:' + id + ':' + seed + ':' + i);
+    const hy = scatterHash('vfx-y:' + id + ':' + seed + ':' + i);
     const px = x + Math.round((hx / 4294967295 - .5) * spanX);
     const py = y + Math.round((hy / 4294967295 - .5) * spanY);
     pool.emitBurst(id, px, py, hx ^ hy, countPerBurst);
