@@ -495,11 +495,23 @@ export class CreatureGenerator {
     buf.fillEllipse(pivotX, centerY + 1, rx, ry, cShad);
     buf.fillEllipse(pivotX, centerY, rx - 1, ry - 1, cMain);
 
-    // Núcleo interno suspendido con ligero desfase hacia la dirección de movimiento
-    if (spec.features.hasTranslucentCore && action !== 'death') {
-      const coreX = pivotX + Math.round(fx * 1.5 * u);
-      const coreY = centerY + Math.round(fy * 1.0 * u);
-      buf.fillEllipse(coreX, coreY, Math.max(2, Math.round(2.0 * u)), Math.max(2, Math.round(1.8 * u)), cCore);
+    // Núcleo interno suspendido con ligero desfase hacia la dirección de movimiento.
+    // El anchor debe señalar el mismo centro que los píxeles visibles; la pose de
+    // muerte no dibuja núcleo y, por tanto, tampoco expone un anchor de núcleo.
+    const nucleus = spec.features.hasTranslucentCore && action !== 'death'
+      ? {
+          x: pivotX + Math.round(fx * 1.5 * u),
+          y: centerY + Math.round(fy * 1.0 * u),
+        }
+      : undefined;
+    if (nucleus) {
+      buf.fillEllipse(
+        nucleus.x,
+        nucleus.y,
+        Math.max(2, Math.round(2.0 * u)),
+        Math.max(2, Math.round(1.8 * u)),
+        cCore,
+      );
     }
 
     // Brillo especular superior izquierdo
@@ -525,7 +537,15 @@ export class CreatureGenerator {
       pivotTexel: [pivotX, pivotY],
       anchors: {
         ground_pivot: { id: 'ground_pivot', texelX: pivotX, texelY: pivotY, normalizedX: pivotX / buf.width, normalizedY: pivotY / buf.height },
-        nucleus: { id: 'nucleus', texelX: pivotX, texelY: centerY, normalizedX: pivotX / buf.width, normalizedY: centerY / buf.height }
+        ...(nucleus ? {
+          nucleus: {
+            id: 'nucleus',
+            texelX: nucleus.x,
+            texelY: nucleus.y,
+            normalizedX: nucleus.x / buf.width,
+            normalizedY: nucleus.y / buf.height,
+          },
+        } : {}),
       }
     };
   }

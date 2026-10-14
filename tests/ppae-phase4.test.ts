@@ -49,6 +49,41 @@ describe('PPAE Phase 4 — Anatomical Archetypes, Fauna, Monsters & Multi-Segmen
     expect(Array.from(cowIdle.buffer.data)).not.toEqual(Array.from(cowDead.buffer.data));
   });
 
+  it('keeps the slime nucleus anchor on the rendered core in all directions and omits it on death', () => {
+    const gen = new CreatureGenerator();
+    const directionVectors = {
+      N: [0, -1], NE: [0.70710678, -0.70710678], E: [1, 0],
+      SE: [0.70710678, 0.70710678], S: [0, 1],
+      SW: [-0.70710678, 0.70710678], W: [-1, 0],
+      NW: [-0.70710678, -0.70710678],
+    } as const;
+
+    for (const profile of [
+      DEFAULT_STYLE_PROFILES['micro-4x4'],
+      DEFAULT_STYLE_PROFILES['micro-6x6'],
+    ]) {
+      const u = profile.moduleSize === 6 ? 1.5 : 1;
+      const width = 5 * profile.moduleSize;
+      const height = 4 * profile.moduleSize;
+      const pivotX = Math.floor(width / 2);
+      const pivotY = height - Math.max(2, Math.floor(profile.moduleSize * 0.65));
+      const centerY = pivotY - Math.max(2, Math.round(4.4 * u));
+
+      for (const [direction, [fx, fy]] of Object.entries(directionVectors)) {
+        const rendered = gen.renderCreatureFrame(
+          'emerald_slime', 'idle', direction as keyof typeof directionVectors, 0, 4, profile,
+        );
+        expect(rendered.anchors.nucleus).toMatchObject({
+          texelX: pivotX + Math.round(fx * 1.5 * u),
+          texelY: centerY + Math.round(fy * u),
+        });
+      }
+
+      const dead = gen.renderCreatureFrame('emerald_slime', 'death', 'E', 0, 4, profile);
+      expect(dead.anchors.nucleus).toBeUndefined();
+    }
+  });
+
   it('supports independent part destruction, weak-point exposure, phase shifts, and telegraphs on the Multi-Segment Boss', () => {
     const bossRenderer = new MultiSegmentBossRenderer();
     const profile = DEFAULT_STYLE_PROFILES['micro-4x4'];
