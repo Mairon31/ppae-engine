@@ -8,11 +8,11 @@ Run locally: npm ci && npm run dev. This is a fully client-side Vite demo whose 
 
 ## Capabilities
 
-The catalog exposes 17 sections: deterministic chunks/world, player, NPC professions, creature bestiary, bosses, trees, flora, geology, terrain and liquids, structures, interiors, caves, crops, equipment/HUD, VFX emitters, weather/wind, and lighting. Previews and thumbnails call the engine's real TypeScript generators, not hand-drawn mockups.
+The current Playground exposes **30 engine-backed sections**, including an editable seeded player creator, full animation catalog, NPC/creature/plant lifecycle variations, full autotiling inputs, equipment/HUD, biome palettes, and an actual native-resolution comparator. Every gallery uses real TypeScript generators, not prerecorded image mockups. See [the complete coverage matrix](PLAYGROUND_COVERAGE_MATRIX.md) for one-to-one API mappings and remaining nonvisual subsystems.
 
-Inspector: deterministic seed, 4×4/6×6/8×8/16×16/32×32/hybrid/adaptive profiles, zoom, 8 directions, 28 character or 12 creature actions, speed, loop/pause, tree/crop/boss phases, creature age and health, scene weather/time, optional grid/pivot and buffer bounds, and live rendering telemetry. The viewer caps the redraw rate to preserve browser responsiveness. The displayed FPS is viewer FPS, **not** the engine runtime benchmark.
+Inspector: deterministic seed, 4×4/6×6/8×8/16×16/32×32/hybrid/adaptive profiles, zoom, 8 directions, 28 character or 12 creature actions, speed, loop/pause, tree/crop/boss phases, creature age and health, scene weather/time, optional grid/pivot and buffer bounds, and live rendering telemetry. The viewer caps the redraw rate and defers gallery thumbnails to preserve browser responsiveness. The displayed FPS is viewer FPS, **not** the engine runtime benchmark.
 
-Character/NPC/creature selection enables the real SpritesheetCompiler PNG and JSON atlas exports for the current action in 8 directions; the toolbar PNG exports the current canvas preview.
+Character/NPC/creature selections offer real SpritesheetCompiler PNG and JSON atlas exports for the active action in 8 directions, using their active anatomical variants and player customization. The toolbar provides both raw native sprite PNG and the visually composed Canvas screenshot. JSON for other categories contains actual morphology, pivots, geometry, palettes, weather definitions or emitter presets as available.
 
 ## VFX, not audio
 
@@ -80,3 +80,16 @@ https://github.com/Mairon31/ppae-engine/actions/runs/38616315820.
 **Evidence:** CI `npm test` and `npm run build` PASS for code commit `ff7b6a08df93d80b824c9cb8e261ca26b1e909ed` in https://github.com/Mairon31/ppae-engine/actions/runs/38619162356; Chromium smoke QA PASS across 17 sections in https://github.com/Mairon31/ppae-engine/actions/runs/38619154215. Inspectable screenshot: QA artifact `ppae-playground-chromium-qa`, file `06-trees.png`. The oak now shows continuous lobed canopy without hard-cut rectangular edges; full viewport render reports native `84×78` texels at micro-6×6, and cards use the same engine path.
 
 **Scope:** the sprite generator clipping issue is fixed. Adjacent-chunk streaming/prop-overflow placement and exhaustive artistic inspection over all possible seeds remain separate rendering concerns; no change to master or PR merge was performed.
+
+
+## Expansión integral del laboratorio (14-10-2026)
+
+La matriz de [30 categorías](PLAYGROUND_COVERAGE_MATRIX.md) documenta la correspondencia estricta entre cada galería y su API. Se incorporó `src/demo/avatar-lab.ts` con 32 identificadores reproducibles por semilla, aleatorización real, edición de rasgos faciales, proporciones, vestuario, equipo, colores y efectos de estado. El personaje editado se utiliza también en la escena del mundo y en sus exportaciones.
+
+El explorador ofrece 28 acciones de personaje, 64 identidades de NPC parametrizadas, 144 variaciones nombradas de criatura, 144 combinaciones de ciclo arbóreo, 20 etapas de cultivos, todas las máscaras brutas de autotiling, 16 texturas por material, seis materiales de equipamiento y todas las paletas de `PaletteManager` y perfiles de resolución concretos. Las miniaturas siguen usando el pipeline del motor y caché acotada.
+
+La demostración permite inspeccionar integridad, acción y fases de muerte de jefes, ocultar tejados y modificar puertas/ventanas, parametrizar cuevas, escala de criaturas y barras de HUD; no simula navegación de juego. Se amplió `SpritesheetCompiler` para conservar el tamaño nativo y variaciones anatómicas de criaturas y efectos visuales del avatar.
+
+**Evidencia inicial de la ampliación:** `npm test` y `npm run build` PASS en https://github.com/Mairon31/ppae-engine/actions/runs/38626871641. Chromium navegó las 28 categorías de esa versión y verificó edición/reroll, búsqueda, exportación y móvil: https://github.com/Mairon31/ppae-engine/actions/runs/38626866399. La versión de 30 secciones requiere confirmación en su propio HEAD, no hereda automáticamente ese estado de verificación.
+
+La cobertura de biblioteca no equivale a una galería para todas las APIs internas (caché, benchmark, LOD, Phaser, portales). Consulte la matriz para esos límites y no represente funciones que no se han probado como completamente demostradas.
