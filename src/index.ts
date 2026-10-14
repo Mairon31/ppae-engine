@@ -12,6 +12,7 @@ export * from './terrain/liquid-renderer';
 export * from './terrain/chunk-renderer';
 export * from './vegetation/nature-generator';
 export * from './vegetation/tree-morphology';
+export * from './vegetation/tree-skeleton-rasterizer';
 export * from './entities/character-rig';
 export * from './entities/character-generator';
 export * from './animation/state-machine';

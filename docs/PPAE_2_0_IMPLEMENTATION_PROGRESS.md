@@ -9,7 +9,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | Fase | Estado | Resumen |
 | --- | --- | --- |
 | 1A — Procedural Tree Morphology Architecture | VERIFIED | Contratos, 12 familias, arquetipos, esqueleto y métricas |
-| 1B — Tree Skeleton Rasterization | PENDING | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
+| 1B — Tree Skeleton Rasterization | IMPLEMENTED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
 | 1C — Advanced Canopy / Foliage | PENDING | Follaje avanzado y diferenciación por especie |
 
 ## Fase 1A — 14 de octubre de 2026
@@ -24,8 +24,21 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas solicitadas:** `npm test`, `npm run build`.
 - **Verificación técnica:** VERIFIED. GitHub Actions `PPAE 2.0 validation` ejecutó con éxito `npm test` y `npm run build` en el commit principal. Evidencia: https://github.com/Mairon31/ppae-engine/actions/runs/38553570173
 - **Validación visual:** PENDING. La fase 1A no conecta todavía el descriptor con el rasterizador visible.
-- **Problemas pendientes:** ejecutar la suite completa y comprobar resultados de CI, validar rasterización en la fase 1B.
+- **Problemas pendientes:** validación visual de siluetas mediante capturas y conexión del rasterizador a la salida de árboles (Fase 1C).
 - **Próxima fase:** 1B — Algoritmo de Rasterización de Esqueletos de Troncos, Bifurcaciones, Raíces y Ramas Curvas.
+
+## Fase 1B — 14 de octubre de 2026
+
+- **Base indicada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520`, con los cambios de Fase 1A supuestos. Ese commit original no contiene 1A; se integró realmente sobre `b3343b1f07f78f6c108cc42af46ae4eee9453c9f`.
+- **Commit de implementación:** se completará con el SHA real tras publicar el lote.
+- **Archivos:** MODIFY `src/vegetation/tree-morphology.ts`, MODIFY `src/index.ts`, ADD `src/vegetation/tree-skeleton-rasterizer.ts`, ADD `tests/ppae-tree-skeleton-1b.test.ts`, MODIFY este documento.
+- **Entregado:** fustes gemelos conectados por horquilla real, cañas múltiples con nodos de base propios, masa foliar secundaria anclada al esqueleto preexistente, rasterizado Bézier con taper, sombreado cilíndrico, gramáticas de corteza por familia y etapa, raíces zanco y superficiales, exposición de madera muerta, capas de profundidad y viento discreto.
+- **Integración:** el resolver 1A ya contenía ramas secundarias. Se conservaron y no se duplicaron; el diff de Gemini se adaptó semánticamente.
+- **Pruebas nuevas:** ocho comprobaciones Vitest para determinismo, morfología, corteza, capas, viento, conectividad, raíces y estados especiales.
+- **Verificación técnica:** pendiente de ejecutar `npm test` y `npm run build` mediante GitHub Actions en la rama/PR.
+- **Verificación visual:** pendiente de captura y revisión de capas: el rasterizador es una API independiente. La integración en los sprites finales y las copas se reserva a Fase 1C.
+- **Estado actual:** IMPLEMENTED (no VERIFIED hasta obtener resultados de CI).
+- **Próxima fase:** FASE 1C — Generación Avanzada de Copas, Masas de Follaje Asimétricas e Integración Multicapa con el Esqueleto.
 
 ## Convenciones de estado
 

@@ -309,6 +309,106 @@ export class TreeMorphologyResolver {
       order: 0, isExposedDeadwood: stage === 'dead' || stage === 'burned'
     });
 
+    // Fuste gemelo: dividir el tronco en una horquilla topológicamente conectada.
+    // El tramo de base termina en fork_junction y desde allí surgen dos ejes de orden 0.
+    if (archetype.trunkPosture === 'forked_twin' && stageRule.branchOrderLimit >= 1) {
+      const forkId = 'fork_junction';
+      const forkX = Math.round(pivotX + (crownHubX - pivotX) * 0.43);
+      const forkY = Math.round(pivotY + (crownHubY - pivotY) * 0.43);
+      const forkRadius = Math.max(1, Math.round(baseRadiusPx * 0.81));
+      const oppositeSide = crownHubX >= pivotX ? -1 : 1;
+      const twinX = Math.max(mod, Math.min(widthPx - mod,
+        crownHubX + oppositeSide * Math.max(mod, Math.round(widthPx * 0.18))));
+      const twinY = Math.max(2, Math.min(pivotY - mod, crownHubY + rng.nextInt(-mod, mod)));
+      const twinId = 'crown_hub_twin';
+      nodes.push({ nodeId: forkId, x: forkX, y: forkY, radiusPx: forkRadius, depthOrder: 0 });
+      nodes.push({
+        nodeId: twinId, x: twinX, y: twinY,
+        radiusPx: Math.max(1, Math.round(hubRadiusPx * 0.8)), depthOrder: 0
+      });
+      const main = segments.find((segment) => segment.segmentId === 'seg_trunk_main');
+      if (main) {
+        const mainIndex = segments.indexOf(main);
+        segments.splice(mainIndex, 1,
+          {
+            ...main, segmentId: 'seg_trunk_lower', toNodeId: forkId,
+            controlX: Math.round((pivotX + forkX) * 0.5),
+            controlY: Math.round((pivotY + forkY) * 0.5),
+            endX: forkX, endY: forkY, endRadiusPx: forkRadius
+          },
+          {
+            ...main, segmentId: 'seg_trunk_upper', fromNodeId: forkId,
+            startX: forkX, startY: forkY,
+            controlX: Math.round((forkX + crownHubX) * 0.5),
+            controlY: Math.min(forkY, crownHubY) + 1,
+            startRadiusPx: forkRadius
+          },
+          {
+            ...main, segmentId: 'seg_trunk_twin', fromNodeId: forkId, toNodeId: twinId,
+            startX: forkX, startY: forkY,
+            controlX: Math.round((forkX + twinX) * 0.5) + oppositeSide * mod,
+            controlY: Math.round((forkY + twinY) * 0.5),
+            endX: twinX, endY: twinY, startRadiusPx: forkRadius,
+            endRadiusPx: Math.max(1, Math.round(hubRadiusPx * 0.8))
+          }
+        );
+      }
+      if (stageRule.foliageDensityFactor > 0 && archetype.foliageDistribution !== 'none') {
+        foliageMasses.push({
+          massId: 'foliage_twin_hub', attachedNodeId: twinId,
+          centerX: twinX, centerY: twinY,
+          radiusX: Math.max(2, Math.round(mod * 1.1)),
+          radiusY: Math.max(2, Math.round(mod * 0.9)),
+          lobeCount: 3, angleTiltRad: oppositeSide * 0.16,
+          density: Math.min(1, stageRule.foliageDensityFactor * 0.8),
+          layerDepth: 'back'
+        });
+      }
+    }
+
+    // Manglares y bambú: raíces y cañas laterales físicamente ancladas a sus propios nodos.
+    if (archetype.trunkPosture === 'multi_stemmed' && stageRule.branchOrderLimit >= 1) {
+      for (const side of [-1, 1]) {
+        const sideId = side < 0 ? 'l' : 'r';
+        const stemBaseX = Math.max(1, Math.min(widthPx - 2,
+          pivotX + side * Math.max(2, Math.round(mod * 0.75))));
+        const stemTopX = Math.max(2, Math.min(widthPx - 3,
+          crownHubX + side * Math.max(3, Math.round(mod * 1.35))));
+        const stemTopY = Math.max(2, Math.min(pivotY - mod,
+          crownHubY + rng.nextInt(-2, 3)));
+        const stemRadius = Math.max(1, Math.round(baseRadiusPx * 0.72));
+        const stemBaseId = `culm_base_${sideId}`;
+        const stemTopId = `culm_stem_${sideId}`;
+        nodes.push({
+          nodeId: stemBaseId, x: stemBaseX, y: pivotY,
+          radiusPx: stemRadius, depthOrder: 0
+        });
+        nodes.push({
+          nodeId: stemTopId, x: stemTopX, y: stemTopY,
+          radiusPx: Math.max(1, stemRadius - 1), depthOrder: 0
+        });
+        segments.push({
+          segmentId: `seg_${stemTopId}`, fromNodeId: stemBaseId, toNodeId: stemTopId,
+          startX: stemBaseX, startY: pivotY,
+          controlX: Math.round((stemBaseX + stemTopX) * 0.5) + side,
+          controlY: Math.round((pivotY + stemTopY) * 0.5),
+          endX: stemTopX, endY: stemTopY,
+          startRadiusPx: stemRadius, endRadiusPx: Math.max(1, stemRadius - 1),
+          order: 0, isExposedDeadwood: stage === 'dead' || stage === 'burned'
+        });
+        if (stageRule.foliageDensityFactor > 0 && archetype.foliageDistribution !== 'none') {
+          foliageMasses.push({
+            massId: `foliage_stem_${sideId}`, attachedNodeId: stemTopId,
+            centerX: stemTopX, centerY: stemTopY,
+            radiusX: Math.max(2, mod), radiusY: Math.max(2, mod),
+            lobeCount: 3, angleTiltRad: side * 0.12,
+            density: Math.min(1, stageRule.foliageDensityFactor * 0.75),
+            layerDepth: side < 0 ? 'back' : 'front'
+          });
+        }
+      }
+    }
+
     const primaryCount = stageRule.branchOrderLimit >= 1
       ? rng.nextInt(...archetype.primaryBranchCountRange) : 1;
     for (let i = 0; i < primaryCount; i++) {
@@ -381,6 +481,8 @@ export class TreeMorphologyResolver {
             nodeId: secondaryNodeId, x: endX, y: endY,
             radiusPx: 1, depthOrder: 2
           });
+          const isSecondaryExposed = isDeadBranch ||
+            rng.chance(archetype.exposedBranchRatio * 0.15);
           segments.push({
             segmentId: `seg_s_${i}_${j}`,
             fromNodeId: branchNodeId, toNodeId: secondaryNodeId,
@@ -388,9 +490,23 @@ export class TreeMorphologyResolver {
             controlX: Math.round((branchEndX + endX) / 2),
             controlY: Math.min(branchEndY, endY),
             endX, endY, startRadiusPx: branchRadius, endRadiusPx: 1,
-            order: 2, isExposedDeadwood: isDeadBranch ||
-              rng.chance(archetype.exposedBranchRatio * .15)
+            order: 2, isExposedDeadwood: isSecondaryExposed
           });
+          if (stageRule.foliageDensityFactor > 0 && !isSecondaryExposed &&
+            archetype.foliageDistribution !== 'none') {
+            foliageMasses.push({
+              massId: `foliage_s_${i}_${j}`, attachedNodeId: secondaryNodeId,
+              centerX: endX, centerY: endY,
+              radiusX: Math.max(2, Math.round(mod * 0.95)),
+              radiusY: Math.max(2, Math.round(mod * 0.8)),
+              lobeCount: rng.nextInt(2, 4),
+              angleTiltRad: (j % 2 === 0 ? -1 : 1) * 0.18,
+              density: Math.min(1, Number((stageRule.foliageDensityFactor * 0.85).toFixed(2))),
+              layerDepth: j % 2 === 0 ? 'front' : 'back',
+              dropLengthPx: archetype.crownArchitecture === 'weeping_cascade'
+                ? rng.nextInt(mod * 2, mod * 3) : undefined
+            });
+          }
         }
       }
     }
