@@ -15,7 +15,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 1E — Spatial Diversity and Silhouette Metrics | VERIFIED | Evitar clones vecinos y métricas de silueta sobre píxeles |
 | 2A — Geological Morphology Architecture | VERIFIED | 17 formaciones, polígonos, facetas, fracturas e inclusiones |
 | 2B — Geological Rasterization and World Integration | VERIFIED | Rasterización de rocas e integración al mundo |
-| 3A — Flora Morphology and Ecological Patches | IMPLEMENTED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
+| 3A — Flora Morphology and Ecological Patches | VERIFIED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
 | 3B — Flora Rasterizer and World Integration | PENDING | Sustitución de sprites antiguos de vegetación y distribución real |
 
 ## Fase 1A — 14 de octubre de 2026
@@ -112,12 +112,12 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 3A — 14 de octubre de 2026
 
 - **Base provista por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con fases anteriores asumidas; **base real de trabajo:** `24d0a96801f25552e0af14fe4edf4ea8e5466b9a`, rama `feat/ppae-2-art-overhaul`, PR #2.
-- **Commit real:** pendiente de anotar después de publicar el lote.
+- **Commit real de implementación:** `9cfe99c5b189b75106599095917b2cb8e620ce5a`.
 - **Archivos:** MODIFY `src/core/contracts.ts` (17 tipos `SecondaryFloraKind` y contratos completos); ADD `src/vegetation/flora-morphology.ts` (catálogo y resolver); MODIFY `src/index.ts` (API); ADD `tests/ppae-flora-morphology-3a.test.ts`; UPDATE este progreso.
 - **Catálogo y morfología:** seis tipos heredados intactos y once añadidos. Hábitos botánicos diferenciados: gramíneas bajas/altas, hierbas, espinos, arbustos florales, helechos, tapetes de musgo, hongos, juncos, plantas acuáticas, enredaderas, cactus y hojas anchas tropicales. Geometría determinista de tallos Bézier, hojas adheridas a curvas, flores con pétalos y discos centrales, cápsulas micológicas y medidas estructurales.
 - **Ecología:** método `selectEcologicalFloraKind` con parches deterministas de 3×3 tiles, criterios de humedad/temperatura/bioma/material/orillas y variantes hash por coordenada, independientes del orden de chunks. Incluye selección potencial de `water_lily_pad` en aguas someras para futura integración en 3B.
 - **Compatibilidad:** no se altera `NatureGenerator.generateSecondaryFlora`, `ProceduralGrammarExecutor.generateBushFlora` ni la distribución de flora actual en `DeterministicWorldField`: la arquitectura 3A requiere conexión de rasterizador y spawns en 3B. Los tests de 3A comprueban descriptores, no calidad visual de sprites.
-- **Pruebas:** `npm test`, `npm run build` y seis pruebas nuevas, pendientes de CI antes de cambiar de IMPLEMENTED a VERIFIED.
+- **Pruebas:** VERIFIED, GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38593279027: `npm test` con **17 suites y 95 pruebas aprobadas** (6 nuevas de 3A); `npm run build` con generación correcta de biblioteca, declaraciones TypeScript, typecheck del paquete y demo.
 - **Siguiente fase:** 3B — FloraBotanicalRasterizer e Integración Ecológica en el Mundo.
 
 ## Convenciones de estado
