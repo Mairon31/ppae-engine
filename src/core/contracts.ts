@@ -1703,4 +1703,10 @@ export interface GoldenSeedBenchmarkEntry {
   readonly profileId: GranularityProfileId;
   readonly minExpectedScore: number;
   readonly requireAsymmetry: boolean;
+  /** Explicit composite-material color ceiling, when different from the base profile. */
+  readonly maxColorsOverride?: number;
+  /** False for emissive materials or multi-source architectural lighting. */
+  readonly checkDirectionalLighting?: boolean;
+  /** Stable RGBA fingerprint; locked only after the specimen baseline is inspected. */
+  readonly expectedPixelHash?: string;
 }

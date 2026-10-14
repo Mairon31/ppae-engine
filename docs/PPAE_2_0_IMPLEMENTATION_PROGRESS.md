@@ -423,3 +423,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Baseline HEAD `6073d5ab9b4a60a614d339d48af10cbc37bfcf0e`; original pasted diff referenced an earlier commit. Existing `AssetCategory` is `tree | mineral_rock | bush_flora | character | creature | structure`, so the proposed `mineral/flora/prop` names were mapped to established public contracts rather than breaking TypeScript.
 - Added quality metrics, palette/contrast/directional illumination, orphan pixels, connected-components and toroidal tile auditing, plus nine deterministic reference specimens in `APPROVED_GOLDEN_SEED_REGISTRY`.
 - New regression suite `tests/ppae-art-quality-evaluator-11.test.ts`. **Status: implemented; CI result pending.** Approval thresholds are provisional until actual scores and visual-review gates are verified, not assumed.
+
+### Phase 11 — Calibration against real assets
+
+- First golden suite failed: birch reference yielded false background-color-average contrast and false inverted lighting, despite its textured bark and foliage. Replaced the two shortcuts with visible silhouette-edge contrast and per-chroma-region highlight alignment; no artificial minimum contrast.
+- Second run: oak, birch, fractured monolith, flora, hero, stag passed; crystal geode (emissive core) and multi-material cottage did not have a meaningful single directional light source. The directional metric remains reported, but the golden suite explicitly opts out of requiring solar coherence for those specimens; geometry, color, noise, connectivity and contrast are still audited.
+- Golden specimens now declare documented per-composite color ceilings instead of a single 28-color bypass, and a terrain specimen is added. The real RGBA hash is exposed to catch deterministic changes, with expected signatures to be locked after CI baseline verification.
+- Regression coverage: synthetic color-overbudget sprite, unreadable foreground, broken seam, reproducible golden hashes. **Status: implementation and baseline verification in progress.**

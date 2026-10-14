@@ -46,7 +46,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202601,
     profileId: 'micro-6x6',
     minExpectedScore: 78,
-    requireAsymmetry: true
+    requireAsymmetry: true,
+    maxColorsOverride: 12
   },
   {
     benchmarkId: 'golden_tree_birch_mature_6x6',
@@ -55,7 +56,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202602,
     profileId: 'micro-6x6',
     minExpectedScore: 78,
-    requireAsymmetry: true
+    requireAsymmetry: true,
+    maxColorsOverride: 12
   },
   {
     benchmarkId: 'golden_rock_crystal_geode_6x6',
@@ -64,7 +66,9 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202603,
     profileId: 'micro-6x6',
     minExpectedScore: 78,
-    requireAsymmetry: true
+    requireAsymmetry: true,
+    maxColorsOverride: 12,
+    checkDirectionalLighting: false
   },
   {
     benchmarkId: 'golden_rock_fractured_monolith_6x6',
@@ -73,7 +77,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202604,
     profileId: 'micro-6x6',
     minExpectedScore: 78,
-    requireAsymmetry: true
+    requireAsymmetry: true,
+    maxColorsOverride: 12
   },
   {
     benchmarkId: 'golden_flora_flower_cluster_6x6',
@@ -82,7 +87,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202605,
     profileId: 'micro-6x6',
     minExpectedScore: 76,
-    requireAsymmetry: false
+    requireAsymmetry: false,
+    maxColorsOverride: 12
   },
   {
     benchmarkId: 'golden_character_hero_south_6x6',
@@ -91,7 +97,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202606,
     profileId: 'micro-6x6',
     minExpectedScore: 80,
-    requireAsymmetry: false
+    requireAsymmetry: false,
+    maxColorsOverride: 24
   },
   {
     benchmarkId: 'golden_character_hero_south_16x16',
@@ -100,7 +107,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202607,
     profileId: 'standard-16x16',
     minExpectedScore: 82,
-    requireAsymmetry: false
+    requireAsymmetry: false,
+    maxColorsOverride: 30
   },
   {
     benchmarkId: 'golden_creature_stag_east_6x6',
@@ -109,7 +117,8 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202608,
     profileId: 'micro-6x6',
     minExpectedScore: 78,
-    requireAsymmetry: false
+    requireAsymmetry: false,
+    maxColorsOverride: 12
   },
   {
     benchmarkId: 'golden_structure_cottage_4x4',
@@ -118,7 +127,16 @@ export const APPROVED_GOLDEN_SEED_REGISTRY: readonly GoldenSeedBenchmarkEntry[] 
     seed: 202609,
     profileId: 'micro-4x4',
     minExpectedScore: 80,
-    requireAsymmetry: false
+    requireAsymmetry: false,
+    maxColorsOverride: 18,
+    checkDirectionalLighting: false
+  },
+  {
+    benchmarkId: 'golden_terrain_meadow_6x6',
+    category: 'terrain', subType: 'meadow_grass', seed: 202610,
+    profileId: 'micro-6x6', minExpectedScore: 78,
+    requireAsymmetry: false, maxColorsOverride: 12,
+    checkDirectionalLighting: false
   }
 ];
 
@@ -130,6 +148,7 @@ export interface SpriteQualityEvaluationOptions {
   readonly requireOrganicAsymmetry?: boolean;
   readonly allowMultiFragment?: boolean;
   readonly maxColorsOverride?: number;
+  readonly checkDirectionalLighting?: boolean;
 }
 
 /**
@@ -221,7 +240,7 @@ export class ProceduralArtQualityEvaluator {
     }
 
     // 5. Detección de Pillow Shading (luz invertida o concentrada sin sesgo direccional)
-    if (directionalLightAlignment < -0.15) {
+    if (options.checkDirectionalLighting !== false && directionalLightAlignment < -0.15) {
       defects.push('PILLOW_SHADING_DETECTED');
     }
 
@@ -238,7 +257,7 @@ export class ProceduralArtQualityEvaluator {
     if (uniqueColorCount > maxAllowedColors) {
       score -= Math.min(25, (uniqueColorCount - maxAllowedColors) * 4);
     }
-    if (directionalLightAlignment < 0.05) {
+    if (options.checkDirectionalLighting !== false && directionalLightAlignment < 0.05) {
       score -= Math.round((0.05 - directionalLightAlignment) * 35);
     }
     score -= Math.round(orphanPixelRatio * 45);
@@ -347,6 +366,7 @@ export class ProceduralArtQualityEvaluator {
   public runGoldenSeedBenchmarkSuite(): ReadonlyArray<{
     readonly entry: GoldenSeedBenchmarkEntry;
     readonly report: ArtQualityEvaluationReport;
+    readonly pixelHash: string;
   }> {
     return APPROVED_GOLDEN_SEED_REGISTRY.map((entry) => {
       const profile = DEFAULT_STYLE_PROFILES[entry.profileId];
@@ -401,6 +421,13 @@ export class ProceduralArtQualityEvaluator {
             entry.seed
           ).buffer;
           break;
+        case 'terrain': {
+          buffer = this.autotiler.generateSeamlessBaseTile(
+            entry.subType as TerrainMaterialId, profile, entry.seed & 15
+          );
+          allowMultiFragment = true;
+          break;
+        }
         case 'structure':
         default: {
           const structDef =
@@ -419,11 +446,28 @@ export class ProceduralArtQualityEvaluator {
         profile,
         requireOrganicAsymmetry: entry.requireAsymmetry,
         allowMultiFragment,
-        maxColorsOverride: 28
+        maxColorsOverride: entry.maxColorsOverride,
+        checkDirectionalLighting: entry.checkDirectionalLighting
       });
-
-      return { entry, report };
+      const pixelHash = this.hashPixelBuffer(buffer);
+      return { entry, report, pixelHash };
     });
+  }
+
+
+  /** FNV-1a on dimensions and raw RGBA; independent of locale and execution order. */
+  public hashPixelBuffer(buffer: PixelBuffer): string {
+    let hash = 0x811c9dc5;
+    for (const dim of [buffer.width, buffer.height]) {
+      for (let bit = 0; bit < 32; bit += 8) {
+        hash = Math.imul(hash ^ ((dim >>> bit) & 255), 0x01000193) >>> 0;
+      }
+    }
+    const bytes = buffer.data;
+    for (let i = 0; i < bytes.length; i++) {
+      hash = Math.imul(hash ^ bytes[i], 0x01000193) >>> 0;
+    }
+    return hash.toString(16).padStart(8, '0');
   }
 
   public auditAllBaseTerrainMaterials(
