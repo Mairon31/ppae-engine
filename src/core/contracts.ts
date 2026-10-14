@@ -785,3 +785,68 @@ export interface ParticleEmitterDefinition {
   readonly colorRampHex: readonly [string, string, string]; // Inicio -> Medio -> Final
   readonly collidesWithFloor: boolean;
 }
+// ============================================================================
+// PHASE 7 CONTRACTS: EQUIPMENT TIERS, INVENTORY ICONS, FARMING & NINE-SLICE HUD
+// ============================================================================
+
+export type ItemMaterialTier = 'wood' | 'stone' | 'copper' | 'iron' | 'gold' | 'crystal';
+
+export type ItemWearState = 'pristine' | 'worn' | 'damaged';
+
+export type EquipmentItemCategory =
+  | 'tool_axe'
+  | 'tool_pickaxe'
+  | 'tool_shovel'
+  | 'weapon_sword'
+  | 'weapon_dagger'
+  | 'shield'
+  | 'armor_helmet'
+  | 'armor_chest'
+  | 'raw_material';
+
+export interface ItemEquipmentDefinition {
+  readonly schemaVersion: string;
+  readonly itemId: string;
+  readonly category: EquipmentItemCategory;
+  readonly tier: ItemMaterialTier;
+  readonly wearState: ItemWearState;
+  readonly durabilityMax: number;
+  readonly durabilityCurrent: number;
+  readonly attackOrPowerBonus: number;
+  readonly defenseBonus: number;
+  readonly primaryColorHex: string;
+  readonly secondaryColorHex: string;
+}
+
+export type CropSpeciesId = 'wheat' | 'tomato' | 'pumpkin' | 'carrot';
+
+export type CropGrowthStage = 'seed' | 'sprout' | 'growing' | 'mature' | 'withered';
+
+export interface CropSpeciesDefinition {
+  readonly schemaVersion: string;
+  readonly speciesId: CropSpeciesId;
+  readonly totalGrowthStages: number;
+  readonly daysToMature: number;
+  readonly requiresWater: boolean;
+  readonly colorPaletteHex: readonly [string, string, string, string];
+}
+
+export interface NineSliceConfig {
+  readonly schemaVersion: string;
+  readonly frameId: string;
+  readonly sourceWidthTexels: number;
+  readonly sourceHeightTexels: number;
+  readonly cornerSizePx: number; // Ancho/alto de las esquinas preservadas 1:1
+}
+
+export type HudBarKind = 'health' | 'energy' | 'mana' | 'durability';
+
+export interface HudBarConfig {
+  readonly kind: HudBarKind;
+  readonly currentVal: number;
+  readonly maxVal: number;
+  readonly widthPx: number;
+  readonly heightPx: number;
+  readonly fillColorHex: string;
+  readonly backgroundColorHex: string;
+}
