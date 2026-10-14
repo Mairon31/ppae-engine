@@ -95,7 +95,7 @@ const LABELS: Record<string, string> = {
   shallow_water: 'Agua superficial', deep_water: 'Agua profunda',
   hud_panel: 'Panel nine-slice', health_bar: 'Salud', mana_bar: 'Maná', stamina_bar: 'Energía',
   world_overview: 'Panorámica procedural', world_wildlife: 'Hábitat y fauna',
-  world_village: 'Pueblo y habitantes', hero: 'Héroe / jugador',
+  world_village: 'Pueblo y habitantes',
   village_cottage_01: 'Cabaña aldeana', blacksmith_forge_01: 'Forja',
   north_mine_cave_mouth: 'Entrada a mina', river_wooden_bridge: 'Puente de madera',
   ancient_crystal_colossus: 'Coloso de cristal',
