@@ -7,22 +7,24 @@ import {
   DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HERO_APPEARANCE,
   DEFAULT_HERO_EQUIPMENT, DEFAULT_HUD_PANEL_CONFIG, DEFAULT_STRUCTURE_CATALOG,
   DEFAULT_STYLE_PROFILES, DEFAULT_WEATHER_STATES, DeterministicWorldField,
-  Direction8, EquipmentItemCategory, FarmingAndCropGenerator, fnv1aHash32,
+  Direction8, EquipmentItemCategory, EquipmentGenerator, FarmingAndCropGenerator, fnv1aHash32,
   GeologicalResourceKind, GranularityProfileId, InteriorGenerator, InventoryIconGenerator,
-  ItemEquipmentDefinition, ItemMaterialTier, LiquidTileGenerator, MultiSegmentBossRenderer,
+  ItemEquipmentDefinition, ItemMaterialTier, ItemWearState, LiquidTileGenerator, MultiSegmentBossRenderer,
   NatureGenerator, NpcProfessionArchetypeId, PixelBuffer, PixelNineSliceLibrary,
   PixelParticleEngine, PixelPerfectLightingEngine, PPAE_SCHEMA_VERSION,
   SecondaryFloraKind, SpeciesAnimationCapabilityRegistry, SpritesheetCompiler,
   StructureGenerator, TerrainAutotiler, TerrainMaterialId, TimeOfDayPhase,
   TreeLifecycleStage, TreeSpeciesId, VFXPresetId, WeatherAndWindSystem,
-  WeatherConditionId, createCorruptedTreantBossState, createDefaultColossusBossState
+  WeatherConditionId, VisualStatusEffect, EntityAppearance, EquipmentLoadout,
+  MATERIAL_TIER_PALETTES, createCorruptedTreantBossState, createDefaultColossusBossState
 } from '../index';
 import {
   BOSS_IDS, CHARACTER_ACTIONS, CROP_STAGES, CREATURE_ACTIONS,
   EIGHT_DIRECTIONS, formatPlaygroundLabel, getPlaygroundSection,
   PLAYGROUND_OPTIONS,
-  PLAYGROUND_SECTIONS, PlaygroundSectionId, TREE_STAGES
+  PLAYGROUND_SECTIONS, PlaygroundSectionId, TREE_STAGES, AUTOTILE_MASKS
 } from './playground-catalog';
+import { AVATAR_FIELDS, AVATAR_VARIANTS, generateAvatarPreset, shadeHex } from './avatar-lab';
 
 const byId = <T extends HTMLElement>(id: string): T => {
   const element = document.getElementById(id);
@@ -48,6 +50,7 @@ const interiors = new InteriorGenerator();
 const caves = new CaveDungeonGenerator();
 const farms = new FarmingAndCropGenerator();
 const icons = new InventoryIconGenerator();
+const equipmentGenerator = new EquipmentGenerator();
 const ui = new PixelNineSliceLibrary();
 const terrain = new TerrainAutotiler();
 const liquids = new LiquidTileGenerator();
@@ -80,6 +83,20 @@ type PlaygroundState = {
   time: TimeOfDayPhase;
   weather: WeatherConditionId;
   page: number;
+  avatarReroll: number;
+  activeAvatarId: string;
+  avatarAppearance: Partial<EntityAppearance>;
+  avatarEquipment: Partial<EquipmentLoadout>;
+  avatarStatus: VisualStatusEffect;
+  materialTier: ItemMaterialTier;
+  wearState: ItemWearState;
+  terrainMask: number;
+  terrainMaterial: TerrainMaterialId;
+  terrainUnderlay: TerrainMaterialId;
+  treeEnvironment: 'normal' | 'autumn' | 'snowy' | 'blossom';
+  bossTelegraph: 'none' | 'radial_slam' | 'frontal_cleave' | 'cross_laser';
+  progress: number;
+  catalogQuery: string;
 };
 const state: PlaygroundState = {
   section: 'world', selected: 'world_overview', profile: 'micro-6x6',
@@ -87,7 +104,13 @@ const state: PlaygroundState = {
   creatureAction: 'move', frame: 0, playing: true, loop: true,
   grid: false, pivot: false, hitbox: false, zoom: 2, speed: 1,
   stage: 'mature', age: 'adult', health: 'healthy',
-  time: 'noon', weather: 'clear', page: 0
+  time: 'noon', weather: 'clear', page: 0,
+  avatarReroll: 0, activeAvatarId: 'hero',
+  avatarAppearance: {}, avatarEquipment: {}, avatarStatus: 'none',
+  materialTier: 'iron', wearState: 'pristine',
+  terrainMask: 255, terrainMaterial: 'forest_moss', terrainUnderlay: 'meadow_grass',
+  treeEnvironment: 'normal', bossTelegraph: 'radial_slam',
+  progress: 70, catalogQuery: ''
 };
 
 let worldField = new DeterministicWorldField(state.seed);
@@ -133,22 +156,33 @@ function storeThumbnail(key: string, canvas: HTMLCanvasElement): void {
 }
 
 
+function characterPreset(id: string, edited = false) {
+  const base = generateAvatarPreset(state.seed, id, state.avatarReroll);
+  if (!edited) return base;
+  return {
+    appearance: { ...base.appearance, ...state.avatarAppearance },
+    equipment: { ...base.equipment, ...state.avatarEquipment }
+  };
+}
+function currentCharacter() {
+  return characterPreset(state.activeAvatarId, true);
+}
 function seedNumber(extra = ''): number {
   return fnv1aHash32(state.seed + ':' + state.selected + ':' + extra);
 }
 function profile(): ArtStyleProfile {
   if (state.profile !== 'adaptive-auto') return DEFAULT_STYLE_PROFILES[state.profile];
   return adaptive.selectOptimalProfile({
-    category: state.section === 'characters' || state.section === 'npcs' ? 'character' :
+    category: state.section === 'characters' || state.section === 'character-actions' || state.section === 'npcs' ? 'character' :
       state.section === 'trees' ? 'tree' : state.section === 'bosses' ? 'creature' : 'terrain',
     cameraZoom: state.zoom, screenPixelRatio: window.devicePixelRatio || 1,
     viewportHeightPx: window.innerHeight, distanceFromCameraTiles: 4,
-    visualImportance: state.section === 'characters' || state.section === 'bosses' ? 'hero_focal' : 'standard',
+    visualImportance: state.section === 'characters' || state.section === 'character-actions' || state.section === 'bosses' ? 'hero_focal' : 'standard',
     currentFrameTimeMs: lastDrawTime, targetFrameBudgetMs: 20
   });
 }
 function frameInfo(): { frame: number; count: number; duration: number } {
-  if (state.section === 'characters' || state.section === 'npcs' || state.section === 'world') {
+  if (['characters','character-actions','npcs','world'].includes(state.section)) {
     const clip = DEFAULT_CHARACTER_CLIPS[state.action];
     return { frame: state.frame % clip.frameCount, count: clip.frameCount, duration: clip.frameDurationMs };
   }
