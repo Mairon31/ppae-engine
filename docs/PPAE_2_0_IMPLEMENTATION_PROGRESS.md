@@ -18,7 +18,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 3A — Flora Morphology and Ecological Patches | VERIFIED | 17 familias, tallos, hojas, flores, hongos y selección ecológica |
 | 3B — Flora Rasterizer and World Integration | VERIFIED | Sustitución de sprites antiguos de vegetación y distribución real |
 | 4A — Autotiling 47-State & Coast Regression | VERIFIED | Corrección de inundación oscura, esquinas euclidianas, 16 variantes y costas húmedas |
-| 4B — Road Junctions and Animated Shorelines | IMPLEMENTED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
+| 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -156,7 +156,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Agua:** normaliza las máscaras de 47 estados y utiliza distancia euclidiana a costas cardinales y esquinas cóncavas/convexas para espuma con pulso animado. Se mantiene el bucle temporal de fotogramas.
 - **Verificación requerida:** `npm test` y `npm run build`; siete regresiones añadidas de caminos, sustrato, esquinas, looping y determinismo entre chunks.
 - **Visual:** los umbrales de pixel tests no sustituyen la auditoría de capturas del mundo y de las uniones entre materiales con distintas variantes. Mantener pendientes las inspecciones visuales antes de asegurar paridad estética.
-- **Estado:** IMPLEMENTED, a la espera de verificación de CI y de registrar SHA exacto del commit.
+- **Estado:** VERIFIED técnicamente; commit `d4dadc56b1bd9f0b4edceaea0480efd2187d99ef`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38596286956: `npm test` **20 suites / 115 pruebas aprobadas** (7 nuevas 4B), `npm run build` correcto con declaraciones, TypeScript, biblioteca y demo.
 - **Siguiente fase:** 5A — Advanced Character Anatomy Engine.
 
 ## Convenciones de estado
