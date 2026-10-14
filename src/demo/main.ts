@@ -24,11 +24,14 @@ import {
   MATERIAL_TIER_PALETTES, CANONICAL_47_AUTOTILE_MASKS, TERRAIN_MATERIALS,
   PaletteManager,
   classifyAutotileMask47, VFX_EMITTER_PRESETS,
-  createCorruptedTreantBossState, createDefaultColossusBossState
+  createCorruptedTreantBossState, createDefaultColossusBossState,
+  PPAEInteractiveShowcaseController, ProceduralArtQualityEvaluator,
+  DEFAULT_SHOWCASE_SCENE_CONFIG, ShowcaseSceneConfig, ShowcaseTelemetrySnapshot,
+  MultiResolutionComparisonItem, CREATURE_SPECIES_CATALOG
 } from '../index';
 import {
   BOSS_IDS, CHARACTER_ACTIONS, CROP_STAGES, CREATURE_ACTIONS,
-  EIGHT_DIRECTIONS, formatPlaygroundLabel, getPlaygroundSection,
+  EIGHT_DIRECTIONS, NPC_PROFESSIONS, formatPlaygroundLabel, getPlaygroundSection,
   PLAYGROUND_OPTIONS,
   PLAYGROUND_SECTIONS, PlaygroundSectionId, TREE_STAGES
 } from './playground-catalog';
@@ -71,6 +74,10 @@ const compiler = new SpritesheetCompiler();
 const adaptive = new AdaptiveResolutionController();
 const paletteManager = new PaletteManager();
 const characterAsm = new AnimationStateMachine();
+const productionShowcase = new PPAEInteractiveShowcaseController();
+const qualityEvaluator = new ProceduralArtQualityEvaluator();
+let currentSceneMetrics: ShowcaseTelemetrySnapshot | null = null;
+let currentComparisonItems: readonly MultiResolutionComparisonItem[] = [];
 
 type PlaygroundState = {
   section: PlaygroundSectionId;
@@ -117,6 +124,14 @@ type PlaygroundState = {
   structureWindows: boolean;
   caveLava: boolean;
   caveCrystals: number;
+  showcaseHour24: number;
+  showcaseNpc: NpcProfessionArchetypeId;
+  showcaseCreature: CreatureSpeciesId;
+  showcaseBoss: typeof BOSS_IDS[number];
+  showcaseStructure: string;
+  showcaseVfx: VFXPresetId;
+  showcaseDoorOpen: boolean;
+  showcaseRoofCutaway: boolean;
 };
 const state: PlaygroundState = {
   section: 'world', selected: 'world_overview', profile: 'micro-6x6',
@@ -133,7 +148,11 @@ const state: PlaygroundState = {
   progress: 70, catalogQuery: '',
   creatureScale: 1, bossAction: 'telegraph_charge', bossDeath: 'alive',
   bossIntegrity: 'intact', structureRoof: true, structureDoor: true,
-  structureWindows: true, caveLava: true, caveCrystals: 5
+  structureWindows: true, caveLava: true, caveCrystals: 5,
+  showcaseHour24: 17.5,
+  showcaseNpc: 'villager_farmer', showcaseCreature: 'forest_stag',
+  showcaseBoss: 'ancient_crystal_colossus', showcaseStructure: 'village_cottage_01',
+  showcaseVfx: 'campfire_flames', showcaseDoorOpen: false, showcaseRoofCutaway: false
 };
 
 let worldField = new DeterministicWorldField(state.seed);
@@ -387,10 +406,55 @@ function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected
   }
   return scene;
 }
+
+function productionConfig(): Partial<ShowcaseSceneConfig> {
+  return {
+    worldSeed: state.seed, requestedProfileId: state.profile,
+    cameraZoom: state.zoom, viewportHeightPx: window.innerHeight,
+    screenPixelRatio: window.devicePixelRatio || 1,
+    hour24: state.showcaseHour24, weatherCondition: state.weather,
+    heroAction: state.action, heroDirection: state.direction,
+    npcProfession: state.showcaseNpc, featuredCreature: state.showcaseCreature,
+    featuredCreatureAction: state.creatureAction, featuredBoss: state.showcaseBoss,
+    featuredStructureId: state.showcaseStructure, isDoorOpen: state.showcaseDoorOpen,
+    isRoofCutaway: state.showcaseRoofCutaway, activeVfxPreset: state.showcaseVfx,
+    frameIndex: state.frame, timeSeconds: Number((elapsed / 1000).toFixed(3))
+  };
+}
+function comparisonStrip(kind: 'hero' | 'oak_tree' | 'crystal_geode'): PixelBuffer {
+  const samples = productionShowcase.renderMultiResolutionComparisonStrip(
+    kind, fnv1aHash32(state.seed + ':' + kind));
+  currentComparisonItems = samples;
+  const padding = 8, gap = 10;
+  const width = samples.reduce((total, sample) => total + sample.buffer.width, 0) +
+    padding * 2 + gap * (samples.length - 1);
+  const height = Math.max(...samples.map(sample => sample.buffer.height)) + padding * 2;
+  const buffer = new PixelBuffer(width, height);
+  buffer.fillRect(0, 0, width, height, { r: 24, g: 34, b: 47, a: 255 });
+  let x = padding;
+  for (const sample of samples) {
+    blend(buffer, sample.buffer, x, height - padding - sample.buffer.height);
+    x += sample.buffer.width + gap;
+  }
+  return buffer;
+}
+
 function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProfile, tick: number): PixelBuffer {
   const n = stableSubjectSeed(section, id);
   switch (section) {
     case 'world': return worldScene(p, tick);
+    case 'integrated-scene': {
+      const frame = productionShowcase.renderWorldSceneFrame({
+        ...productionConfig(), requestedProfileId: p.id, frameIndex: tick
+      });
+      currentSceneMetrics = frame.telemetry;
+      if (id === 'boss_preview') return frame.bossPreviewBuffer;
+      if (id === 'interior_preview') return frame.interiorPreviewBuffer;
+      if (id === 'cave_preview') return frame.cavePreviewBuffer;
+      return frame.sceneBuffer;
+    }
+    case 'quality-inspector':
+      return comparisonStrip(id === 'oak_tree' || id === 'crystal_geode' ? id : 'hero');
     case 'characters':
     case 'character-actions': {
       const action = section === 'character-actions' ? id as CharacterActionId : state.action;
