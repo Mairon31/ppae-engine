@@ -10,6 +10,7 @@ import {
   RGBAColor,
   VisualStatusEffect
 } from '../core/contracts';
+import { resolveDetailBudgetForProfile } from '../core/coordinates';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { direction8ToUnitVector, ProceduralCharacterRig } from './character-rig';
@@ -101,19 +102,24 @@ export class CharacterAvatarGenerator {
     const [fx, fy] = direction8ToUnitVector(direction);
     const isFacingNorth = fy < -0.2;
     const isProfileSide = Math.abs(fx) > 0.85;
-    const u = mod === 6 ? 1.5 : 1.0;
+    const u = mod / 4;
+    const budget = resolveDetailBudgetForProfile(profile);
 
     // Colores resueltos
     const skin = hexToRgba(appearance.skinColorHex);
     const skinShad = hexToRgba(appearance.skinShadowHex);
+    const skinDeepShad = adjustColorBrightness(skinShad, -22);
     const skinHigh = adjustColorBrightness(skin, 18);
     const eyeCol = hexToRgba(appearance.eyeColorHex);
     const hair = hexToRgba(appearance.hairColorHex);
     const hairShad = hexToRgba(appearance.hairShadowHex);
     const hairHigh = adjustColorBrightness(hair, 24);
+    const hairSpec = adjustColorBrightness(hair, 45);
     const armorMain = hexToRgba(equipment.armorPrimaryHex);
     const armorShad = adjustColorBrightness(armorMain, -32);
+    const armorDeepShad = adjustColorBrightness(armorMain, -52);
     const armorHigh = adjustColorBrightness(armorMain, 26);
+    const armorSpec = adjustColorBrightness(armorMain, 48);
     const armorSec = hexToRgba(equipment.armorSecondaryHex);
     const capeCol = hexToRgba(equipment.capeColorHex);
     const capeShad = adjustColorBrightness(capeCol, -35);
@@ -292,9 +298,19 @@ export class CharacterAvatarGenerator {
         for (let dy = 0; dy < torsoH; dy++) {
           const half = dy >= Math.floor(torsoH * .62) ? waist : chest;
           for (let dx = -half; dx <= half; dx++) {
-            const color = dy === 0 || (dx < -half * .25 && dy < torsoH * .55)
+            let color = dy === 0 || (dx < -half * .25 && dy < torsoH * .55)
               ? armorHigh : dx > half * .3 || dy === torsoH - 1
               ? armorShad : armorMain;
+            if (budget.shadingSteps >= 4) {
+              if (dx < -half * .55 && dy < torsoH * .35 && budget.enableSpecularHighlights) {
+                color = armorSpec;
+              } else if (dx > half * .65 || (dy === torsoH - 1 && dx > 0)) {
+                color = armorDeepShad;
+              } else if (budget.enableClothFoldsAndSeams && dy >= Math.floor(torsoH * .62) &&
+                Math.abs(dx) % Math.max(2, Math.round(1.5 * u)) === 0) {
+                color = armorShad;
+              }
+            }
             b.setPixel(tx + dx, ty + dy, color);
           }
         }
@@ -386,6 +402,11 @@ export class CharacterAvatarGenerator {
         b.fillRect(hx - 1, hy - 1, Math.max(2, Math.round(2.2 * u)),
           Math.max(2, Math.round(2.2 * u)), glovesCol);
         b.setPixel(hx, hy - 1, skin);
+        if (budget.enableSecondaryJointArticulation && u >= 2) {
+          b.fillRect(hx - Math.round(.8 * u), hy - Math.round(.8 * u),
+            Math.max(1, Math.round(u * .8)), Math.max(1, Math.round(u * .8)), skinHigh);
+          b.setPixel(hx + Math.round(.8 * u), hy, skinDeepShad);
+        }
         if (equipment.mainHand !== 'none') {
           const wx = toScreenX(j.weapon_tip.x), wy = toScreenY(j.weapon_tip.y);
           // Profession-specific tool silhouettes; all pivot at the real
@@ -488,8 +509,11 @@ export class CharacterAvatarGenerator {
             : Math.max(1, Math.round(headRx *
                 Math.sqrt(Math.max(.12, 1 - Math.pow((dy + 1) / (headRy + 2), 2)))));
           for (let dx = -half; dx <= half; dx++) {
-            const tone = dy === headRy || dx > half * .45
+            let tone = dy === headRy || dx > half * .45
               ? skinShad : dy < -1 && dx < 0 ? skinHigh : skin;
+            if (budget.shadingSteps >= 4 && dy === headRy && dx > 0) {
+              tone = skinDeepShad;
+            }
             b.setPixel(hx + dx, hy + dy, tone);
           }
         }
@@ -523,34 +547,80 @@ export class CharacterAvatarGenerator {
           const expression = action === 'sleeping' ? 'blink' : (appearance.expression ?? 'neutral');
           const brow = appearance.ageGroup === 'elder'
             ? hexToRgba('#cbd5e1') : hairShad;
+          const tier = budget.facialDetailTier;
+          const hdEyes = tier === 'full_features' || tier === 'expressive_hd';
+          const eyesClosed = expression === 'blink';
+          const browY = eyeY - Math.max(1, Math.round(.9 * u));
+          const eyeSize = hdEyes ? Math.max(2, Math.round(.85 * u)) : 1;
+          const white = hexToRgba('#f8fafc');
+          const pupil = hexToRgba('#0f172a');
+          // Centralize all facial details to preserve direction-specific depth.
+          const drawEye = (ex: number, sideView: boolean): void => {
+            if (tier !== 'eyes_only') {
+              b.fillRect(ex - (hdEyes ? 1 : 0), browY,
+                Math.max(1, eyeSize + (sideView ? 0 : 1)), 1, brow);
+            }
+            if (hdEyes) {
+              const left = sideView ? ex - Math.floor(eyeSize / 2) : ex - 1;
+              b.fillRect(left, eyeY, eyeSize + 1, eyeSize,
+                eyesClosed ? skinShad : white);
+              if (!eyesClosed) {
+                b.fillRect(ex, eyeY, Math.max(1, eyeSize - 1), eyeSize, eyeCol);
+                b.setPixel(ex, eyeY + Math.floor(eyeSize / 2), pupil);
+                if (tier === 'expressive_hd') {
+                  b.setPixel(left, eyeY, hexToRgba('#ffffff'));
+                  b.drawLine(left, eyeY - 1, left + eyeSize, eyeY - 1, brow);
+                  b.setPixel(left, eyeY + eyeSize, skinShad);
+                }
+              }
+            } else {
+              b.setPixel(ex, eyeY, eyesClosed ? brow : eyeCol);
+              if (u >= 1.5 && !eyesClosed && !sideView) {
+                b.setPixel(ex, eyeY + 1, eyeCol);
+              }
+            }
+          };
+
           if (isProfileSide) {
             const eyeX = hx + eyeShiftX;
-            b.setPixel(eyeX, eyeY - 1, brow);
-            if (expression !== 'blink') b.setPixel(eyeX, eyeY, eyeCol);
-            else b.setPixel(eyeX, eyeY, brow);
-            b.setPixel(hx + Math.round(fx * headRx), eyeY + 1, skinHigh);
+            drawEye(eyeX, true);
+            b.setPixel(hx + Math.round(fx * headRx), eyeY + Math.max(1, Math.round(.7 * u)), skinHigh);
           } else {
             const eyeSpan = Math.max(2, Math.round(1.6 * u));
-            const lx = hx + eyeShiftX - eyeSpan;
-            const rx = hx + eyeShiftX + eyeSpan;
-            b.setPixel(lx, eyeY - 1, brow);
-            b.setPixel(rx, eyeY - 1, brow);
-            const eyeTone = expression === 'blink' ? brow : eyeCol;
-            b.setPixel(lx, eyeY, eyeTone);
-            b.setPixel(rx, eyeY, eyeTone);
-            if (u >= 1.5 && expression !== 'blink') {
-              b.setPixel(lx, eyeY + 1, eyeCol);
-              b.setPixel(rx, eyeY + 1, eyeCol);
-            }
-            // Subtle nose and mouth below the actual eye line.
-            b.setPixel(hx + eyeShiftX, eyeY + Math.max(2, Math.round(1.8 * u)),
-              skinShad);
-            if (expression === 'happy') {
-              b.setPixel(hx + eyeShiftX - 1, eyeY + Math.round(3 * u), hairShad);
-              b.setPixel(hx + eyeShiftX + 1, eyeY + Math.round(3 * u), hairShad);
-            }
-            if (expression === 'surprised') {
-              b.setPixel(hx + eyeShiftX, eyeY + Math.round(3 * u), hairShad);
+            drawEye(hx + eyeShiftX - eyeSpan, false);
+            drawEye(hx + eyeShiftX + eyeSpan, false);
+            if (hdEyes) {
+              const noseY = eyeY + Math.max(1, Math.round(1.1 * u));
+              const mouthY = eyeY + Math.max(2, Math.round(2.1 * u));
+              b.setPixel(hx + eyeShiftX, noseY, skinShad);
+              b.setPixel(hx + eyeShiftX - 1, noseY, skinHigh);
+              const mouthW = expression === 'surprised'
+                ? Math.max(1, Math.round(.5 * u))
+                : Math.max(2, Math.round(1.4 * u));
+              if (expression === 'surprised') {
+                b.fillEllipse(hx + eyeShiftX, mouthY, Math.max(1, Math.round(.5 * u)),
+                  Math.max(1, Math.round(.65 * u)), skinDeepShad);
+              } else if (expression === 'happy') {
+                b.drawLine(hx + eyeShiftX - Math.floor(mouthW / 2), mouthY - 1,
+                  hx + eyeShiftX, mouthY, skinDeepShad);
+                b.drawLine(hx + eyeShiftX, mouthY,
+                  hx + eyeShiftX + Math.floor(mouthW / 2), mouthY - 1, skinDeepShad);
+              } else {
+                b.fillRect(hx + eyeShiftX - Math.floor(mouthW / 2), mouthY,
+                  mouthW, 1, skinDeepShad);
+              }
+              if (tier === 'expressive_hd') {
+                b.setPixel(hx + eyeShiftX - Math.max(1, Math.round(.45 * u)),
+                  mouthY + 1, skinShad);
+              }
+            } else if (tier === 'eyes_and_brows') {
+              b.setPixel(hx + eyeShiftX, eyeY + Math.max(2, Math.round(1.8 * u)), skinShad);
+              if (expression === 'happy') {
+                b.setPixel(hx + eyeShiftX - 1, eyeY + Math.round(3 * u), hairShad);
+                b.setPixel(hx + eyeShiftX + 1, eyeY + Math.round(3 * u), hairShad);
+              } else if (expression === 'surprised') {
+                b.setPixel(hx + eyeShiftX, eyeY + Math.round(3 * u), hairShad);
+              }
             }
           }
           // Marks are deliberately below/above the eye line, never on the pupils.
@@ -684,8 +754,15 @@ export class CharacterAvatarGenerator {
             for (let dy = -1; dy <= hairDepth; dy++) {
               const span = dy === -1 ? headRx - 1 : headRx;
               for (let dx = -span; dx <= span; dx++) {
-                const tone = dy <= 0 && dx < 0 ? hairHigh
+                let tone = dy <= 0 && dx < 0 ? hairHigh
                   : dx > span * .45 ? hairShad : hair;
+                if (budget.shadingSteps >= 4) {
+                  if (dy === -1 && dx < -1 && budget.enableSpecularHighlights) {
+                    tone = hairSpec;
+                  } else if (dx % 3 === 0 && dy > 0) {
+                    tone = hairShad;
+                  }
+                }
                 b.setPixel(hx + dx, crownY + dy, tone);
               }
             }

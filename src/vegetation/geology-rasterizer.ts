@@ -8,6 +8,7 @@ import type {
   RGBAColor,
   RockSubFragment
 } from '../core/contracts';
+import { resolveDetailBudgetForProfile } from '../core/coordinates';
 import { fnv1aHash32 } from '../core/deterministic';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
@@ -26,6 +27,7 @@ export interface RenderedGeologicalArtifact {
 
 interface StoneColorSet {
   readonly outline: RGBAColor;
+  readonly abyssShadow: RGBAColor;
   readonly deepShadow: RGBAColor;
   readonly midtone: RGBAColor;
   readonly highlight: RGBAColor;
@@ -47,6 +49,7 @@ export class GeologicalFormationRasterizer {
     const w = descriptor.canvasWidthTexels;
     const h = descriptor.canvasHeightTexels;
     const buffer = new PixelBuffer(w, h);
+    const budget = resolveDetailBudgetForProfile(profile);
     const archetype = GEOLOGICAL_ARCHETYPE_CATALOG[descriptor.kind];
     if (!archetype) throw new Error('Unknown geological kind: ' + descriptor.kind);
     const colors = this.resolveStoneColors(archetype, stateTag);
@@ -59,7 +62,8 @@ export class GeologicalFormationRasterizer {
         { r: 15, g: 23, b: 42, a: 105 });
     }
     for (const fragment of [...descriptor.fragments].sort((a,b) => a.zOrder-b.zOrder)) {
-      this.rasterizeRockFragment(buffer, fragment, descriptor, colors, stateTag);
+      this.rasterizeRockFragment(buffer, fragment, descriptor, colors,
+        budget.barkAndFacetMicroDetailLevel, stateTag);
     }
     const mineralMask = new Set<number>();
     // Count distinct mineral texels, not an estimated rectangle area.
@@ -85,9 +89,14 @@ export class GeologicalFormationRasterizer {
     state: GeologicalRenderState
   ): StoneColorSet {
     const stone = archetype.stonePalette;
+    const deep = hexToRgba(stone.deepShadowHex);
     return {
       outline: hexToRgba(stone.outlineHex),
-      deepShadow: hexToRgba(stone.deepShadowHex),
+      abyssShadow: {
+        r: Math.max(0, deep.r - 18), g: Math.max(0, deep.g - 18),
+        b: Math.max(0, deep.b - 18), a: 255
+      },
+      deepShadow: deep,
       midtone: hexToRgba(stone.midtoneHex),
       highlight: hexToRgba(stone.highlightHex),
       accent: hexToRgba(state === 'snowy' ? '#eef6fa' : stone.accentHex),
@@ -98,10 +107,11 @@ export class GeologicalFormationRasterizer {
 
   private rasterizeRockFragment(
     buf: PixelBuffer, frag: RockSubFragment, descriptor: GeologicalMorphologyDescriptor,
-    colors: StoneColorSet, state: GeologicalRenderState
+    colors: StoneColorSet, detailLevel: 1 | 2 | 3 | 4, state: GeologicalRenderState
   ): void {
     for (const facet of frag.facets) {
-      this.rasterizeFacetTriangle(buf, facet, frag, descriptor.metrics.angularityScore, colors, state);
+      this.rasterizeFacetTriangle(buf, facet, frag, descriptor.metrics.angularityScore,
+        colors, detailLevel, state);
     }
     const archetype = GEOLOGICAL_ARCHETYPE_CATALOG[descriptor.kind];
     const veinTone = archetype.mineralPalette
@@ -134,7 +144,8 @@ export class GeologicalFormationRasterizer {
   /** Barycentric triangle fill using integer texel centers and discrete tones. */
   private rasterizeFacetTriangle(
     buf: PixelBuffer, facet: GeologicalFacetPlane, frag: RockSubFragment,
-    angularity: number, colors: StoneColorSet, state: GeologicalRenderState
+    angularity: number, colors: StoneColorSet,
+    detailLevel: 1 | 2 | 3 | 4, state: GeologicalRenderState
   ): void {
     const [a,b,c] = facet.vertices;
     const minX = Math.max(0,Math.min(a.x,b.x,c.x));
@@ -155,6 +166,21 @@ export class GeologicalFormationRasterizer {
         let color=tone;
         if(angularity>.65 && (w1<.16 || w2<.16) && w0>.2 && facet.faceLightScore>.2) {
           color=colors.accent;
+        }
+        // Native-resolution lithology: micro-facets emerge from the facet's
+        // barycentric geometry, with deterministic grain only inside its face.
+        if (detailLevel >= 2) {
+          const grain = ((x * 37) ^ (y * 59) ^ (frag.centerX * 11)) & 31;
+          if (detailLevel >= 3 && facet.toneBand === 'shadow' && w0 < .28) {
+            color = colors.abyssShadow;
+          } else if (grain < detailLevel && facet.toneBand === 'midtone') {
+            color = colors.highlight;
+          } else if (grain === 7 && detailLevel >= 3 &&
+            facet.toneBand === 'highlight') {
+            color = colors.accent;
+          } else if (grain === 11 && detailLevel === 4 && facet.faceLightScore < 0) {
+            color = colors.abyssShadow;
+          }
         }
         if(frag.strataLineSpacingPx && (y+Math.floor(x*.25))%frag.strataLineSpacingPx===0){
           color=facet.toneBand === 'shadow' ? colors.outline : colors.deepShadow;

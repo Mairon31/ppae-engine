@@ -62,7 +62,7 @@ export class ProceduralCharacterRig {
     totalFrames: number,
     profile: ArtStyleProfile
   ): CharacterRigPose {
-    const scaleUnit = profile.moduleSize === 6 ? 1.5 : 1.0;
+    const scaleUnit = profile.moduleSize / 4;
     const hScale = Math.max(0.9, Math.min(1.1, appearance.heightScale));
     const phase = ((frameIndex % Math.max(1, totalFrames)) / Math.max(1, totalFrames)) * Math.PI * 2;
 

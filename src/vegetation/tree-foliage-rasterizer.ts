@@ -6,6 +6,7 @@ import type {
   TreeMorphologyDescriptor,
   TreeSpeciesDefinition
 } from '../core/contracts';
+import { resolveDetailBudgetForProfile } from '../core/coordinates';
 import { SeededRNG, fnv1aHash32 } from '../core/deterministic';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
@@ -27,9 +28,11 @@ export interface RenderedTreeCanopyLayers {
 
 interface FoliageColorPalette {
   readonly outline: RGBAColor;
+  readonly abyssShadow: RGBAColor;
   readonly deepShadow: RGBAColor;
   readonly midtone: RGBAColor;
   readonly highlight: RGBAColor;
+  readonly specularTip: RGBAColor;
   readonly accentOrFruit?: RGBAColor;
   readonly snowCap: RGBAColor;
 }
@@ -138,6 +141,8 @@ export class TreeCanopyFoliageRasterizer {
     if (envState === 'autumn' && species.speciesId !== 'pine') {
       return {
         outline: hexToRgba('#2e130c'),
+        abyssShadow: hexToRgba('#47170d'),
+        specularTip: hexToRgba('#fde047'),
         deepShadow: hexToRgba('#6e2515'),
         midtone: hexToRgba('#b54821'),
         highlight: hexToRgba('#e68a2e'),
@@ -148,6 +153,8 @@ export class TreeCanopyFoliageRasterizer {
     if (envState === 'blossom') {
       return {
         outline: hexToRgba('#3b1224'),
+        abyssShadow: hexToRgba('#581c87'),
+        specularTip: hexToRgba('#ffffff'),
         deepShadow: hexToRgba('#8a2be2'),
         midtone: hexToRgba('#ec4899'),
         highlight: hexToRgba('#fbcfe8'),
@@ -155,11 +162,21 @@ export class TreeCanopyFoliageRasterizer {
         snowCap: hexToRgba('#eef6fa')
       };
     }
+    const shad = hexToRgba(species.foliageColors.shadow);
+    const high = hexToRgba(species.foliageColors.highlight);
     return {
       outline: hexToRgba(species.foliageColors.outline),
-      deepShadow: hexToRgba(species.foliageColors.shadow),
+      abyssShadow: {
+        r: Math.max(0, shad.r - 18), g: Math.max(0, shad.g - 18),
+        b: Math.max(0, shad.b - 18), a: 255
+      },
+      deepShadow: shad,
       midtone: hexToRgba(species.foliageColors.midtone),
-      highlight: hexToRgba(species.foliageColors.highlight),
+      highlight: high,
+      specularTip: {
+        r: Math.min(255, high.r + 28), g: Math.min(255, high.g + 28),
+        b: Math.min(255, high.b + 22), a: 255
+      },
       accentOrFruit: species.foliageColors.fruitOrAccent
         ? hexToRgba(species.foliageColors.fruitOrAccent) : undefined,
       snowCap: hexToRgba('#eef6fa')
@@ -204,15 +221,19 @@ export class TreeCanopyFoliageRasterizer {
     const cy = mass.centerY;
     const rx = mass.radiusX;
     const ry = mass.radiusY;
-    const lobes = Math.max(3, mass.lobeCount);
+    const budget = resolveDetailBudgetForProfile(profile);
+    const lobes = Math.max(3, mass.lobeCount * budget.foliageSubdivisionLevel);
     const centers: Array<{x: number; y: number; rx: number; ry: number}> = [];
     for (let i = 0; i < lobes; i++) {
       const angle = (i / lobes) * Math.PI * 2 + mass.angleTiltRad;
+      const ring = budget.foliageSubdivisionLevel === 1 ? .48 : (i % 2 ? .3 : .5);
+      const factor = budget.foliageSubdivisionLevel === 1
+        ? 1 : Math.max(.5, 1.1 / Math.sqrt(budget.foliageSubdivisionLevel));
       centers.push({
-        x: Math.round(cx + Math.cos(angle) * rx * 0.48),
-        y: Math.round(cy + Math.sin(angle) * ry * 0.42),
-        rx: Math.max(2, Math.round(rx * rng.nextRange(0.55, 0.78))),
-        ry: Math.max(2, Math.round(ry * rng.nextRange(0.52, 0.75)))
+        x: Math.round(cx + Math.cos(angle) * rx * ring),
+        y: Math.round(cy + Math.sin(angle) * ry * (ring * .875)),
+        rx: Math.max(2, Math.round(rx * rng.nextRange(0.55, 0.78) * factor)),
+        ry: Math.max(2, Math.round(ry * rng.nextRange(0.52, 0.75) * factor))
       });
     }
     const minX = Math.max(1, cx - rx - 3);
@@ -240,9 +261,16 @@ export class TreeCanopyFoliageRasterizer {
         if (envState === 'snowy' && relativeY < -0.25) {
           tone = palette.snowCap;
         } else if (mass.layerDepth === 'back') {
-          tone = lightScore > 0.15 ? palette.midtone : palette.deepShadow;
+          tone = budget.shadingSteps >= 4 && lightScore < -.2
+            ? palette.abyssShadow
+            : lightScore > .15 ? palette.midtone : palette.deepShadow;
+        } else if (budget.shadingSteps >= 4 && budget.enableSpecularHighlights &&
+          lightScore > .38 && ((px * 5 + py * 7) & 7) === 0) {
+          tone = palette.specularTip;
         } else if (lightScore > 0.22 && ((px + py * 3) & 3) !== 0) {
           tone = palette.highlight;
+        } else if (budget.shadingSteps >= 5 && relativeY > .5) {
+          tone = palette.abyssShadow;
         } else if (relativeY > 0.32 || lightScore < -0.25) {
           tone = palette.deepShadow;
         } else {
