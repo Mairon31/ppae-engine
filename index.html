@@ -1,167 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PPAE Studio — Fase 1: Núcleo Gráfico Procedural</title>
-    <style>
-      :root {
-        --bg: #0f141c;
-        --panel: #18202c;
-        --border: #2a364a;
-        --text: #e2e8f0;
-        --accent: #38bdf8;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        background: var(--bg);
-        color: var(--text);
-        display: grid;
-        grid-template-columns: 340px 1fr;
-        min-height: 100vh;
-      }
-      aside {
-        background: var(--panel);
-        border-right: 1px solid var(--border);
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      h1 {
-        font-size: 16px;
-        margin: 0;
-        color: var(--accent);
-      }
-      label {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        font-size: 12px;
-      }
-      input,
-      select,
-      button {
-        background: #0f141c;
-        color: var(--text);
-        border: 1px solid var(--border);
-        padding: 8px;
-        border-radius: 4px;
-        font-family: inherit;
-      }
-      button {
-        cursor: pointer;
-        background: #1e293b;
-        font-weight: 600;
-      }
-      button:hover {
-        border-color: var(--accent);
-      }
-      main {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-      .cards-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 14px;
-      }
-      .asset-card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      }
-      canvas {
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
-        border: 1px solid var(--border);
-      }
-      .meta {
-        font-size: 11px;
-        color: #94a3b8;
-        width: 100%;
-        line-height: 1.5;
-      }
-      .telemetry-box {
-        background: #0b0f17;
-        border: 1px solid var(--border);
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 11px;
-        line-height: 1.6;
-      }
-    </style>
-  </head>
-  <body>
-    <aside>
-      <h1>PPAE Phase 1 — Inspector</h1>
-      <label>
-        Semilla del Mundo (Seed)
-        <input id="seed-input" type="text" value="PixelProject-2026" />
-      </label>
-      <label>
-        Perfil de Granularidad (4x4 vs 6x6)
-        <select id="profile-select">
-          <option value="micro-4x4">Micro Art 4×4 (6×6 mod/tile)</option>
-          <option value="micro-6x6">Micro Art 6×6 (4×4 mod/tile)</option>
-          <option value="hybrid-24">Hybrid HD 48px</option>
-        </select>
-      </label>
-      <label>
-        Paleta / Bioma
-        <select id="palette-select">
-          <option value="meadow-summer">Pradera Templada (Verano)</option>
-          <option value="meadow-autumn">Bosque Ámbar (Otoño)</option>
-          <option value="tundra-winter">Tundra Boreal (Invierno)</option>
-        </select>
-      </label>
-      <label>
-        Estado del Recurso
-        <select id="state-select">
-          <option value="intact">Intacto</option>
-          <option value="snowy">Nevado</option>
-          <option value="wind_sway">Impulso de Viento</option>
-          <option value="damaged">Dañado</option>
-        </select>
-      </label>
-      <label>
-        Escala Entera (Integer Zoom)
-        <select id="scale-select">
-          <option value="2">2× (Nativo x2)</option>
-          <option value="4" selected>4× (Inspección)</option>
-          <option value="6">6× (Macro Pixel)</option>
-        </select>
-      </label>
-      <label style="flex-direction: row; align-items: center; gap: 8px">
-        <input id="debug-pivots" type="checkbox" checked />
-        Mostrar Pivote, Retícula y Hitbox
-      </label>
-      <button id="random-seed-btn">Generar Nueva Semilla</button>
-      <div id="telemetry" class="telemetry-box"></div>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0b0e13"/>
+  <meta name="description" content="PPAE Playground — explora sprites, animaciones, escenarios, vegetación, clima y VFX generados por el motor procedural."/>
+  <title>PPAE — Playground del motor procedural</title>
+  <link rel="stylesheet" href="/src/demo/playground.css"/>
+</head>
+<body>
+  <div class="studio">
+    <aside class="sidebar" aria-label="Catálogo de sistemas del motor">
+      <a class="identity" href="#world" aria-label="PPAE Playground">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span><strong>PPAE</strong><small>ENGINE PLAYGROUND</small></span>
+        <span class="identity-version">2.0</span>
+      </a>
+      <div class="sidebar-label">EXPLORADOR DEL MOTOR</div>
+      <nav id="section-nav" class="section-nav" aria-label="Secciones"></nav>
+      <div class="sidebar-bottom">
+        <span class="live-dot"></span> Renderizado procedural real
+        <a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">Ver repositorio ↗</a>
+      </div>
     </aside>
-    <main>
-      <section>
-        <h2 style="margin: 0 0 10px 0; font-size: 14px">
-          Escenario Ordenado por Profundidad (Y-Sorting + Retícula Lógica 16×16 → Visual 24×24)
-        </h2>
-        <canvas id="world-stage" width="768" height="320"></canvas>
-      </section>
-      <section>
-        <h2 style="margin: 0 0 10px 0; font-size: 14px">Catálogo de Recursos Generados por Código</h2>
-        <div id="cards-container" class="cards-grid"></div>
-      </section>
-    </main>
-    <script type="module" src="/src/demo/main.ts"></script>
-  </body>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>PPAE Studio</span><span class="chevron">/</span><strong id="crumb-current">Mundo procedural</strong></div>
+        <div class="top-actions">
+          <span class="engine-status"><span class="live-dot"></span> Motor activo</span>
+          <a class="top-repo" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          <button type="button" id="toggle-sidebar" class="mobile-nav-button" aria-expanded="false" aria-label="Abrir navegación">☰</button>
+        </div>
+      </header>
+      <main class="main-content">
+        <div class="page-heading">
+          <div><div class="eyebrow">PROCEDURAL PIXEL ART ENGINE / LABORATORIO</div><h1 id="page-title">Mundo procedural</h1><p id="page-description">Un entorno de pruebas conectado a los generadores de PPAE.</p></div>
+          <div class="build-badge"><span class="live-dot"></span> LIVE PREVIEW <span class="build-version">ALPHA</span></div>
+        </div>
+        <section class="preview-shell" aria-label="Visor del motor">
+          <div class="preview-toolbar">
+            <div class="preview-tabs"><span class="tab-active">01 &nbsp; VISTA EN DIRECTO</span><span id="preview-subtitle">Generación determinista</span></div>
+            <div class="preview-buttons">
+              <button type="button" id="toggle-grid" class="icon-button" title="Mostrar retícula" aria-pressed="false">▦</button>
+              <button type="button" id="play-toggle" class="icon-button" title="Pausar o reproducir" aria-pressed="true">Ⅱ</button>
+              <button type="button" id="download-png" class="icon-button" title="Guardar PNG">↓ PNG</button>
+            </div>
+          </div>
+          <div class="viewport" id="viewport"><canvas id="world-stage" width="960" height="540" aria-label="Escena generada por PPAE"></canvas><div class="canvas-vignette" aria-hidden="true"></div><div class="viewport-top"><span id="stage-mode-label">WORLD / LIVE SCENE</span><span id="stage-coordinates">SEED · PPAE</span></div><div class="viewport-bottom"><span id="stage-action">IDLE</span><span id="stage-frames">FRAME 01 / 04</span></div></div>
+          <div class="preview-footer"><span><span class="live-dot"></span> <strong id="engine-live">LISTO</strong></span><span id="render-stats">—</span><span id="fps-counter">— FPS</span></div>
+        </section>
+        <div class="section-heading"><div><div class="eyebrow">CATÁLOGO EXPLORABLE</div><h2 id="gallery-title">Variaciones disponibles</h2></div><div class="gallery-nav"><span id="gallery-range">—</span><button type="button" id="gallery-prev" aria-label="Página anterior">←</button><button type="button" id="gallery-next" aria-label="Página siguiente">→</button></div></div>
+        <div id="cards-container" class="cards-grid" aria-live="polite"></div>
+        <section class="bottom-info"><div><strong>Sprites generados, no mockups</strong><p>Las muestras utilizan los generadores públicos de PPAE y semilla determinista. El visor no altera el repositorio ni el mundo guardado.</p></div><div class="bottom-actions"><button type="button" id="download-atlas" class="secondary-button">Exportar spritesheet</button><button type="button" id="download-json" class="secondary-button">Metadatos JSON</button></div></section>
+      </main>
+    </div>
+    <aside class="inspector" aria-label="Controles del Playground">
+      <div class="inspector-top"><div class="eyebrow">INSPECTOR</div><h2>Propiedades <span class="inspector-symbol">⚙</span></h2><p>Ajusta el motor en tiempo real</p></div>
+      <div class="inspector-body">
+        <div class="control-section-title">GENERACIÓN <span>01</span></div>
+        <label>Semilla del mundo<input id="seed-input" value="PixelProject-2026" spellcheck="false"/></label>
+        <button type="button" id="random-seed-btn" class="full-button">↻ &nbsp; Nueva variante</button>
+        <label>Resolución artística<select id="profile-select">
+          <option value="micro-4x4">Micro Art 4×4</option><option value="micro-6x6" selected>Micro Art 6×6</option>
+          <option value="classic-8x8">Classic 8×8</option><option value="standard-16x16">Standard 16×16</option>
+          <option value="detailed-32x32">Detailed 32×32</option><option value="hybrid-24">Hybrid 24 / 48 px</option>
+          <option value="adaptive-auto">Adaptive (auto)</option>
+        </select></label>
+        <label>Zoom del visor <strong id="zoom-display">2×</strong><input id="zoom-select" type="range" min="1" max="5" value="2" step="1"/></label>
+        <div class="control-section-title">ANIMACIÓN <span>02</span></div>
+        <label>Acción<select id="action-select"></select></label>
+        <label>Orientación<select id="direction-select"></select></label>
+        <label>Velocidad <strong id="speed-display">1.0×</strong><input id="speed-select" type="range" min="0.25" max="2.5" step="0.25" value="1"/></label>
+        <div class="toggle-row"><span>Reproducción continua</span><input id="loop-toggle" type="checkbox" checked/></div>
+        <div class="control-section-title">VARIACIONES <span>03</span></div>
+        <label>Estado / etapa<select id="stage-select"></select></label>
+        <label>Complexión / edad<select id="age-select"><option value="adult">Adulto</option><option value="juvenile">Juvenil</option><option value="alpha_elder">Alfa / anciano</option></select></label>
+        <label>Condición<select id="health-select"><option value="healthy">Normal</option><option value="wounded">Herido</option><option value="corrupted">Corrupto</option></select></label>
+        <div class="control-section-title">ESCENA <span>04</span></div>
+        <label>Hora del día<select id="time-select"><option value="noon">Mediodía</option><option value="dawn">Amanecer</option><option value="dusk">Atardecer</option><option value="night">Noche</option></select></label>
+        <label>Clima<select id="weather-select"><option value="clear">Despejado</option><option value="rain">Lluvia</option><option value="snow">Nieve</option><option value="thunderstorm">Tormenta</option></select></label>
+        <div class="toggle-row"><span>Mostrar pivote</span><input id="pivot-toggle" type="checkbox"/></div>
+        <div class="toggle-row"><span>Mostrar hitbox</span><input id="hitbox-toggle" type="checkbox"/></div>
+      </div>
+      <div class="inspector-bottom"><div class="eyebrow">DIAGNÓSTICO EN VIVO</div><div id="telemetry" class="telemetry-box" aria-live="polite">Iniciando motor…</div></div>
+    </aside>
+  </div>
+  <script type="module" src="/src/demo/main.ts"></script>
+</body>
 </html>

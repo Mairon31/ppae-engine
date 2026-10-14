@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feat/ppae-2-art-overhaul
   workflow_dispatch:
 
 permissions:
