@@ -359,7 +359,7 @@ export const MARKETING_TRANSLATIONS: Readonly<Record<string, readonly [string, s
   "Open GitHub Pages settings": [
     "Abrir configuración de GitHub Pages",
     "Abrir configurações do GitHub Pages"
-  ]
+  ],
   "Language": ["Idioma","Idioma"],
   "Website language": ["Idioma del sitio web","Idioma do site"],
   "PPAE Engine — Procedural Pixel Art Engine": ["PPAE Engine — Motor Procedural de Pixel Art","PPAE Engine — Motor Procedural de Pixel Art"],
