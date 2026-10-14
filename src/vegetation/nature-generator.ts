@@ -65,7 +65,7 @@ export class NatureGenerator {
     const species = TREE_SPECIES_CATALOG[speciesId];
     const windShiftTexels = options?.windShiftTexels ?? 0;
     const morphology = this.morphologyResolver.resolveTreeMorphology(
-      speciesId, stage, profile, seed, options?.archetypeId
+      speciesId, stage, profile, seed, options?.archetypeId, windShiftTexels
     );
     const skeleton = this.skeletonRasterizer.renderSkeleton(
       morphology, profile, species, windShiftTexels
