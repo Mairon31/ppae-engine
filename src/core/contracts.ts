@@ -573,3 +573,112 @@ export interface BossVisualState {
   readonly telegraphProgress: number; // [0.0 a 1.0]
   readonly segments: Readonly<Record<BossSegmentId, BossSegmentState>>;
 }
+// ============================================================================
+// PHASE 5 CONTRACTS: STRUCTURES, INTERIORS, FORMAL PORTALS & CAVES
+// ============================================================================
+
+export type StructureArchetypeId =
+  | 'cottage_house'
+  | 'blacksmith_forge'
+  | 'watch_tower'
+  | 'wooden_bridge'
+  | 'cave_entrance';
+
+export type WallMaterialId = 'timber_frame' | 'cobblestone' | 'ashlar_brick' | 'cavern_rock';
+export type RoofStyleId = 'pitched_shingle' | 'thatched_gable' | 'stone_battlement' | 'none';
+
+export interface LogicalRect {
+  readonly x: number; // En unidades lógicas de mundo (base 16 por tile)
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface StructureDefinition {
+  readonly schemaVersion: string;
+  readonly structureId: string;
+  readonly archetype: StructureArchetypeId;
+  readonly wallMaterial: WallMaterialId;
+  readonly roofStyle: RoofStyleId;
+  readonly widthInTiles: number;
+  readonly heightInTiles: number;
+  readonly hasChimney: boolean;
+  readonly windowCount: number;
+  readonly doorTileOffsetX: number; // Offset en tiles desde la esquina izquierda del edificio
+  readonly wallPrimaryHex: string;
+  readonly wallSecondaryHex: string;
+  readonly roofPrimaryHex: string;
+  readonly roofShadowHex: string;
+}
+
+export type FurnitureKind =
+  | 'bed'
+  | 'dining_table'
+  | 'wooden_chair'
+  | 'bookshelf'
+  | 'storage_chest'
+  | 'furnace_hearth'
+  | 'wall_torch'
+  | 'woven_rug';
+
+export interface FurniturePlacement {
+  readonly id: string;
+  readonly kind: FurnitureKind;
+  readonly tileX: number;
+  readonly tileY: number;
+  readonly widthTiles: number;
+  readonly heightTiles: number;
+  readonly collidable: boolean;
+  readonly emitsLight?: boolean;
+}
+
+export interface InteriorDefinition {
+  readonly schemaVersion: string;
+  readonly interiorId: string;
+  readonly parentStructureId: string;
+  readonly widthInTiles: number;
+  readonly heightInTiles: number;
+  readonly floorMaterialHex: string;
+  readonly floorAccentHex: string;
+  readonly wallMaterialHex: string;
+  readonly exitDoorTileX: number;
+  readonly exitDoorTileY: number;
+  readonly furniture: readonly FurniturePlacement[];
+}
+
+export type WorldSpaceKind = 'exterior_overworld' | 'building_interior' | 'underground_cave';
+
+export interface PortalEndpoint {
+  readonly spaceKind: WorldSpaceKind;
+  readonly spaceId: string;
+  readonly triggerRect: LogicalRect;
+  readonly safeSpawnPoint: {
+    readonly worldX: number;
+    readonly worldY: number;
+    readonly facingDirection: Direction8;
+  };
+}
+
+export interface PortalDefinition {
+  readonly schemaVersion: string;
+  readonly portalId: string;
+  readonly structureId: string;
+  readonly doorId: string;
+  readonly isOpen: boolean;
+  readonly isLocked: boolean;
+  readonly requiredKeyId?: string;
+  readonly sideA: PortalEndpoint; // Ej: Exterior frente a la puerta
+  readonly sideB: PortalEndpoint; // Ej: Interior de la vivienda o cámara de cueva
+}
+
+export interface CaveChamberDefinition {
+  readonly schemaVersion: string;
+  readonly caveId: string;
+  readonly widthInTiles: number;
+  readonly heightInTiles: number;
+  readonly seed: number;
+  readonly hasLavaPool: boolean;
+  readonly crystalCount: number;
+  readonly exitStairsTileX: number;
+  readonly exitStairsTileY: number;
+}
