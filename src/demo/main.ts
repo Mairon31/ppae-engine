@@ -1,7 +1,7 @@
 import {
   AdaptiveResolutionController, ALL_DIRECTIONS_8, AMBIENT_PROFILES_BY_PHASE,
   AnimationStateMachine, ArtStyleProfile, CharacterActionId, CharacterAvatarGenerator,
-  CharacterCustomizationService, CHUNK_SIZE_TILES, ChunkWorldRenderer,
+  CharacterCustomizationService, ChunkWorldRenderer,
   CaveDungeonGenerator, CreatureActionId, CreatureAgeStage, CreatureGenerator,
   CreatureHealthState, CreatureSpeciesId, CropSpeciesId, DEFAULT_CHARACTER_CLIPS, DEFAULT_CREATURE_CLIPS,
   DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HERO_APPEARANCE,
@@ -210,7 +210,7 @@ function worldScene(p: ArtStyleProfile, tick: number): PixelBuffer {
   const cacheKey = state.seed + ':' + p.id + ':' + variant;
   let chunk = cachedWorld.get(cacheKey);
   if (!chunk) {
-    chunk = worldRenderer.renderChunk(0, 0, p, variant, 4);
+    chunk = worldRenderer.renderChunk(0, 0, p, variant, 4, 8);
     if (cachedWorld.size >= 8) cachedWorld.clear();
     cachedWorld.set(cacheKey, chunk);
   }
@@ -241,13 +241,13 @@ function worldScene(p: ArtStyleProfile, tick: number): PixelBuffer {
   if (state.weather !== 'clear') {
     weather.setWeatherState(DEFAULT_WEATHER_STATES[state.weather]);
     const result = weather.renderWeatherOverlay(
-      scene.width, scene.height, { x: 0, y: 0, width: CHUNK_SIZE_TILES * 16, height: CHUNK_SIZE_TILES * 16 },
+      scene.width, scene.height, { x: 0, y: 0, width: 8 * 16, height: 8 * 16 },
       p, elapsed / 1000, [], false, seedNumber('weather'));
     blend(scene, result.overlayBuffer, 0, 0);
   }
   if (state.time !== 'noon') {
     const lit = lighting.applyLightingToScene(scene,
-      { x: 0, y: 0, width: CHUNK_SIZE_TILES * 16, height: CHUNK_SIZE_TILES * 16 },
+      { x: 0, y: 0, width: 8 * 16, height: 8 * 16 },
       AMBIENT_PROFILES_BY_PHASE[state.time], p, [], elapsed / 1000);
     return lit.litBuffer;
   }
@@ -444,7 +444,7 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
   const p = DEFAULT_STYLE_PROFILES['micro-4x4'];
   // Preview generation uses the same engine entrypoints, at a bounded resolution.
   if (section === 'world') {
-    const chunk = worldRenderer.renderChunk(0, 0, p, 0, 4);
+    const chunk = worldRenderer.renderChunk(0, 0, p, 0, 4, 8);
     toThumbnail(canvas, chunk.terrainBuffer);
   } else if (section === 'particles') {
     const pool = new PixelParticleEngine(128);
@@ -516,7 +516,8 @@ function refreshControlVisibility(): void {
     state.section === 'farming' ? CROP_STAGES :
     state.section === 'bosses' ? ['phase_1_dormant','phase_2_enraged','phase_3_critical'] :
     ['intact'];
-  const selectedStage = stages.includes(state.stage as never) ? state.stage : stages[0];
+  const defaultStage = state.section === 'trees' || state.section === 'farming' ? 'mature' : stages[0];
+  const selectedStage = stages.includes(state.stage as never) ? state.stage : defaultStage;
   state.stage = selectedStage;
   options(byId<HTMLSelectElement>('stage-select'), stages, selectedStage);
   byId<HTMLSelectElement>('age-select').disabled = !creature;

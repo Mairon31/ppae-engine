@@ -26,6 +26,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
+| Playground — Interactive PPAE Demo | VERIFIED (code/CI) | 17 secciones, escenas de motor real, NPCs, 28/12 acciones, VFX visuales, clima, iluminación y exportación PNG/atlas/JSON; publicación Pages en revisión |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -247,6 +248,14 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Pruebas:** `tests/ppae-advanced-creatures-bosses-8a.test.ts` cubre catálogo, render escalado, determinismo en ocho direcciones, variantes, ambos jefes y compilación de atlas.
 - **Estado:** VERIFIED técnicamente. Commits: implementación `a04780f26139387f1881fdd57007f16316042018`, corrección de regresión de pivote slime y expectativa de familias 6B `e79910e00364f20548a31c8fac133723a45f5cae`, anclaje de raíces y compilación TypeScript `dbabf52138de17f6df3434dca1962e40d211b1a5`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38608133738: **27 suites / 157 tests aprobados**, `npm run build` correcto (TypeScript, biblioteca, declaraciones y demo). Inspección visual de las diez familias en 4/6/8/16/32 pendiente: las pruebas técnicas no certifican fidelidad artística.
 - **Siguiente:** Fase 9 — Procedural Architecture & Interiors.
+
+## Playground interactivo (octubre de 2026)
+
+- **Rama y PR:** `feat/ppae-2-art-overhaul` / PR #2. Entry `index.html` → `src/demo/main.ts`, catálogo `src/demo/playground-catalog.ts`, estilos `src/demo/playground.css`.
+- **Cobertura:** 17 secciones y generación procedimental real: mundo 8×8 tiles, jugador, NPCs, fauna, jefes, flora, geología, arquitectura, interiores, cuevas, agricultura, UI/inventario, partículas **VFX** (sin SFX ni audio), clima e iluminación. Inspector de resolución, semilla, dirección, acción, escala, edad/estado, hora/clima y telemetría. Exportación de PNG de vista, atlas PNG y JSON de metadatos para personajes y criaturas.
+- **Verificación técnica:** GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38611894862 aprobó **28 suites / 161 tests y npm run build** sobre commit `327b643b56be179c14fe37ff94b6ad3e226bfe3f`; cambios menores posteriores requieren su propia ejecución CI.
+- **Publicación:** La fase build de Pages sobre el mismo commit aprobó; el trabajo `deploy` falló en https://github.com/Mairon31/ppae-engine/actions/runs/38611894661. No afirmar que Pages funciona hasta que se confirme. Inspeccionar la configuración de Actions/Pages y las restricciones de la rama protegida `github-pages`; puede requerir una acción del propietario en Settings.
+- **QA pendiente:** comprobar manualmente en navegador, especialmente animaciones, rendimiento en 16×16/32×32, VFX y legibilidad móvil. Los tests no certifican calidad visual.
 
 ## Convenciones de estado
 

@@ -90,8 +90,8 @@ const LABELS: Record<string, string> = {
   jump_pounce: 'Salto / emboscada', special_ability: 'Habilidad especial',
   rest_graze: 'Pastoreo', eat_feed: 'Alimentación', sleep: 'Dormir',
   attack: 'Ataque', hurt: 'Herido', death: 'Muerte',
-  weapon_sword: 'Espada', weapon_axe: 'Hacha',
-  weapon_pickaxe: 'Pico', armor_chest: 'Coraza', shield: 'Escudo'
+  weapon_sword: 'Espada', tool_axe: 'Hacha',
+  tool_pickaxe: 'Pico', armor_chest: 'Coraza', shield: 'Escudo'
 };
 
 export function formatPlaygroundLabel(id: string): string {

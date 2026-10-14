@@ -25,7 +25,9 @@ describe('PPAE Playground — catalog and real generator integration', () => {
     expect(PLAYGROUND_OPTIONS.npcs).toEqual([...NPC_PROFESSIONS]);
     expect(CHARACTER_ACTIONS).toHaveLength(28);
     expect(CREATURE_ACTIONS).toHaveLength(12);
-    expect(formatPlaygroundLabel('town_guard')).not.toBe('');
+    expect(formatPlaygroundLabel('town_guard')).toBe('Guardia');
+    expect(formatPlaygroundLabel('forest_moss')).toBe('Forest Moss');
+    expect(formatPlaygroundLabel('tool_axe')).toBe('Hacha');
   });
 
   it('renders playable character and eight deterministic profession presets', () => {
