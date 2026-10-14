@@ -53,6 +53,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout smoke verification
+        uses: actions/checkout@v4
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify public Playground HTML and asset MIME types
+        run: node scripts/verify-live-pages.mjs
