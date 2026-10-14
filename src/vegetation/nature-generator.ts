@@ -1,6 +1,7 @@
 import type {
   AnchorPoint,
   ArtStyleProfile,
+  GeologicalMorphologyDescriptor,
   GeologicalResourceKind,
   SecondaryFloraKind,
   TreeLifecycleStage,
@@ -20,6 +21,8 @@ import {
 } from './tree-foliage-rasterizer';
 import type { CanopyEnvironmentalState } from './tree-foliage-rasterizer';
 import { TreeSkeletonRasterizer } from './tree-skeleton-rasterizer';
+import { GeologicalMorphologyResolver } from './geology-morphology';
+import { GeologicalFormationRasterizer } from './geology-rasterizer';
 
 /** Canonical 12-family catalog shared with morphology and rendering. */
 export const TREE_SPECIES_CATALOG: Readonly<Record<TreeSpeciesId, TreeSpeciesDefinition>> =
@@ -36,6 +39,7 @@ export interface NatureSpriteArtifact {
   readonly pivotTexel: readonly [number, number];
   readonly stage: string;
   readonly morphology?: TreeMorphologyDescriptor;
+  readonly geology?: GeologicalMorphologyDescriptor;
   readonly anchors?: Readonly<Record<string, AnchorPoint>>;
 }
 
@@ -44,6 +48,8 @@ export class NatureGenerator {
   private readonly morphologyResolver = new TreeMorphologyResolver();
   private readonly skeletonRasterizer = new TreeSkeletonRasterizer();
   private readonly foliageRasterizer = new TreeCanopyFoliageRasterizer();
+  private readonly geologyResolver = new GeologicalMorphologyResolver();
+  private readonly geologyRasterizer = new GeologicalFormationRasterizer();
 
   public generateTreeStage(
     speciesId: TreeSpeciesId,
@@ -125,43 +131,14 @@ export class NatureGenerator {
     profile: ArtStyleProfile,
     seed: number
   ): NatureSpriteArtifact {
-    const mod = profile.moduleSize;
-    const w = 4 * mod;
-    const h = 3 * mod;
-    const buf = new PixelBuffer(w, h);
-    const rng = new SeededRNG(seed);
-    const cx = Math.floor(w / 2);
-    const cy = Math.floor(h * 0.62);
-    const rx = Math.floor(w * 0.34);
-    const ry = Math.floor(h * 0.28);
-
-    const stoneShad = hexToRgba('#424a59');
-    const stoneMid = hexToRgba('#68748a');
-    const stoneHigh = hexToRgba('#98a5bd');
-    const stoneOut = hexToRgba('#1b2029');
-
-    buf.fillEllipse(cx, cy + 1, rx, ry, stoneShad);
-    buf.fillEllipse(cx, cy, rx - 1, ry - 1, stoneMid);
-    buf.fillEllipse(cx - 2, cy - 2, Math.max(2, rx - 3), Math.max(2, ry - 3), stoneHigh);
-
-    const veinColor =
-      kind === 'gold_vein'
-        ? hexToRgba('#facc15')
-        : kind === 'iron_vein'
-        ? hexToRgba('#d97757')
-        : kind === 'crystal_geode'
-        ? hexToRgba('#38bdf8')
-        : stoneHigh;
-
-    if (kind !== 'mossy_boulder' && kind !== 'surface_pebbles') {
-      for (let i = 0; i < 4; i++) {
-        const vx = cx + rng.nextInt(-rx + 3, rx - 3);
-        const vy = cy + rng.nextInt(-ry + 2, ry - 2);
-        buf.fillRect(vx, vy, 2, 2, veinColor);
-      }
-    }
-
-    buf.applySelectiveOutline(stoneOut);
-    return { buffer: buf, pivotTexel: [cx, cy + ry], stage: kind };
+    const descriptor = this.geologyResolver.resolveGeologicalMorphology(kind, profile, seed);
+    const rendered = this.geologyRasterizer.renderGeologicalFormation(descriptor, profile);
+    return {
+      buffer: rendered.buffer,
+      pivotTexel: rendered.pivotTexel,
+      stage: kind,
+      geology: descriptor,
+      anchors: rendered.anchors
+    };
   }
 }

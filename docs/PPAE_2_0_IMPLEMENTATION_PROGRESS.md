@@ -14,7 +14,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 1D — Production Pipeline and World Ecology | VERIFIED | Árboles morfológicos reales en generadores y distribución ecológica |
 | 1E — Spatial Diversity and Silhouette Metrics | VERIFIED | Evitar clones vecinos y métricas de silueta sobre píxeles |
 | 2A — Geological Morphology Architecture | VERIFIED | 17 formaciones, polígonos, facetas, fracturas e inclusiones |
-| 2B — Geological Rasterization and World Integration | PENDING | Rasterización de rocas e integración al mundo |
+| 2B — Geological Rasterization and World Integration | IMPLEMENTED | Rasterización de rocas e integración al mundo |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -92,6 +92,20 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Estado técnico:** VERIFIED (código publicado y CI correcto).
 - **Validación visual:** pendiente y no aplicable al resolver de datos por sí solo; las capturas del nuevo arte geológico deberán revisarse tras 2B.
 - **Siguiente fase:** Fase 2B — GeologicalFormationRasterizer e integración en NatureGenerator, ProceduralGrammarExecutor y DeterministicWorldField.
+
+## Fase 2B — 14 de octubre de 2026
+
+- **Base citada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520` con todas las subfases anteriores supuestamente incorporadas. **HEAD real antes del lote:** `4c1def932095f7dc36f61082771fb82c54197770`.
+- **Commit de implementación:** pendiente de anotar el SHA real.
+- **Archivos:** ADD `src/vegetation/geology-rasterizer.ts`; MODIFY `src/vegetation/nature-generator.ts`, `src/art-generator/grammars.ts`, `src/terrain/world-field.ts`, `src/index.ts`; ADD `tests/ppae-geology-rasterizer-2b.test.ts`; MODIFY este documento.
+- **Rasterizador:** triángulos por baricéntricas sin antialias, geometría facetada con iluminación 3D en bandas, aristas, grietas y vetas, estratos, musgo/nieve y formaciones de cristal. Conteo de minerales únicos pintados en pantalla.
+- **Pipeline:** `NatureGenerator.generateGeologicalResource` retorna polígonos de 2A/2B con `geology` y `anchors` conservando la API anterior. `ProceduralGrammarExecutor.generateMineralRock` reutiliza el rasterizador, adapta por vecino más cercano a las dimensiones exactas y cuantiza colores al presupuesto real de `PaletteDefinition`.
+- **Ecología:** `DeterministicWorldField` distribuye 17 recursos posibles según material, bioma, humedad y coordenadas; sin dependencia del orden de renderizado de chunks. Las rocas aparecerán en zonas rocosas, playas, desiertos, praderas, bosques y tundra según los tiles disponibles.
+- **Compatibilidad:** no modifica `master` ni `Mairon31/pixelproject`; los siete identificadores geológicos anteriores siguen soportados.
+- **Pruebas y build:** `npm test`, `npm run build` pendientes de verificación de GitHub Actions.
+- **Estado:** IMPLEMENTED; no VERIFIED hasta que CI termine con éxito.
+- **Validación visual:** requiere revisar imágenes reales del mapa y galerías; pruebas de píxeles no garantizan por sí solas calidad artística.
+- **Siguiente fase:** 3A — Arquitectura Botánica de Microvegetación, Césped No Repetitivo, Anatomía Floral y Agrupamiento Ecológico.
 
 ## Convenciones de estado
 

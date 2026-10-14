@@ -1,6 +1,7 @@
 import {
   AutotileMask8,
   BiomeId,
+  GeologicalResourceKind,
   PPAE_SCHEMA_VERSION,
   TerrainMaterialDefinition,
   TerrainMaterialId,
@@ -394,8 +395,10 @@ export class DeterministicWorldField {
       const stageRoll = this.latticeHash(tileX, tileY, 971);
       const variantSeed = fnv1aHash32(`${this.seedNum}::prop::${tileX},${tileY}`);
 
-      if (base.material === 'rock_cliff' && spawnRoll < 0.22) {
-        const subType = spawnRoll < 0.06 ? 'crystal_geode' : spawnRoll < 0.14 ? 'iron_vein' : 'mossy_boulder';
+      if (base.material === 'rock_cliff' && spawnRoll < 0.24) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
         propSpawn = { kind: 'mineral', subType, variantSeed };
       } else if (
         (base.material === 'meadow_grass' || base.material === 'forest_moss' || base.material === 'snow_frost') &&
@@ -432,12 +435,29 @@ export class DeterministicWorldField {
       } else if (base.material === 'desert_dune' && spawnRoll < 0.06) {
         propSpawn = { kind: 'flora', subType: 'desert_cactus', variantSeed };
       } else if (
+        (base.material === 'desert_dune' || base.material === 'sand_beach') &&
+        spawnRoll >= 0.06 && spawnRoll < 0.14
+      ) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
+        propSpawn = { kind: 'mineral', subType, variantSeed };
+      } else if (
         (base.material === 'meadow_grass' || base.material === 'forest_moss') &&
         spawnRoll >= 0.2 &&
         spawnRoll < 0.34
       ) {
         const subType = spawnRoll < 0.25 ? 'wild_flower' : spawnRoll < 0.3 ? 'tall_grass' : 'mushroom_cluster';
         propSpawn = { kind: 'flora', subType, variantSeed };
+      } else if (
+        (base.material === 'meadow_grass' || base.material === 'forest_moss' ||
+          base.material === 'snow_frost') &&
+        spawnRoll >= 0.34 && spawnRoll < 0.42
+      ) {
+        const subType = this.selectGeologicalFormation(
+          base.biome, base.material, base.moisture, speciesRoll, tileX, tileY
+        );
+        propSpawn = { kind: 'mineral', subType, variantSeed };
       }
     }
 
@@ -517,6 +537,45 @@ export class DeterministicWorldField {
     if (stageRoll < 0.96) return 'dead';
     if (stageRoll < 0.985) return 'stump';
     return 'fallen_log';
+  }
+
+  /**
+   * Coordinates + environment determine 17 geological formations in O(1).
+   * No mutable global state; independent from chunk traversal and tree selection.
+   */
+  private selectGeologicalFormation(
+    biome: BiomeId, material: TerrainMaterialId, moisture: number,
+    roll: number, tileX: number, tileY: number
+  ): GeologicalResourceKind {
+    const spatial = Math.abs(tileX * 5 + tileY * 7 + Math.floor(roll * 19));
+    if (material === 'sand_beach') {
+      const coastal: readonly GeologicalResourceKind[] = [
+        'rounded_riverstone', 'surface_pebbles', 'sunken_half_buried', 'flat_slab'
+      ];
+      return coastal[spatial % coastal.length];
+    }
+    if (biome === 'desert' || material === 'desert_dune') {
+      const desert: readonly GeologicalResourceKind[] = [
+        'eroded_sandstone', 'flat_slab', 'jagged_outcrop', 'copper_vein', 'gold_vein'
+      ];
+      return desert[spatial % desert.length];
+    }
+    if (material === 'rock_cliff') {
+      const cliffs: readonly GeologicalResourceKind[] =
+        biome === 'volcanic'
+          ? ['volcanic_basalt', 'jagged_outcrop', 'fractured_monolith',
+             'crag_cliff_boulder', 'crystal_geode']
+          : ['crag_cliff_boulder', 'fractured_monolith', 'jagged_outcrop',
+             'angular_boulder', 'coal_deposit', 'copper_vein', 'iron_vein',
+             'gold_vein', 'crystal_geode', 'volcanic_basalt'];
+      return cliffs[spatial % cliffs.length];
+    }
+    const fieldRocks: readonly GeologicalResourceKind[] = moisture > .55
+      ? ['mossy_boulder', 'sunken_half_buried', 'surface_pebbles',
+         'rounded_riverstone', 'stacked_cairn']
+      : ['angular_boulder', 'flat_slab', 'surface_pebbles',
+         'sunken_half_buried', 'stacked_cairn'];
+    return fieldRocks[spatial % fieldRocks.length];
   }
 
 }

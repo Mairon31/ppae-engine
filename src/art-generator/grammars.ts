@@ -5,7 +5,8 @@ import {
   ProceduralAssetDefinition,
   RGBAColor,
   BotanicalFamilyId,
-  TreeSpeciesDefinition
+  TreeSpeciesDefinition,
+  GeologicalResourceKind
 } from '../core/contracts';
 import { SeededRNG } from '../core/deterministic';
 import { hexToRgba, rgbaToHex } from '../palette/palette-manager';
@@ -13,6 +14,8 @@ import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { BOTANICAL_SPECIES_DEFINITIONS, TreeMorphologyResolver } from '../vegetation/tree-morphology';
 import { TreeSkeletonRasterizer } from '../vegetation/tree-skeleton-rasterizer';
 import { TreeCanopyFoliageRasterizer } from '../vegetation/tree-foliage-rasterizer';
+import { GeologicalMorphologyResolver, GEOLOGICAL_ARCHETYPE_CATALOG } from '../vegetation/geology-morphology';
+import { GeologicalFormationRasterizer } from '../vegetation/geology-rasterizer';
 
 export interface GrammarOutput {
   readonly buffer: PixelBuffer;
@@ -23,6 +26,8 @@ export class ProceduralGrammarExecutor {
   private readonly morphologyResolver = new TreeMorphologyResolver();
   private readonly skeletonRasterizer = new TreeSkeletonRasterizer();
   private readonly foliageRasterizer = new TreeCanopyFoliageRasterizer();
+  private readonly geologicalResolver = new GeologicalMorphologyResolver();
+  private readonly geologicalRasterizer = new GeologicalFormationRasterizer();
   public execute(
     def: ProceduralAssetDefinition,
     profile: ArtStyleProfile,
@@ -179,8 +184,9 @@ export class ProceduralGrammarExecutor {
   }
 
   /**
-   * Gramática de Rocas y Vetas Minerales:
-   * Construye facetas poligonales discretas y vetas cristalinas incrustadas.
+   * Catalog mineral and rock assets share the 2A/2B faceted geology pipeline.
+   * Nearest-neighbor fitting preserves the exact module dimensions, and
+   * palette quantization enforces maxColorsPerAsset without antialiasing.
    */
   private generateMineralRock(
     buffer: PixelBuffer,
@@ -190,45 +196,73 @@ export class ProceduralGrammarExecutor {
     rng: SeededRNG,
     stateTag: 'intact' | 'damaged' | 'snowy' | 'wind_sway'
   ): GrammarOutput {
-    const stoneRamp = palette.ramps[def.primaryRampId] ?? palette.ramps.stone;
-    const crystalRamp = palette.ramps[def.secondaryRampId] ?? palette.ramps.mineral_crystal;
+    const stone = palette.ramps[def.primaryRampId] ?? palette.ramps.stone;
+    const mineral = palette.ramps[def.secondaryRampId] ?? palette.ramps.mineral_crystal;
+    const family = def.archetype === 'crystal_vein'
+      ? 'crystal_geode' : def.archetype;
+    const kind: GeologicalResourceKind =
+      Object.prototype.hasOwnProperty.call(GEOLOGICAL_ARCHETYPE_CATALOG, family)
+        ? family as GeologicalResourceKind
+        : 'angular_boulder';
 
-    const w = buffer.width;
-    const h = buffer.height;
-    const cx = Math.floor(w / 2);
-    const cy = Math.floor(h * 0.62);
-    const rx = Math.floor(w * 0.36);
-    const ry = Math.floor(h * 0.28);
+    const descriptor = this.geologicalResolver.resolveGeologicalMorphology(
+      kind, profile, rng.nextInt(0, 0x7fffffff)
+    );
+    const rendered = this.geologicalRasterizer.renderGeologicalFormation(
+      descriptor, profile, stateTag
+    );
 
-    // Bloque rocoso facetado por niveles de sombra
-    buffer.fillEllipse(cx, cy + 1, rx, ry, stoneRamp.shadow);
-    buffer.fillEllipse(cx, cy - 1, rx - 1, ry - 1, stoneRamp.midtone);
-    buffer.fillRect(cx - Math.floor(rx * 0.5), cy - ry + 1, Math.floor(rx * 0.8), Math.floor(ry * 0.6), stoneRamp.highlight);
+    // Select a compact declared color ramp so accent/crystal detail remains
+    // distinguishable and no arbitrary colors escape into the asset atlas.
+    const colors: RGBAColor[] = [
+      stone.outline, stone.shadow, stone.midtone, stone.highlight, stone.accent,
+      mineral.outline, mineral.shadow, mineral.midtone, mineral.highlight, mineral.accent
+    ];
+    const used = new Set<string>();
+    const permitted = colors.filter(c => {
+      const key = `${c.r}:${c.g}:${c.b}`;
+      if(used.has(key))return false;
+      used.add(key);
+      return true;
+    }).slice(0,Math.max(1,palette.maxColorsPerAsset));
+    const source = rendered.buffer;
+    const width = buffer.width, height = buffer.height;
+    const scale = Math.min((width-2)/source.width,(height-2)/source.height);
+    const fitWidth = Math.max(1,Math.min(width,Math.round(source.width*scale)));
+    const fitHeight = Math.max(1,Math.min(height,Math.round(source.height*scale)));
+    const left = Math.max(0,Math.min(width-fitWidth,
+      Math.round(width/2-(rendered.pivotTexel[0]/source.width)*fitWidth)));
+    const top = Math.max(0,Math.min(height-fitHeight,
+      height-2-Math.round((rendered.pivotTexel[1]/source.height)*fitHeight)));
 
-    // Incrustaciones de cristales / vetas minerales según semilla
-    const crystalCount = stateTag === 'damaged' ? 2 : rng.nextInt(3, 6);
-    for (let i = 0; i < crystalCount; i++) {
-      const vx = cx + rng.nextInt(-Math.floor(rx * 0.65), Math.floor(rx * 0.65));
-      const vy = cy + rng.nextInt(-Math.floor(ry * 0.55), Math.floor(ry * 0.25));
-      const spireH = rng.nextInt(3, Math.max(4, profile.moduleSize + 1));
-      buffer.drawLine(vx, vy, vx + rng.nextInt(-2, 2), vy - spireH, crystalRamp.midtone, 2);
-      buffer.setPixel(vx, vy - spireH, crystalRamp.accent);
-      buffer.setPixel(vx - 1, vy - spireH + 1, crystalRamp.highlight);
+    const nearest=(original:RGBAColor):RGBAColor=>{
+      let best=permitted[0],distance=Infinity;
+      for(const c of permitted){
+        const dr=c.r-original.r,dg=c.g-original.g,db=c.b-original.b;
+        const delta=dr*dr+dg*dg+db*db;
+        if(delta<distance){best=c;distance=delta;}
+      }
+      return { ...best, a: original.a };
+    };
+    for(let y=0;y<fitHeight;y++){
+      const sy=Math.min(source.height-1,Math.floor((y+.5)*source.height/fitHeight));
+      for(let x=0;x<fitWidth;x++){
+        const sx=Math.min(source.width-1,Math.floor((x+.5)*source.width/fitWidth));
+        const p=source.getPixel(sx,sy);
+        if(p.a>0)buffer.setPixel(left+x,top+y,nearest(p));
+      }
     }
 
-    if (profile.outlineMode !== 'none') {
-      buffer.applySelectiveOutline(stoneRamp.outline);
-    }
-
+    const ax=Math.max(0,Math.min(width-1,
+      left+Math.round(rendered.pivotTexel[0]*fitWidth/source.width)));
+    const ay=Math.max(0,Math.min(height-1,
+      top+Math.round(rendered.pivotTexel[1]*fitHeight/source.height)));
     return {
       buffer,
       anchors: {
         base_pivot: {
-          id: 'base_pivot',
-          texelX: cx,
-          texelY: cy + ry,
-          normalizedX: cx / w,
-          normalizedY: (cy + ry) / h
+          id: 'base_pivot', texelX: ax, texelY: ay,
+          normalizedX: ax/width, normalizedY: ay/height
         }
       }
     };
