@@ -17,6 +17,7 @@ import {
   TreeLifecycleStage, TreeSpeciesId, VFXPresetId, WeatherAndWindSystem,
   WeatherConditionId, VisualStatusEffect, EntityAppearance, EquipmentLoadout,
   MATERIAL_TIER_PALETTES, CANONICAL_47_AUTOTILE_MASKS, TERRAIN_MATERIALS,
+  classifyAutotileMask47, VFX_EMITTER_PRESETS,
   createCorruptedTreantBossState, createDefaultColossusBossState
 } from '../index';
 import {
@@ -888,7 +889,7 @@ function refreshControlVisibility(): void {
   byId<HTMLSelectElement>('direction-select').disabled = !['characters','character-actions','npcs','npc-variants','creatures','creature-variants','bosses','world'].includes(state.section);
   const downloadable = ['characters','character-actions','npcs','npc-variants'].includes(state.section) || creature;
   (byId('download-atlas') as HTMLButtonElement).disabled = !downloadable;
-  (byId('download-json') as HTMLButtonElement).disabled = !downloadable;
+  (byId('download-json') as HTMLButtonElement).disabled = false;
 }
 function selectItem(id: string): void {
   if (!PLAYGROUND_OPTIONS[state.section].includes(id)) return;
@@ -1045,6 +1046,128 @@ function exportSheet(kind: 'png' | 'json'): void {
       { type: 'application/json' })), name + '.json');
   }
 }
+function exportTechnicalJSON(): void {
+  if (['characters','character-actions','npcs','npc-variants','creatures','creature-variants']
+    .includes(state.section)) {
+    exportSheet('json');
+    return;
+  }
+  const p = profile();
+  const id = state.selected;
+  const buffer = renderSubject(state.section, id, p, state.frame);
+  const data: Record<string, unknown> = {
+    engine: 'PPAE Engine 2.0', section: state.section,
+    id, seed: state.seed, seedHash: seedNumber(id), styleProfile: p.id,
+    nativeBuffer: { width: buffer.width, height: buffer.height,
+      encoding: 'RGBA8', uniqueOpaqueColors: buffer.countUniqueOpaqueColors() }
+  };
+  switch (state.section) {
+    case 'trees':
+    case 'tree-lifecycle':
+    case 'tree-archetypes': {
+      const [family, value] = state.section === 'trees' ? [id, undefined] : id.split(':');
+      const options = {
+        ...(state.section === 'tree-archetypes' ? { archetypeId: value } : {}),
+        envState: state.treeEnvironment
+      };
+      const artifact = nature.generateTreeStage(family as TreeSpeciesId,
+        (state.section === 'tree-lifecycle' ? value : state.section === 'tree-archetypes'
+          ? 'mature' : state.stage) as TreeLifecycleStage, p, seedNumber(id), options);
+      data.morphology = artifact.morphology;
+      data.anchors = artifact.anchors;
+      data.pivotTexel = artifact.pivotTexel;
+      break;
+    }
+    case 'flora': {
+      const artifact = nature.generateSecondaryFlora(id as SecondaryFloraKind, p, seedNumber(id));
+      data.morphology = artifact.flora; data.anchors = artifact.anchors;
+      break;
+    }
+    case 'geology': {
+      const artifact = nature.generateGeologicalResource(id as GeologicalResourceKind, p, seedNumber(id));
+      data.morphology = artifact.geology; data.anchors = artifact.anchors;
+      break;
+    }
+    case 'autotiling':
+      data.mask = classifyAutotileMask47(Number(id));
+      data.material = state.terrainMaterial;
+      data.underlay = state.terrainUnderlay;
+      break;
+    case 'liquids':
+      data.material = id; data.mask = classifyAutotileMask47(state.terrainMask);
+      data.animationFrame = state.frame % 8;
+      break;
+    case 'terrain-variants':
+      data.material = id.split(':')[0]; data.variantIndex = Number(id.split(':')[1]);
+      break;
+    case 'terrain':
+      data.material = id;
+      break;
+    case 'structures': {
+      const artifact = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG[id], p, true, true);
+      data.definition = DEFAULT_STRUCTURE_CATALOG[id];
+      data.anchors = { ground: artifact.pivotTexel };
+      data.wallCollisionRects = artifact.wallCollisionRects;
+      data.doorCollisionRect = artifact.doorCollisionRect;
+      data.roofOcclusionFootprint = artifact.roofOcclusionFootprint;
+      break;
+    }
+    case 'interiors': {
+      const artifact = interiors.renderInterior(DEFAULT_COTTAGE_INTERIOR, p);
+      data.definition = DEFAULT_COTTAGE_INTERIOR;
+      data.collisionRects = artifact.collisionRects;
+      data.walkabilityGrid = artifact.walkabilityGrid;
+      data.lightSourcePositionsTexel = artifact.lightSourcePositionsTexel;
+      break;
+    }
+    case 'caves': {
+      const artifact = caves.generateChamber({ ...DEFAULT_CRYSTAL_CAVERN, seed: seedNumber(id) }, p);
+      data.definition = DEFAULT_CRYSTAL_CAVERN;
+      data.collisionRects = artifact.collisionRects;
+      data.bioluminescentNodes = artifact.bioluminescentNodes;
+      break;
+    }
+    case 'bosses': {
+      const boss = id === BOSS_IDS[1] ?
+        createCorruptedTreantBossState(seedNumber(id)) : createDefaultColossusBossState(seedNumber(id));
+      data.bossState = { ...boss, phase: state.stage, telegraphKind: state.bossTelegraph };
+      break;
+    }
+    case 'farming':
+    case 'crop-lifecycle': {
+      const [crop, phase] = state.section === 'crop-lifecycle' ? id.split(':') : [id, state.stage];
+      data.crop = crop; data.lifecycleStage = phase;
+      break;
+    }
+    case 'equipment':
+    case 'equipment-materials':
+      data.material = state.section === 'equipment-materials' ? id.split(':')[0] : state.materialTier;
+      data.category = state.section === 'equipment-materials' ? id.split(':')[1] : id;
+      data.wearState = state.wearState;
+      break;
+    case 'hud':
+      data.progress = state.progress;
+      break;
+    case 'particles':
+      data.emitterPreset = VFX_EMITTER_PRESETS[id as VFXPresetId];
+      data.activeParticles = particles.getTelemetry().activeParticlesCount;
+      break;
+    case 'weather':
+      data.weather = DEFAULT_WEATHER_STATES[id as WeatherConditionId];
+      break;
+    case 'lighting':
+      data.ambient = AMBIENT_PROFILES_BY_PHASE[id as TimeOfDayPhase];
+      break;
+    case 'world':
+      data.worldChunk = showcaseChunk;
+      data.weather = state.weather; data.time = state.time;
+      break;
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  downloadUrl(url, 'ppae-metadata-' + state.section + '-' + id.replace(/:/g,'-') + '.json');
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 function syncPlayButton(): void {
   const button = byId<HTMLButtonElement>('play-toggle');
   button.textContent = state.playing ? 'Ⅱ' : '▶';
@@ -1141,6 +1264,12 @@ function connectControls(): void {
       state.page++; renderCards();
     }
   });
+  byId('download-sprite').addEventListener('click', () => {
+    const buffer = renderSubject(state.section, state.selected, profile(), state.frame);
+    const filename = 'ppae-native-' + state.section + '-' + state.selected.replace(/:/g,'-') +
+      '-' + profile().id + '.png';
+    downloadUrl(encodePng(buffer), filename);
+  });
   byId('download-png').addEventListener('click', () => {
     const filename = 'ppae-' + state.section + '-' + state.selected + '-' + profile().id + '.png';
     downloadUrl(stage.toDataURL('image/png'), filename);
@@ -1150,7 +1279,7 @@ function connectControls(): void {
     state.page = 0; renderCards();
   });
   byId('download-atlas').addEventListener('click', () => exportSheet('png'));
-  byId('download-json').addEventListener('click', () => exportSheet('json'));
+  byId('download-json').addEventListener('click', () => exportTechnicalJSON());
   byId('mobile-nav-scrim').addEventListener('click', closeMobileNav);
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeMobileNav();
