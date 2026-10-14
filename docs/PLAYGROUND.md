@@ -1,6 +1,8 @@
 # PPAE Engine — Interactive Playground
 
-GitHub Pages: https://mairon31.github.io/ppae-engine/
+GitHub Pages (publicación pendiente de fusión a master): https://mairon31.github.io/ppae-engine/
+
+La rama feat/ppae-2-art-overhaul compila el Playground en Actions, pero no intenta publicar en el entorno protegido github-pages. El workflow de Pages desplegará la nueva versión tras la fusión autorizada del PR #2; no se han cambiado ni fusionado commits a master.
 
 Run locally: npm ci && npm run dev. This is a fully client-side Vite demo whose entrypoint is src/demo/main.ts and UI is index.html + src/demo/playground.css.
 

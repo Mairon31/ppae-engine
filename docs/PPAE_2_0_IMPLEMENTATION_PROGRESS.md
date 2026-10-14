@@ -26,7 +26,6 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 7A — Multi-Resolution Profiles & Adaptive Detail Budgets | VERIFIED | 4, 6, 8, 16, 32 texels/módulo, nueve dimensiones y LOD adaptativo |
 | 7B — Native Multi-Resolution Detail Synthesis | VERIFIED | Escalado de esqueleto proporcional, rostro HD, pliegues, sublóbulos foliares y facetas minerales |
 | 8A — Advanced Creatures & Bosses | VERIFIED | Dieciséis especies, diez familias, escala multirresolución, variantes de edad/salud y segundo jefe con anatomía arbórea |
-| Playground — Interactive PPAE Demo | VERIFIED (code/CI) | 17 secciones, escenas de motor real, NPCs, 28/12 acciones, VFX visuales, clima, iluminación y exportación PNG/atlas/JSON; publicación Pages en revisión |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -249,14 +248,6 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Estado:** VERIFIED técnicamente. Commits: implementación `a04780f26139387f1881fdd57007f16316042018`, corrección de regresión de pivote slime y expectativa de familias 6B `e79910e00364f20548a31c8fac133723a45f5cae`, anclaje de raíces y compilación TypeScript `dbabf52138de17f6df3434dca1962e40d211b1a5`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38608133738: **27 suites / 157 tests aprobados**, `npm run build` correcto (TypeScript, biblioteca, declaraciones y demo). Inspección visual de las diez familias en 4/6/8/16/32 pendiente: las pruebas técnicas no certifican fidelidad artística.
 - **Siguiente:** Fase 9 — Procedural Architecture & Interiors.
 
-## Playground interactivo (octubre de 2026)
-
-- **Rama y PR:** `feat/ppae-2-art-overhaul` / PR #2. Entry `index.html` → `src/demo/main.ts`, catálogo `src/demo/playground-catalog.ts`, estilos `src/demo/playground.css`.
-- **Cobertura:** 17 secciones y generación procedimental real: mundo 8×8 tiles, jugador, NPCs, fauna, jefes, flora, geología, arquitectura, interiores, cuevas, agricultura, UI/inventario, partículas **VFX** (sin SFX ni audio), clima e iluminación. Inspector de resolución, semilla, dirección, acción, escala, edad/estado, hora/clima y telemetría. Exportación de PNG de vista, atlas PNG y JSON de metadatos para personajes y criaturas.
-- **Verificación técnica:** GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38611894862 aprobó **28 suites / 161 tests y npm run build** sobre commit `327b643b56be179c14fe37ff94b6ad3e226bfe3f`; cambios menores posteriores requieren su propia ejecución CI.
-- **Publicación:** La fase build de Pages sobre el mismo commit aprobó; el trabajo `deploy` falló en https://github.com/Mairon31/ppae-engine/actions/runs/38611894661. No afirmar que Pages funciona hasta que se confirme. Inspeccionar la configuración de Actions/Pages y las restricciones de la rama protegida `github-pages`; puede requerir una acción del propietario en Settings.
-- **QA pendiente:** comprobar manualmente en navegador, especialmente animaciones, rendimiento en 16×16/32×32, VFX y legibilidad móvil. Los tests no certifican calidad visual.
-
 ## Convenciones de estado
 
 - `PENDING`: no iniciado.
@@ -266,3 +257,15 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - `BLOCKED`: no es posible seguir por una dependencia o fallo específico.
 
 No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR sin autorización.
+
+## PPAE Playground — 14 de octubre de 2026
+
+- **Objetivo:** demostrador interactivo de los sistemas PPAE 2.0 antes de la Fase 9 (17 secciones de mundo, entidades, vegetación, arquitectura, VFX y entorno).
+- **Interfaz:** sustituido el inspector estático por Playground responsive con catálogo seleccionable, escena pixel-perfect, inspección de 28 acciones humanas y 12 acciones de criaturas, 8 direcciones, zoom, controles de FPS, perfil 4/6/8/16/32/híbrido/adaptativo, semilla, edad, salud, fases, clima y luz.
+- **VFX (no SFX):** emisiones visuales de `PixelParticleEngine`, incluyendo humo, fuego, chispas, hojas, salpicaduras y magia; sin reproducción de audio.
+- **Exportación:** PNG de escena y atlas PNG/JSON del `SpritesheetCompiler` para humanoides y criaturas; telemetría de render y ocupación de partículas.
+- **Código:** `index.html`, `src/demo/main.ts`, `src/demo/playground.css`, `src/demo/playground-catalog.ts`; `tests/ppae-playground.test.ts`, `docs/PLAYGROUND.md`.
+- **Verificación técnica:** suites `npm test` y `npm run build` completadas satisfactoriamente en CI de commit `327b643b56be179c14fe37ff94b6ad3e226bfe3f`, runs https://github.com/Mairon31/ppae-engine/actions/runs/38611894862 y https://github.com/Mairon31/ppae-engine/actions/runs/38611901583. Nueva validación pendiente para los últimos retoques.
+- **Publicación GitHub Pages:** el build de Pages pasó, pero el job de deploy desde la rama del PR falló en https://github.com/Mairon31/ppae-engine/actions/runs/38611894661. Se impide desplegar desde la rama no fusionada y se mantiene el deploy solo desde `master`, sin modificar `master` ni fusionar el PR. La URL pública puede mostrar la demo anterior hasta que se integre el PR.
+- **QA visual:** revisión humana de screenshots, rendimiento por perfil y compatibilidad táctil pendiente; tests/build no certifican fidelidad visual.
+- **Estado:** IMPLEMENTED, verificación de compilación y pruebas aprobada, publicación pública y QA visual pendientes.

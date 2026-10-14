@@ -44,6 +44,8 @@ jobs:
           path: dist/demo
 
   deploy:
+    # Pages publication stays protected until PR #2 is merged to master.
+    if: github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
     environment:

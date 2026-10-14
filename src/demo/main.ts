@@ -1,7 +1,7 @@
 import {
   AdaptiveResolutionController, ALL_DIRECTIONS_8, AMBIENT_PROFILES_BY_PHASE,
   AnimationStateMachine, ArtStyleProfile, CharacterActionId, CharacterAvatarGenerator,
-  CharacterCustomizationService, ChunkWorldRenderer,
+  CharacterCustomizationService, CHUNK_SIZE_TILES, ChunkWorldRenderer,
   CaveDungeonGenerator, CreatureActionId, CreatureAgeStage, CreatureGenerator,
   CreatureHealthState, CreatureSpeciesId, CropSpeciesId, DEFAULT_CHARACTER_CLIPS, DEFAULT_CREATURE_CLIPS,
   DEFAULT_CRYSTAL_CAVERN, DEFAULT_COTTAGE_INTERIOR, DEFAULT_HERO_APPEARANCE,
@@ -183,12 +183,12 @@ function sceneBackground(target: CanvasRenderingContext2D, w: number, h: number)
   target.fillStyle = '#ffffff04';
   target.fillRect(70, 90, w - 140, h - 180);
 }
-function baseScene(type: string, p: ArtStyleProfile, tick: number): PixelBuffer {
+function baseScene(type: string, p: ArtStyleProfile, tick: number, materialId = state.selected): PixelBuffer {
   const size = p.canonicalTileTexels;
   const countX = type === 'terrain' ? 5 : 8;
   const countY = type === 'terrain' ? 5 : 7;
   const result = new PixelBuffer(size * countX, size * countY);
-  const targetMaterial = type === 'terrain' ? state.selected as TerrainMaterialId :
+  const targetMaterial = type === 'terrain' ? materialId as TerrainMaterialId :
     type === 'weather' ? 'meadow_grass' : 'forest_moss';
   for (let y = 0; y < countY; y++) {
     for (let x = 0; x < countX; x++) {
@@ -205,12 +205,12 @@ function baseScene(type: string, p: ArtStyleProfile, tick: number): PixelBuffer 
   }
   return result;
 }
-function worldScene(p: ArtStyleProfile, tick: number): PixelBuffer {
+function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected): PixelBuffer {
   const variant = tick % 4;
   const cacheKey = state.seed + ':' + p.id + ':' + variant;
   let chunk = cachedWorld.get(cacheKey);
   if (!chunk) {
-    chunk = worldRenderer.renderChunk(0, 0, p, variant, 4, 8);
+    chunk = worldRenderer.renderChunk(0, 0, p, variant, 4);
     if (cachedWorld.size >= 8) cachedWorld.clear();
     cachedWorld.set(cacheKey, chunk);
   }
@@ -218,13 +218,13 @@ function worldScene(p: ArtStyleProfile, tick: number): PixelBuffer {
   scene.data.set(chunk.terrainBuffer.data);
   for (const prop of chunk.sortedProps) blend(scene, prop.buffer, prop.drawTexelX, prop.drawTexelY);
   const tile = p.canonicalTileTexels;
-  const village = state.selected === 'world_village';
+  const village = previewId === 'world_village';
   if (village) {
     const cottage = structures.generateStructure(DEFAULT_STRUCTURE_CATALOG.village_cottage_01, p, true, true);
     blend(scene, cottage.baseAndWallsBuffer, tile * 1, tile);
     blend(scene, cottage.roofOverlayBuffer, tile * 1, tile);
   }
-  if (state.selected === 'world_wildlife') {
+  if (previewId === 'world_wildlife') {
     const wolf = creatures.renderCreatureFrame('timber_wolf', 'move', 'E', tick % 6, 6, p, seedNumber('wolf'));
     blend(scene, wolf.buffer, Math.floor(tile * 5 - wolf.pivotTexel[0]), Math.floor(tile * 5 - wolf.pivotTexel[1]));
   }
@@ -241,13 +241,13 @@ function worldScene(p: ArtStyleProfile, tick: number): PixelBuffer {
   if (state.weather !== 'clear') {
     weather.setWeatherState(DEFAULT_WEATHER_STATES[state.weather]);
     const result = weather.renderWeatherOverlay(
-      scene.width, scene.height, { x: 0, y: 0, width: 8 * 16, height: 8 * 16 },
+      scene.width, scene.height, { x: 0, y: 0, width: CHUNK_SIZE_TILES * 16, height: CHUNK_SIZE_TILES * 16 },
       p, elapsed / 1000, [], false, seedNumber('weather'));
     blend(scene, result.overlayBuffer, 0, 0);
   }
   if (state.time !== 'noon') {
     const lit = lighting.applyLightingToScene(scene,
-      { x: 0, y: 0, width: 8 * 16, height: 8 * 16 },
+      { x: 0, y: 0, width: CHUNK_SIZE_TILES * 16, height: CHUNK_SIZE_TILES * 16 },
       AMBIENT_PROFILES_BY_PHASE[state.time], p, [], elapsed / 1000);
     return lit.litBuffer;
   }
@@ -293,7 +293,7 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       Math.round(Math.sin(elapsed / 500) * p.moduleSize / 6)).buffer;
     case 'geology': return nature.generateGeologicalResource(id as GeologicalResourceKind, p, n).buffer;
     case 'terrain': {
-      const tile = baseScene('terrain', p, tick);
+      const tile = baseScene('terrain', p, tick, id);
       return tile;
     }
     case 'structures': {
@@ -444,8 +444,7 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
   const p = DEFAULT_STYLE_PROFILES['micro-4x4'];
   // Preview generation uses the same engine entrypoints, at a bounded resolution.
   if (section === 'world') {
-    const chunk = worldRenderer.renderChunk(0, 0, p, 0, 4, 8);
-    toThumbnail(canvas, chunk.terrainBuffer);
+    toThumbnail(canvas, worldScene(p, 0, id));
   } else if (section === 'particles') {
     const pool = new PixelParticleEngine(128);
     pool.emitBurst(id as VFXPresetId, 60, 45, seedNumber(id), 60);
@@ -516,8 +515,7 @@ function refreshControlVisibility(): void {
     state.section === 'farming' ? CROP_STAGES :
     state.section === 'bosses' ? ['phase_1_dormant','phase_2_enraged','phase_3_critical'] :
     ['intact'];
-  const defaultStage = state.section === 'trees' || state.section === 'farming' ? 'mature' : stages[0];
-  const selectedStage = stages.includes(state.stage as never) ? state.stage : defaultStage;
+  const selectedStage = stages.includes(state.stage as never) ? state.stage : stages[0];
   state.stage = selectedStage;
   options(byId<HTMLSelectElement>('stage-select'), stages, selectedStage);
   byId<HTMLSelectElement>('age-select').disabled = !creature;
