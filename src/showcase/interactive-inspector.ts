@@ -42,7 +42,8 @@ import {
   DEFAULT_COTTAGE_INTERIOR,
   InteriorGenerator
 } from '../interiors/interior-generator';
-import { PixelPerfectLightingEngine } from '../lighting/lighting-engine';
+import { AMBIENT_PROFILES_BY_PHASE, PixelPerfectLightingEngine } from '../lighting/lighting-engine';
+import { fnv1aHash32 } from '../core/deterministic';
 import {
   APPROVED_GOLDEN_SEED_REGISTRY,
   ProceduralArtQualityEvaluator
@@ -220,32 +221,8 @@ export class PPAEInteractiveShowcaseController {
       height: chunkSizeTiles * 16
     };
 
-    // 2. Proyección de sombras solares/lunares direccionales (Fase 10)
-    const shadowCasters: SolarShadowCaster[] = [
-      {
-        casterId: 'hero_caster',
-        worldX: 48,
-        worldY: 72,
-        baseRadiusTexels: Math.max(3, profile.moduleSize),
-        heightTexels: profile.moduleSize * 6
-      },
-      {
-        casterId: 'oak_caster',
-        worldX: 24,
-        worldY: 48,
-        baseRadiusTexels: Math.max(4, Math.round(profile.moduleSize * 1.4)),
-        heightTexels: profile.moduleSize * 8
-      }
-    ];
-
-    const shadowResult = this.lightingEngine.renderDirectionalCastShadows(
-      sceneBuffer,
-      shadowCasters,
-      cameraWorldRect,
-      cfg.hour24,
-      profile,
-      false
-    );
+    // Subjects are generated before the shadow pass so casters use their
+    // actual pixel foot positions instead of hardcoded unrelated world points.
 
     // 3. Estructura arquitectónica con separación de muros y techo (Fase 9)
     const structDef =
@@ -257,7 +234,6 @@ export class PPAEInteractiveShowcaseController {
       cfg.isDoorOpen,
       cfg.hour24 >= 18 || cfg.hour24 <= 6
     );
-    this.blitOpaque(sceneBuffer, renderedStruct.baseAndWallsBuffer, profile.canonicalTileTexels, 2);
 
     // 4. Árboles, formaciones geológicas y flora destacados (Fases 1, 2 y 3)
     const windSample = this.weatherSystem.sampleWindField(0, 0, cfg.timeSeconds);
@@ -280,27 +256,9 @@ export class PPAEInteractiveShowcaseController {
       windSample.canopyPixelShiftX
     );
 
-    this.blitOpaque(
-      sceneBuffer,
-      featuredTree.buffer,
-      2,
-      Math.max(0, Math.floor(sceneH * 0.25))
-    );
-    this.blitOpaque(
-      sceneBuffer,
-      featuredRock.buffer,
-      Math.floor(sceneW * 0.72),
-      Math.floor(sceneH * 0.58)
-    );
-    this.blitOpaque(
-      sceneBuffer,
-      featuredFlora.buffer,
-      Math.floor(sceneW * 0.18),
-      Math.floor(sceneH * 0.68)
-    );
-
     // 5. NPC de profesión, criatura con capacidades validadas y avatar del héroe (Fases 5, 6 y 8)
-    const npcPreset = this.npcService.generateNpcPreset(cfg.npcProfession, 2026);
+    const sceneSeed = fnv1aHash32(String(cfg.worldSeed));
+    const npcPreset = this.npcService.generateNpcPreset(cfg.npcProfession, sceneSeed);
     const npcFrame = this.avatarGen.renderCharacterFrame(
       npcPreset.appearance,
       npcPreset.equipment,
@@ -323,7 +281,7 @@ export class PPAEInteractiveShowcaseController {
       cfg.frameIndex % creatureClip.frameCount,
       creatureClip.frameCount,
       profile,
-      202608
+      sceneSeed ^ 0xc3e4a
     );
 
     const heroClip = DEFAULT_CHARACTER_CLIPS[cfg.heroAction];
@@ -337,29 +295,87 @@ export class PPAEInteractiveShowcaseController {
       profile
     );
 
-    this.blitOpaque(
-      sceneBuffer,
-      npcFrame.buffer,
-      Math.floor(sceneW * 0.62),
-      Math.floor(sceneH * 0.42)
-    );
-    this.blitOpaque(
-      sceneBuffer,
-      creatureFrame.buffer,
-      Math.floor(sceneW * 0.22),
-      Math.floor(sceneH * 0.52)
-    );
-    this.blitOpaque(
-      sceneBuffer,
-      heroFrame.buffer,
-      Math.floor(sceneW * 0.44),
-      Math.floor(sceneH * 0.48)
-    );
 
-    // Superponer techo si no está en modo cutaway interior
+    // 2. Determine all ground-contact points in the same pixel coordinate
+    // system used by the chunk renderer; preserve original terrain prop spawns.
+    const tile = profile.canonicalTileTexels;
+    const structX = Math.max(0, Math.floor((sceneW - renderedStruct.baseAndWallsBuffer.width) / 2));
+    const structY = Math.max(0, Math.floor(sceneH * 0.15));
+    const treeX = Math.max(0, Math.floor(sceneW * 0.07));
+    const treeY = Math.max(0, Math.floor(sceneH * 0.41 - featuredTree.buffer.height));
+    const rockX = Math.floor(sceneW * 0.72);
+    const rockY = Math.floor(sceneH * 0.67 - featuredRock.buffer.height);
+    const floraX = Math.floor(sceneW * 0.14);
+    const floraY = Math.floor(sceneH * 0.79 - featuredFlora.buffer.height);
+    const npcX = Math.floor(sceneW * 0.73 - npcFrame.buffer.width / 2);
+    const npcY = Math.floor(sceneH * 0.69 - npcFrame.buffer.height);
+    const creatureX = Math.floor(sceneW * 0.30 - creatureFrame.buffer.width / 2);
+    const creatureY = Math.floor(sceneH * 0.77 - creatureFrame.buffer.height);
+    const heroX = Math.floor(sceneW * 0.48 - heroFrame.buffer.width / 2);
+    const heroY = Math.floor(sceneH * 0.84 - heroFrame.buffer.height);
+
+    const actualCasters: SolarShadowCaster[] = [
+      { casterId: 'oak_mature', worldX: (treeX + featuredTree.buffer.width / 2) * 16 / tile,
+        worldY: (treeY + featuredTree.buffer.height) * 16 / tile,
+        baseRadiusTexels: Math.max(3, Math.floor(featuredTree.buffer.width * 0.25)),
+        heightTexels: featuredTree.buffer.height },
+      { casterId: 'hero', worldX: (heroX + heroFrame.buffer.width / 2) * 16 / tile,
+        worldY: (heroY + heroFrame.buffer.height) * 16 / tile,
+        baseRadiusTexels: Math.max(2, Math.floor(heroFrame.buffer.width * 0.26)),
+        heightTexels: heroFrame.buffer.height },
+      ...renderedChunk.sortedProps.filter(prop => prop.buffer.height >= tile)
+        .slice(0, 24).map(prop => ({
+          casterId: 'prop_' + prop.tileX + '_' + prop.tileY,
+          worldX: (prop.drawTexelX + prop.buffer.width / 2) * 16 / tile,
+          worldY: (prop.drawTexelY + prop.buffer.height) * 16 / tile,
+          baseRadiusTexels: Math.max(2, Math.floor(prop.buffer.width * 0.22)),
+          heightTexels: prop.buffer.height
+        }))
+    ];
+    const shadowResult = this.lightingEngine.renderDirectionalCastShadows(
+      sceneBuffer, actualCasters, cameraWorldRect, cfg.hour24, profile, false);
+
+    // 3–5. Depth-sort native sprites by their *pixel foot position*. This
+    // includes real chunk flora/rocks/trees rather than discarding sortedProps.
+    const sceneItems: Array<{
+      readonly sprite: PixelBuffer;
+      readonly x: number;
+      readonly y: number;
+      readonly depth: number;
+    }> = [
+      ...renderedChunk.sortedProps.map(prop => ({
+        sprite: prop.buffer, x: prop.drawTexelX, y: prop.drawTexelY,
+        depth: prop.drawTexelY + prop.buffer.height
+      })),
+      { sprite: renderedStruct.baseAndWallsBuffer, x: structX, y: structY,
+        depth: structY + renderedStruct.baseAndWallsBuffer.height },
+      { sprite: featuredTree.buffer, x: treeX, y: treeY,
+        depth: treeY + featuredTree.buffer.height },
+      { sprite: featuredRock.buffer, x: rockX, y: rockY,
+        depth: rockY + featuredRock.buffer.height },
+      { sprite: featuredFlora.buffer, x: floraX, y: floraY,
+        depth: floraY + featuredFlora.buffer.height },
+      { sprite: npcFrame.buffer, x: npcX, y: npcY,
+        depth: npcY + npcFrame.buffer.height },
+      { sprite: creatureFrame.buffer, x: creatureX, y: creatureY,
+        depth: creatureY + creatureFrame.buffer.height },
+      { sprite: heroFrame.buffer, x: heroX, y: heroY,
+        depth: heroY + heroFrame.buffer.height }
+    ];
+    sceneItems.sort((a, b) => a.depth - b.depth);
+    for (const item of sceneItems) this.blitAlpha(sceneBuffer, item.sprite, item.x, item.y);
     if (!cfg.isRoofCutaway) {
-      this.blitOpaque(sceneBuffer, renderedStruct.roofOverlayBuffer, profile.canonicalTileTexels, 2);
+      this.blitAlpha(sceneBuffer, renderedStruct.roofOverlayBuffer, structX, structY);
     }
+
+    // Color grading is derived from the same hour as the cast shadows.
+    const solarPhase = cfg.hour24 < 5 || cfg.hour24 >= 21 ? 'night' :
+      cfg.hour24 < 8 ? 'dawn' : cfg.hour24 < 11 ? 'morning' :
+      cfg.hour24 < 15 ? 'noon' : cfg.hour24 < 18 ? 'afternoon' : 'dusk';
+    const grade = this.lightingEngine.applyLightingToScene(
+      sceneBuffer, cameraWorldRect,
+      AMBIENT_PROFILES_BY_PHASE[solarPhase], profile, [], cfg.timeSeconds);
+    sceneBuffer.data.set(grade.litBuffer.data);
 
     // 6. Emisión y renderizado de partículas VFX (Fase 10)
     const particleEngine = new PixelParticleEngine(256);
@@ -367,14 +383,20 @@ export class PPAEInteractiveShowcaseController {
       cfg.activeVfxPreset,
       Math.floor(sceneW * 0.5),
       Math.floor(sceneH * 0.55),
-      2026,
+      sceneSeed ^ 0x731d,
       8
     );
     particleEngine.update(40, windSample);
     const activeParticlesRendered = particleEngine.renderParticles(sceneBuffer, profile);
 
     // 7. Clima dinámico, niebla multicapa y relámpagos ramificados con supresión bajo techo (Fase 10)
-    const shelteredRects: readonly LogicalRect[] = [renderedStruct.roofOcclusionFootprint];
+    const roof = renderedStruct.roofOcclusionFootprint;
+    const shelteredRects: readonly LogicalRect[] = cfg.isRoofCutaway ? [] : [{
+      x: structX * 16 / tile + roof.x,
+      y: structY * 16 / tile + roof.y,
+      width: roof.width,
+      height: roof.height
+    }];
     const weatherResult = this.weatherSystem.renderWeatherOverlay(
       sceneW,
       sceneH,
@@ -383,15 +405,15 @@ export class PPAEInteractiveShowcaseController {
       cfg.timeSeconds,
       shelteredRects,
       false,
-      2026
+      sceneSeed ^ 0x3944
     );
     this.blitAlpha(sceneBuffer, weatherResult.overlayBuffer, 0, 0);
 
     // 8. Vistas secundarias del inspector: Jefe Multisegmento, Interior y Cueva Subterránea
     const bossState =
       cfg.featuredBoss === 'corrupted_forest_treant_lord'
-        ? createCorruptedTreantBossState(2026)
-        : createDefaultColossusBossState(2026);
+        ? createCorruptedTreantBossState(sceneSeed)
+        : createDefaultColossusBossState(sceneSeed);
     const bossRender = this.bossRenderer.renderBoss({ ...bossState, frameIndex: cfg.frameIndex }, profile);
     const interiorRender = this.interiorGen.renderInterior(DEFAULT_COTTAGE_INTERIOR, profile);
     const caveRender = this.caveGen.generateChamber(DEFAULT_CRYSTAL_CAVERN, profile);

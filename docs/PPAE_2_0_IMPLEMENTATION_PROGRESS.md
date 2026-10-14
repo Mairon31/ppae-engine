@@ -470,3 +470,10 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - **Material-appropriate light audit:** emissive crystal geodes opt out of solar key-light alignment, matching Phase 11's documented quality registry, while remaining metrics are enforced.
 
 - **Geode audit calibration:** real 32x32 geode has symmetry 0.942 (just above the organic silhouette cutoff 0.940), while tree and hero pass. Radial crystal symmetry does not imply an organic lollipop defect; disabled the **organic-tree** asymmetry requirement only for geodes, leaving their measured ratio, contrast, palette, noise, connectivity and emissive-light exception in the live quality report. Trees/organic rocks remain covered.
+
+### Phase 12 — Production-compositing corrective pass
+
+- The supplied orchestrator initially generated but discarded `renderedChunk.sortedProps`, used hard-coded caster positions unrelated to rendered subjects, always rendered structure walls first, and omitted ambient grade. Replaced with a single foot-Y depth-sorted draw list including all actual chunk props, featured flora/geology/tree, structure base, NPC, creature and hero. Roof remains a separate occludable overlay; cave/interior/boss previews retained.
+- Solar-shadow caster logical coordinates now derive from the actual rasterized tree/hero/chunk prop pixel positions; ambient solar-hour grade reuses the Phase 10 lighting engine.
+- Roof precipitation shelter is relocated into scene logical coordinates, disabled for roof cutaway; world seed now influences NPC/creature/VFX/boss presets rather than being only terrain seed. Seed streams remain deterministic.
+- Implementation requires CI, 32-lab Chromium and real screenshot QA for visual overlap/readability before marking Phase 12 verified.
