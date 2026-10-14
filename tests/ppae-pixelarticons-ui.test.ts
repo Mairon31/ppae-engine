@@ -34,6 +34,6 @@ describe('Landing and studio native Pixelarticons', () => {
     expect(source).not.toContain("const glyphs = [");
     expect(source).toContain('hydratePixelIcons()');
     expect(source).toContain("pixelIcon(state.playing ? 'pause' : 'play')");
-    expect(body).toContain('aria-label="Pausar o reproducir"');
+    expect(body).toContain('aria-label="Pause or play"');
   });
 });
