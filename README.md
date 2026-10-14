@@ -21,4 +21,8 @@ npm run build
 
 El punto de entrada es `src/index.ts`. `npm run build` genera un bundle ESM autocontenido en `dist/library/`, declaraciones TypeScript con extensiones ESM válidas en `dist/` y la demostración web en `dist/demo/`; los outputs están separados para que Vite no borre los artefactos de biblioteca. El build comprueba además el paquete con resolución TypeScript `NodeNext`. El paquete expone sus APIs desde la raíz, sin depender de rutas internas.
 
+## Demo en GitHub Pages
+
+La demo se publica en `https://mairon31.github.io/ppae-engine/`. El workflow de GitHub Actions `deploy-pages.yml` construye `npm run build:demo` y despliega el contenido estático de `dist/demo` en pushes a `master` o mediante ejecución manual.
+
 `PPAEPerformanceBenchmarkSuite` mide generación CPU de recursos y memoria estimada de caché. No mide FPS, frame time, draw calls ni uso de GPU; esas métricas requieren una escena activa y un renderer real.

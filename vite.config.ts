@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/ppae-engine/' : '/',
   server: {
     port: 5173,
     open: false
@@ -10,4 +11,4 @@ export default defineConfig({
     outDir: 'dist/demo',
     emptyOutDir: true
   }
-});
+}));
