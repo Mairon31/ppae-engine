@@ -15,3 +15,5 @@ export * from './entities/character-rig';
 export * from './entities/character-generator';
 export * from './animation/state-machine';
 export * from './animation/spritesheet-compiler';
+export * from './entities/creature-archetypes';
+export * from './entities/boss-generator';
