@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_STYLE_PROFILES, NatureGenerator, TREE_SPECIES_CATALOG,
+  DEFAULT_STYLE_PROFILES, NatureGenerator, TREE_SPECIES_CATALOG, fnv1aHash32,
   TreeMorphologyResolver, TREE_MORPHOLOGY_ARCHETYPES
 } from '../src/index';
 import type { TreeSpeciesId } from '../src/index';
@@ -45,6 +45,17 @@ describe('P0 tree canopy clipping and runtime sprite bounds regression', () => {
         expect(sample.buffer.width % profile.moduleSize).toBe(0);
         expect(sample.buffer.height % profile.moduleSize).toBe(0);
         assertSafeEdges(sample.buffer, family + '/' + id);
+      }
+    }
+  });
+
+  it('reproduces the exact Playground default oak/pine/birch seeds without cut borders', () => {
+    const profile = DEFAULT_STYLE_PROFILES['micro-6x6'];
+    for (const family of ['oak','pine','birch'] as const) {
+      const seed = fnv1aHash32('PixelProject-2026:' + family + ':');
+      for (const stage of ['mature','ancient'] as const) {
+        const artifact = generator.generateTreeStage(family, stage, profile, seed);
+        assertSafeEdges(artifact.buffer, 'Playground default ' + family + '/' + stage);
       }
     }
   });
