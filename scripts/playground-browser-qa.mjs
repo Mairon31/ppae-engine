@@ -249,6 +249,37 @@ try {
   const homepageCanvas = await page.locator('#landing-world').evaluate(node=>node.toDataURL());
   if (!homepageCanvas.startsWith('data:image/png;base64,')) throw new Error('Live landing variant could not render');
   console.log('MOBILE LANDING OK: navigation, reroll, responsive layout');
+  // Confirm localized deep links, UI translations and language persistence.
+  const localePage = await browser.newPage({ viewport:{width:390,height:844} });
+  localePage.on('pageerror', err => errors.push('locale-pageerror: '+err.message));
+  await localePage.goto(url + '?lang=es#trees', { waitUntil:'domcontentloaded' });
+  await localePage.waitForFunction(() =>
+    document.documentElement.lang === 'es' &&
+    document.getElementById('page-title')?.textContent === 'Árboles' &&
+    !document.getElementById('playground-app')?.hidden);
+  if ((await localePage.locator('#section-nav .nav-link').count()) !== 30)
+    throw new Error('ES deep-link catalog did not render all 30 sections');
+  await localePage.locator('#playground-app [data-language-select]').selectOption('pt');
+  await localePage.waitForURL(/\\?lang=pt#trees$/);
+  await localePage.waitForFunction(() =>
+    document.documentElement.lang === 'pt' &&
+    document.getElementById('page-title')?.textContent === 'Árvores');
+  await localePage.screenshot({path:join(output,'36-playground-portuguese-mobile.png'),fullPage:true});
+  await localePage.locator('.studio-top-home').click();
+  await localePage.waitForFunction(() =>
+    location.hash === '#home' &&
+    location.search.includes('lang=pt') &&
+    !document.getElementById('landing-page')?.hidden);
+  const ptOverflow = await localePage.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  if (ptOverflow > 1) throw new Error('Portuguese landing overflow: '+ptOverflow);
+  await localePage.screenshot({path:join(output,'37-landing-portuguese-mobile.png'),fullPage:true});
+  await localePage.locator('#landing-page [data-language-select]').selectOption('en');
+  await localePage.waitForFunction(() =>
+    document.documentElement.lang === 'en' &&
+    !location.search.includes('lang=') &&
+    document.getElementById('lp-headline')?.textContent?.includes('ONE ENGINE.'));
+  await localePage.close();
+  console.log('LOCALE QA OK: Spanish deep link, Portuguese switch and mobile landing, English default');
   if (errors.length) throw new Error('Browser errors:\n' + errors.join('\n'));
   console.log('BROWSER QA PASS: product landing, ' + total + ' engine labs, avatar, native exports and 390px mobile');
 } finally {
