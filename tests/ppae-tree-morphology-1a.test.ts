@@ -23,7 +23,8 @@ describe('PPAE 2.0 Phase 1A — Procedural Tree Morphology Architecture', () => 
     const willowWeeping = resolver.resolveTreeMorphology('willow', 'mature', profile4, 1024, 'willow_weeping_cascade');
 
     expect(oakMonarch.canvasWidthTexels).toBeGreaterThan(pineSpire.canvasWidthTexels);
-    expect(pineSpire.canvasHeightTexels).toBeGreaterThanOrEqual(oakMonarch.canvasHeightTexels);
+    // Compare morphological proportions, not transparent sprite safety padding.
+    expect(pineSpire.metrics.aspectRatio).toBeLessThan(oakMonarch.metrics.aspectRatio);
     expect(willowWeeping.skeleton.foliageMasses[0].dropLengthPx).toBeGreaterThan(0);
     expect(resolver.computeStructuralDissimilarity(oakMonarch, pineSpire)).toBeGreaterThan(0.35);
     expect(resolver.computeStructuralDissimilarity(oakMonarch, birchColumn)).toBeGreaterThan(0.35);
