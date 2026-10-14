@@ -207,3 +207,18 @@
   .lp-header .site-language-control select{max-width:80px}
   .studio .top-actions .site-language-control select{max-width:76px}
 }
+
+/* Compact mobile Studio toolbar: prioritize the translated section title.
+   Prevent language selector and mobile action controls from expanding viewport. */
+@media(max-width:660px){
+  .studio .topbar{display:flex;min-width:0;width:100%}
+  .studio .breadcrumbs{flex:1 1 0;min-width:0;overflow:hidden}
+  .studio .breadcrumbs span:first-child,.studio .breadcrumbs .chevron{display:none}
+  .studio .breadcrumbs strong{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .studio .top-actions{flex:0 0 auto;gap:5px;min-width:0}
+  .studio .topbar .engine-status{display:none}
+  .studio .studio-top-home{font-size:0;gap:0;min-width:25px;padding:3px}
+  .studio .mobile-inspector-button{font-size:0;gap:0;width:36px;min-width:36px;padding:5px}
+  .studio .mobile-nav-button{width:36px;min-width:36px;padding:5px}
+  .studio .top-actions .site-language-control select{width:86px;max-width:86px}
+}
