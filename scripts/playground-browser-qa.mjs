@@ -63,7 +63,7 @@ try {
   const playButton = page.locator('#play-toggle');
   if (await playButton.locator('svg.px-icon').count() !== 1)
     throw new Error('Player controls must use Pixelarticons SVG, not text glyphs');
-  if (total < 30) {
+  if (total < 32) {
     await page.screenshot({ path: join(output, '00-diagnostic.png'), fullPage: true });
     const pageHtml = (await page.content()).slice(0, 3000);
     const failed = errors.join(' | ');
@@ -76,7 +76,7 @@ try {
       previewText: document.getElementById('engine-live')?.textContent,
       mainText: document.body.innerText.slice(0, 800)
     }));
-    throw new Error('Only ' + total + ' navigation sections; expected 30. ' +
+    throw new Error('Only ' + total + ' navigation sections; expected 32. ' +
       'diagnostic=' + JSON.stringify(navigation) + '; browser errors=' + failed +
       '; HTML=' + pageHtml);
   }
@@ -428,14 +428,21 @@ try {
     document.documentElement.lang === 'es' &&
     document.getElementById('page-title')?.textContent === 'Árboles' &&
     !document.getElementById('playground-app')?.hidden);
-  if ((await localePage.locator('#section-nav .nav-link').count()) !== 30)
-    throw new Error('ES deep-link catalog did not render all 30 sections');
+  if ((await localePage.locator('#section-nav .nav-link').count()) !== 32)
+    throw new Error('ES deep-link catalog did not render all 32 sections');
   await localePage.locator('#playground-app [data-language-select]').selectOption('pt');
   await localePage.waitForURL(/\\?lang=pt#trees$/);
   await localePage.waitForFunction(() =>
     document.documentElement.lang === 'pt' &&
     document.getElementById('page-title')?.textContent === 'Árvores');
   await localePage.screenshot({path:join(output,'36-playground-portuguese-mobile.png'),fullPage:true});
+  await localePage.locator('#section-nav .nav-link')
+    .filter({ hasText: 'Inspetor de qualidade artística' }).click();
+  await localePage.waitForURL(/\\?lang=pt#quality-inspector$/);
+  await localePage.waitForFunction(() =>
+    document.getElementById('page-title')?.textContent === 'Inspetor de qualidade artística' &&
+    document.getElementById('quality-live-metrics')?.textContent?.includes('detailed-32x32'));
+  await localePage.screenshot({path:join(output,'53-phase12-mobile-quality-pt.png'),fullPage:true});
   await localePage.locator('.studio-top-home').click();
   await localePage.waitForFunction(() =>
     location.hash === '#home' &&

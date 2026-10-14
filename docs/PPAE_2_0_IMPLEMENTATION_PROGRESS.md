@@ -480,3 +480,5 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 
 - `PPAEEngine.renderProductionScene` and `PPAEEngine.compareProductionProfiles` expose the integrated controller to existing production consumers via lazy allocation; single-asset engine construction and existing API semantics are preserved.
 - Removed dead `blitOpaque` method after switching to alpha-safe composite, addressing TS6133 strict build failure. The browser's thumbnail rendering is bounded to the micro-4x4 generator for quality galleries while the main viewer shows all five actual tiers. Adaptive resolution remains delegated to the showcase controller for full-size render calls.
+
+- Browser QA's previous ES deep-link test hard-coded the former 30-section count despite 32 working labs; updated the expected count to 32 and added a Portuguese mobile quality-inspector deep link/render assertion. Existing 30 sections remain in the same order, so legacy navigation indices are stable.
