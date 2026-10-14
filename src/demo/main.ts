@@ -710,6 +710,36 @@ function paint(): void {
       '<br/>' + tr('Render: ') + lastDrawTime.toFixed(1) + ' ms' +
       '<br/>' + tr('Animation: ') + (state.playing ? 'PLAY' : 'PAUSE') +
       '<br/>' + tr('Active VFX: ') + particles.getTelemetry().activeParticlesCount;
+    if (state.section === 'integrated-scene' && currentSceneMetrics) {
+      const t = currentSceneMetrics, node = document.createElement('pre');
+      node.id = 'showcase-live-metrics'; node.className = 'live-diagnostics';
+      node.textContent = [
+        'WORLD SCENE PIPELINE · ' + t.resolvedProfileId,
+        'MODULE ' + t.moduleSizeTexels + ' · TILE ' + t.canonicalTileTexels,
+        'SHADOW PIXELS ' + t.renderedShadowPixels,
+        'SOLAR VECTOR ' + t.solarShadowVector.dirX.toFixed(2) + ', ' + t.solarShadowVector.dirY.toFixed(2),
+        'WEATHER DROPS ' + t.weatherDropsSpawned + ' · SHELTERED ' + t.weatherDropsSuppressedByRoof,
+        'LIGHTNING BRANCHES ' + t.lightningBranchesCount,
+        'VFX PARTICLES ' + t.activeParticlesRendered,
+        'QUALITY HERO ' + t.heroQualityReport.overallScore + '/100 · ' + (t.heroQualityReport.passed ? 'PASS' : 'CHECK'),
+        'QUALITY TREE ' + t.featuredTreeQualityReport.overallScore + '/100 · ' + (t.featuredTreeQualityReport.passed ? 'PASS' : 'CHECK'),
+        'QUALITY GEOLOGY ' + t.featuredRockQualityReport.overallScore + '/100 · ' + (t.featuredRockQualityReport.passed ? 'PASS' : 'CHECK'),
+        'DETAIL ' + JSON.stringify(t.heroDimensionSpec.artCompositionUnits)
+      ].join('\n');
+      byId('telemetry').append(node);
+    }
+    if (state.section === 'quality-inspector') {
+      const node = document.createElement('pre');
+      node.id = 'quality-live-metrics'; node.className = 'live-diagnostics';
+      node.textContent = (state.selected === 'golden_registry'
+        ? qualityEvaluator.runGoldenSeedBenchmarkSuite().map(r =>
+            r.entry.benchmarkId + '  ' + r.report.overallScore + '/100  ' +
+            (r.report.passed ? 'PASS' : r.report.defects.join(','))).join('\n')
+        : currentComparisonItems.map(r => r.profileId + '  ' +
+            r.qualityReport.overallScore + '/100  ' +
+            (r.qualityReport.passed ? 'PASS' : r.qualityReport.defects.join(','))).join('\n'));
+      byId('telemetry').append(node);
+    }
   } catch (err) {
     errorString = err instanceof Error ? err.message : String(err);
     byId('engine-live').textContent = 'ERROR';
@@ -876,7 +906,7 @@ function renderLabControls(): void {
   avatarRoot.hidden = !isAvatar;
   const isSystem = ['trees','tree-archetypes','bosses','autotiling','liquids',
     'equipment','equipment-materials','hud','creatures','creature-variants',
-    'structures','caves'].includes(state.section);
+    'structures','caves','integrated-scene','quality-inspector'].includes(state.section);
   systemRoot.hidden = !isSystem;
   if (isAvatar) {
     const heading = document.createElement('h3'); heading.className = 'lab-heading';
@@ -999,6 +1029,49 @@ function renderLabControls(): void {
       assign(value); refreshLabPreview();
     });
   };
+  if (state.section === 'integrated-scene') {
+    choose('Featured NPC profession', 'lab-showcase-npc', NPC_PROFESSIONS,
+      state.showcaseNpc, value => { state.showcaseNpc = value as NpcProfessionArchetypeId; });
+    choose('Featured creature', 'lab-showcase-creature', Object.keys(CREATURE_SPECIES_CATALOG),
+      state.showcaseCreature, value => { state.showcaseCreature = value as CreatureSpeciesId; });
+    choose('Boss archetype', 'lab-showcase-boss', BOSS_IDS,
+      state.showcaseBoss, value => { state.showcaseBoss = value as typeof BOSS_IDS[number]; });
+    choose('Structure archetype', 'lab-showcase-structure', Object.keys(DEFAULT_STRUCTURE_CATALOG),
+      state.showcaseStructure, value => { state.showcaseStructure = value; });
+    choose('VFX emitter', 'lab-showcase-vfx', Object.keys(VFX_EMITTER_PRESETS),
+      state.showcaseVfx, value => { state.showcaseVfx = value as VFXPresetId; });
+    const hourLabel = document.createElement('label');
+    hourLabel.textContent = tr('Solar hour: ');
+    const hourValue = document.createElement('strong');
+    hourValue.textContent = state.showcaseHour24.toFixed(1) + 'h';
+    const hourInput = document.createElement('input'); hourInput.type = 'range';
+    hourInput.id = 'lab-showcase-hour'; hourInput.min = '0'; hourInput.max = '24';
+    hourInput.step = '.5'; hourInput.value = String(state.showcaseHour24);
+    hourInput.addEventListener('input', () => {
+      state.showcaseHour24 = Number(hourInput.value);
+      hourValue.textContent = state.showcaseHour24.toFixed(1) + 'h';
+      refreshLabPreview();
+    });
+    hourLabel.append(hourValue, hourInput); systemRoot.append(hourLabel);
+    const toggleScene = (id: string, labelText: string, initial: boolean,
+      update: (v: boolean) => void): void => {
+      const row = document.createElement('label'); row.className = 'toggle-row';
+      const box = document.createElement('input'); box.type = 'checkbox'; box.id = id;
+      box.checked = initial;
+      box.addEventListener('change', () => { update(box.checked); refreshLabPreview(); });
+      const txt = document.createElement('span'); txt.textContent = tr(labelText);
+      row.append(txt,box); systemRoot.append(row);
+    };
+    toggleScene('lab-showcase-door', 'Open structure door', state.showcaseDoorOpen,
+      v => { state.showcaseDoorOpen = v; });
+    toggleScene('lab-showcase-roof', 'Cut away roof', state.showcaseRoofCutaway,
+      v => { state.showcaseRoofCutaway = v; });
+  }
+  if (state.section === 'quality-inspector') {
+    const note = document.createElement('p'); note.className = 'lab-description';
+    note.textContent = tr('Select a live five-tier comparison or inspect the ten locked golden references. Audit scores are available in the telemetry panel and JSON export.');
+    systemRoot.append(note);
+  }
   if (state.section === 'trees' || state.section === 'tree-archetypes')
     choose('Foliage season', 'lab-tree-env',
       ['normal','autumn','snowy','blossom'], state.treeEnvironment,
@@ -1087,7 +1160,7 @@ function renderLabControls(): void {
   }
 }
 function refreshControlVisibility(): void {
-  const character = ['characters','character-actions','npcs','npc-variants','world'].includes(state.section);
+  const character = ['characters','character-actions','npcs','npc-variants','world','integrated-scene'].includes(state.section);
   const creature = state.section === 'creatures' || state.section === 'creature-variants';
   const animated = character || creature;
   const actionSelect = byId<HTMLSelectElement>('action-select');
@@ -1103,7 +1176,7 @@ function refreshControlVisibility(): void {
   options(byId<HTMLSelectElement>('stage-select'), stages, selectedStage);
   byId<HTMLSelectElement>('age-select').disabled = !creature || state.section === 'creature-variants';
   byId<HTMLSelectElement>('health-select').disabled = !creature || state.section === 'creature-variants';
-  byId<HTMLSelectElement>('direction-select').disabled = !['characters','character-actions','npcs','npc-variants','creatures','creature-variants','bosses','world'].includes(state.section);
+  byId<HTMLSelectElement>('direction-select').disabled = !['characters','character-actions','npcs','npc-variants','creatures','creature-variants','bosses','world','integrated-scene'].includes(state.section);
   const downloadable = ['characters','character-actions','npcs','npc-variants'].includes(state.section) || creature;
   (byId('download-atlas') as HTMLButtonElement).disabled = !downloadable;
   (byId('download-json') as HTMLButtonElement).disabled = false;
@@ -1148,7 +1221,8 @@ function renderNav(): void {
     caves:'grid-3x3', farming:'tree', 'crop-lifecycle':'tree',
     equipment:'gamepad', 'equipment-materials':'gear',
     hud:'heart', particles:'sparkles', weather:'cloud',
-    lighting:'sun', palettes:'star', 'resolution-profiles':'sliders'
+    lighting:'sun', palettes:'star', 'resolution-profiles':'sliders',
+    'integrated-scene':'gamepad', 'quality-inspector':'sliders'
   };
   PLAYGROUND_SECTIONS.forEach(section => {
     if (lastGroup !== section.group) {
@@ -1404,6 +1478,34 @@ function exportTechnicalJSON(): void {
     case 'palettes':
       data.palette = paletteManager.getPalette(id);
       break;
+    case 'integrated-scene': {
+      const frame = productionShowcase.renderWorldSceneFrame(productionConfig());
+      data.config = { ...DEFAULT_SHOWCASE_SCENE_CONFIG, ...productionConfig() };
+      data.catalog = productionShowcase.getCatalogInventory();
+      data.telemetry = frame.telemetry;
+      data.previewKind = id;
+      data.nativePreview = {
+        width: buffer.width, height: buffer.height,
+        rgbaHash: qualityEvaluator.hashPixelBuffer(buffer)
+      };
+      break;
+    }
+    case 'quality-inspector': {
+      data.comparisons = (id === 'golden_registry' ? [] :
+        productionShowcase.renderMultiResolutionComparisonStrip(id as 'hero' | 'oak_tree' | 'crystal_geode',
+          fnv1aHash32(state.seed + ':' + id)).map(item => ({
+            profile: item.profileId, score: item.qualityReport.overallScore,
+            defects: item.qualityReport.defects,
+            rgbaHash: qualityEvaluator.hashPixelBuffer(item.buffer),
+            dimensions: { width: item.buffer.width, height: item.buffer.height }
+          })));
+      data.goldenReferences = id === 'golden_registry'
+        ? qualityEvaluator.runGoldenSeedBenchmarkSuite().map(item => ({
+            ...item.entry, score: item.report.overallScore,
+            defects: item.report.defects, rgbaHash: item.pixelHash
+          })) : undefined;
+      break;
+    }
     case 'resolution-profiles':
       data.artStyleProfile = DEFAULT_STYLE_PROFILES[id as GranularityProfileId];
       data.generatedNativeProfile = id;
