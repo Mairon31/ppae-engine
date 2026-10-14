@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="theme-color" content="#0b1020"/>
   <meta property="og:title" content="PPAE Engine — Procedural Pixel Art Engine"/>
-  <meta property="og:description" content="Arte pixel procedural, personajes animados, mundos y VFX generados en tiempo real. Explora el motor."/>
+  <meta property="og:description" content="Procedural pixel art, animated characters, worlds, and VFX generated in real time. Explore the engine."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&amp;family=Press+Start+2P&amp;display=swap" rel="stylesheet"/>
-  <meta name="description" content="PPAE Engine: genera pixel art procedural, sprites animados, mundos, criaturas, vegetación y VFX. Prueba sus 30 laboratorios."/>
+  <meta name="description" content="PPAE Engine generates procedural pixel art, animated sprites, worlds, creatures, vegetation, and VFX. Explore 30 interactive labs."/>
   <title>PPAE Engine — Procedural Pixel Art Engine</title>
   <link rel="stylesheet" href="/src/demo/playground.css"/>
   <!-- If a branch source is published instead of Vite dist/demo, fail visibly
@@ -30,14 +30,14 @@
       var error=document.createElement('main');
       error.id='ppae-publish-error';
       var title=document.createElement('h1');
-      title.textContent='PPAE: publicación sin compilar';
+      title.textContent='PPAE: uncompiled deployment';
       var message=document.createElement('p');
-      message.textContent='GitHub Pages está sirviendo archivos fuente de Vite en lugar de dist/demo. Por eso los estilos, las animaciones y el motor no se cargan.';
+      message.textContent='GitHub Pages is serving Vite source files instead of the dist/demo build. This prevents styles, animation, and the engine from loading.';
       var guide=document.createElement('p');
-      guide.textContent='Abre el repositorio → Settings → Pages → Build and deployment → Source → GitHub Actions. Después ejecuta Deploy demo to GitHub Pages.';
+      guide.textContent='In your repository, open Settings > Pages > Build and deployment > Source and select GitHub Actions. Then run the Deploy demo to GitHub Pages workflow.';
       var link=document.createElement('a');
       link.href='https://github.com/Mairon31/ppae-engine/settings/pages';
-      link.textContent='Abrir configuración de GitHub Pages ↗';
+      link.textContent='Open GitHub Pages settings ↗';
       error.append(title,message,guide,link);
       document.body.replaceChildren(error);
     });
@@ -45,140 +45,140 @@
 </head>
 <body>
   <div id="landing-page" class="landing-page" hidden>
-    <a class="skip-link" href="#characters">Saltar al laboratorio</a>
+    <a class="skip-link" href="#characters">Skip to Playground</a>
     <header class="lp-header">
-      <a class="lp-logo" href="#home" aria-label="PPAE Engine — inicio"><span class="lp-logo-glyph" aria-hidden="true"><span data-px-icon="sparkles"></span></span><span>PPAE<span class="lp-logo-small"> ENGINE</span></span><span class="lp-logo-tag">v2.0 ALPHA</span></a>
-      <nav class="lp-nav" aria-label="Navegación principal">
-        <a href="#features">CAPACIDADES</a>
-        <a href="#showcase">GALERÍA</a>
+      <a class="lp-logo" href="#home" aria-label="PPAE Engine — Home"><span class="lp-logo-glyph" aria-hidden="true"><span data-px-icon="sparkles"></span></span><span>PPAE<span class="lp-logo-small"> ENGINE</span></span><span class="lp-logo-tag">v2.0 ALPHA</span></a>
+      <nav class="lp-nav" aria-label="Main navigation">
+        <a href="#features">FEATURES</a>
+        <a href="#showcase">SHOWCASE</a>
         <a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">GITHUB <span aria-hidden="true"><span data-px-icon="external-link"></span></span></a>
       </nav>
-      <a class="lp-cta lp-cta-small" href="#world"><span aria-hidden="true"><span data-px-icon="play"></span></span> ABRIR PLAYGROUND</a>
+      <a class="lp-cta lp-cta-small" href="#world"><span aria-hidden="true"><span data-px-icon="play"></span></span> OPEN PLAYGROUND</a>
     </header>
     <main id="landing-content">
       <section class="lp-hero" aria-labelledby="lp-headline">
         <div class="lp-hero-copy">
           <div class="lp-kicker"><span class="lp-kicker-dot"></span> PROCEDURAL PIXEL ART ENGINE <span class="lp-kicker-sep">/</span> OPEN SOURCE</div>
-          <h1 id="lp-headline">UN MOTOR.<br/><span>INFINITOS</span><br/>PÍXELES<span class="lp-period">.</span></h1>
-          <p class="lp-hero-lede">Arte vivo, no sprites prefabricados. Crea personajes, criaturas, biomas, animaciones y efectos visuales mediante generación procedural reproducible.</p>
-          <div class="lp-hero-actions"><a class="lp-cta lp-cta-primary" href="#world"><span aria-hidden="true"><span data-px-icon="play"></span></span> EXPLORAR EL MOTOR <span aria-hidden="true"><span data-px-icon="external-link"></span></span></a><a class="lp-cta lp-cta-outline" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">VER CÓDIGO <span data-px-icon="external-link"></span></a></div>
-          <div class="lp-hero-proof"><span><b>30</b> LABORATORIOS</span><span class="lp-proof-divider"></span><span><b>28</b> ACCIONES</span><span class="lp-proof-divider"></span><span><b>8</b> DIRECCIONES</span></div>
+          <h1 id="lp-headline">ONE ENGINE.<br/><span>ENDLESS</span><br/>PIXELS<span class="lp-period">.</span></h1>
+          <p class="lp-hero-lede">Living pixel art, not pre-made sprites. Generate characters, creatures, biomes, animations, and visual effects through reproducible procedural systems.</p>
+          <div class="lp-hero-actions"><a class="lp-cta lp-cta-primary" href="#world"><span aria-hidden="true"><span data-px-icon="play"></span></span> EXPLORE THE ENGINE <span aria-hidden="true"><span data-px-icon="external-link"></span></span></a><a class="lp-cta lp-cta-outline" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">VIEW SOURCE <span data-px-icon="external-link"></span></a></div>
+          <div class="lp-hero-proof"><span><b>30</b> LABS</span><span class="lp-proof-divider"></span><span><b>28</b> ACTIONS</span><span class="lp-proof-divider"></span><span><b>8</b> DIRECTIONS</span></div>
         </div>
         <div class="lp-stage-outer">
           <div class="lp-stage-top"><span><span class="lp-led"></span> ENGINE LIVE / WORLD GEN</span><span id="landing-seed-label">SEED PPAE-2026</span></div>
-          <div class="lp-stage-window"><canvas id="landing-world" width="384" height="216" role="img" aria-label="Escena procedural animada de bosque, personaje y criaturas generados por el motor"></canvas><div class="lp-stage-scanlines" aria-hidden="true"></div><div class="lp-stage-badge">GENERADO EN TIEMPO REAL</div></div>
-          <div class="lp-stage-bottom"><span>01 / PROCEDURAL WORLD</span><button type="button" id="landing-reroll" class="lp-refresh" title="Generar una nueva variante"><span data-px-icon="refresh"></span> NUEVA VARIANTE</button><span>RGBA / PIXEL PERFECT</span></div>
-          <div class="lp-float-chip lp-chip-a"><span data-px-icon="external-link"></span> SIN SPRITES PREDEFINIDOS</div><div class="lp-float-chip lp-chip-b"><span data-px-icon="sparkles"></span> SEED DETERMINISTA</div>
+          <div class="lp-stage-window"><canvas id="landing-world" width="384" height="216" role="img" aria-label="Animated procedural forest scene with engine-generated characters and creatures"></canvas><div class="lp-stage-scanlines" aria-hidden="true"></div><div class="lp-stage-badge">GENERATED LIVE</div></div>
+          <div class="lp-stage-bottom"><span>01 / PROCEDURAL WORLD</span><button type="button" id="landing-reroll" class="lp-refresh" title="Generate a new variation"><span data-px-icon="refresh"></span> NEW VARIATION</button><span>RGBA / PIXEL PERFECT</span></div>
+          <div class="lp-float-chip lp-chip-a"><span data-px-icon="external-link"></span> NO PRE-MADE SPRITES</div><div class="lp-float-chip lp-chip-b"><span data-px-icon="sparkles"></span> DETERMINISTIC SEED</div>
         </div>
       </section>
-      <div class="lp-ticker" aria-label="Características técnicas"><div class="lp-ticker-content">PIXEL PERFECT <span><span data-px-icon="sparkles"></span></span> GENERACIÓN PROCEDURAL <span><span data-px-icon="sparkles"></span></span> SPRITES ANIMADOS <span><span data-px-icon="sparkles"></span></span> OCHO DIRECCIONES <span><span data-px-icon="sparkles"></span></span> REPRODUCIBILIDAD <span><span data-px-icon="sparkles"></span></span> SIN ASSETS PREFABRICADOS <span><span data-px-icon="sparkles"></span></span> PIXEL PERFECT <span><span data-px-icon="sparkles"></span></span> GENERACIÓN PROCEDURAL <span><span data-px-icon="sparkles"></span></span></div></div>
+      <div class="lp-ticker" aria-label="Engine capabilities"><div class="lp-ticker-content">PIXEL PERFECT <span><span data-px-icon="sparkles"></span></span> PROCEDURAL GENERATION <span><span data-px-icon="sparkles"></span></span> ANIMATED SPRITES <span><span data-px-icon="sparkles"></span></span> EIGHT DIRECTIONS <span><span data-px-icon="sparkles"></span></span> REPRODUCIBILITY <span><span data-px-icon="sparkles"></span></span> NO PRE-MADE ASSETS <span><span data-px-icon="sparkles"></span></span> PIXEL PERFECT <span><span data-px-icon="sparkles"></span></span> PROCEDURAL GENERATION <span><span data-px-icon="sparkles"></span></span></div></div>
       <section id="showcase" class="lp-section lp-showcase">
-        <div class="lp-section-header"><div><div class="lp-eyebrow">01 / EL MOTOR EN ACCIÓN</div><h2>NO SON MOCKUPS.<br/><span>SON PÍXELES GENERADOS.</span></h2></div><p>Estas muestras se dibujan con las APIs del propio motor. Cada sistema es explorable y configurable en el Playground.</p></div>
+        <div class="lp-section-header"><div><div class="lp-eyebrow">01 / THE ENGINE IN ACTION</div><h2>NOT MOCKUPS.<br/><span>SON PIXELS GENERADOS.</span></h2></div><p>Every sample is rendered by the engine's own APIs. Explore and configure each system in the Playground.</p></div>
         <div class="lp-showcase-grid">
-          <a href="#characters" class="lp-showcase-card lp-feature-player"><div class="lp-card-top"><span>01 / PERSONAJES</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-player" width="240" height="168" aria-label="Sprite procedural de personaje"></canvas><div class="lp-card-bottom"><strong>IDENTIDADES ÚNICAS</strong><small>RIG 2D · EQUIPAMIENTO · ANIMACIÓN</small></div></a>
-          <a href="#trees" class="lp-showcase-card lp-feature-nature"><div class="lp-card-top"><span>02 / NATURALEZA</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-tree" width="240" height="168" aria-label="Árbol procedural generado"></canvas><div class="lp-card-bottom"><strong>VEGETACIÓN VIVA</strong><small>MORFOLOGÍA · ESTACIONES · CICLOS</small></div></a>
-          <a href="#creatures" class="lp-showcase-card lp-feature-fauna"><div class="lp-card-top"><span>03 / BESTIARIO</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-creature" width="240" height="168" aria-label="Criatura procedural generada"></canvas><div class="lp-card-bottom"><strong>CRIATURAS CON VIDA</strong><small>EDADES · ESTADOS · 8 DIRECCIONES</small></div></a>
-          <a href="#liquids" class="lp-showcase-card lp-feature-liquid"><div class="lp-card-top"><span>04 / MATERIALES</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-water" width="240" height="168" aria-label="Superficie de agua procedural animada"></canvas><div class="lp-card-bottom"><strong>MUNDOS SIN COSTURAS</strong><small>TILEABLE · AUTOTILING · LÍQUIDOS</small></div></a>
+          <a href="#characters" class="lp-showcase-card lp-feature-player"><div class="lp-card-top"><span>01 / CHARACTERS</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-player" width="240" height="168" aria-label="Procedurally generated character sprite"></canvas><div class="lp-card-bottom"><strong>UNIQUE IDENTITIES</strong><small>RIG 2D · EQUIPMENT · ANIMATION</small></div></a>
+          <a href="#trees" class="lp-showcase-card lp-feature-nature"><div class="lp-card-top"><span>02 / NATURE</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-tree" width="240" height="168" aria-label="Procedurally generated tree"></canvas><div class="lp-card-bottom"><strong>LIVING VEGETATION</strong><small>MORPHOLOGY · SEASONS · LIFECYCLES</small></div></a>
+          <a href="#creatures" class="lp-showcase-card lp-feature-fauna"><div class="lp-card-top"><span>03 / BESTIARY</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-creature" width="240" height="168" aria-label="Procedurally generated creature"></canvas><div class="lp-card-bottom"><strong>LIVING CREATURES</strong><small>AGE GROUPS · CONDITIONS · 8 DIRECTIONS</small></div></a>
+          <a href="#liquids" class="lp-showcase-card lp-feature-liquid"><div class="lp-card-top"><span>04 / MATERIALS</span><span class="lp-card-arrow"><span data-px-icon="external-link"></span></span></div><canvas id="landing-card-water" width="240" height="168" aria-label="Animated procedural water surface"></canvas><div class="lp-card-bottom"><strong>SEAMLESS WORLDS</strong><small>TILEABLE · AUTOTILING · LIQUIDS</small></div></a>
         </div>
       </section>
       <section id="features" class="lp-section lp-feature-section">
-        <div class="lp-section-header"><div><div class="lp-eyebrow">02 / CONSTRUIDO PARA CREADORES</div><h2>UNA CAJA DE HERRAMIENTAS.<br/><span>MILES DE POSIBILIDADES.</span></h2></div><p>De prototipos rápidos a pipelines complejos. PPAE es una biblioteca TypeScript con generación reproducible y APIs tipadas.</p></div>
+        <div class="lp-section-header"><div><div class="lp-eyebrow">02 / BUILT FOR CREATORS</div><h2>ONE TOOLKIT.<br/><span>ENDLESS POSSIBILITIES.</span></h2></div><p>From rapid prototypes to production pipelines, PPAE is a TypeScript library with reproducible generation and typed APIs.</p></div>
         <div class="lp-feature-grid">
-          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="grid-3x3"></span></span><small>01 · GENERACIÓN</small><h3>Mundos procedurales</h3><p>Terreno, biomas, recursos, arquitectura, vegetación, cuevas y agua basada en reglas y semillas.</p><a href="#world">Explorar mundos <span data-px-icon="external-link"></span></a></article>
-          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="sparkles"></span></span><small>02 · ENTIDADES</small><h3>Personajes expresivos</h3><p>Personalización anatómica, equipo, spritesheets, acciones, direcciones y variaciones de criaturas.</p><a href="#characters">Crear personaje <span data-px-icon="external-link"></span></a></article>
-          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="lightbulb"></span></span><small>03 · ATÓSFERA</small><h3>VFX y luz dinámica</h3><p>Partículas, iluminación pixel-perfect, viento, clima y estados visuales calculados en tiempo real.</p><a href="#particles">Ver efectos <span data-px-icon="external-link"></span></a></article>
-          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="code"></span></span><small>04 · DESARROLLO</small><h3>Listo para integrar</h3><p>Buffers RGBA, atlas con metadatos, controles de resolución y utilidades de integración.</p><a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">Código y documentación <span data-px-icon="external-link"></span></a></article>
+          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="grid-3x3"></span></span><small>01 · GENERATION</small><h3>Procedural Worlds</h3><p>Terrain, biomes, resources, structures, vegetation, caves, and water generated from rules and seeds.</p><a href="#world">Explore worlds <span data-px-icon="external-link"></span></a></article>
+          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="sparkles"></span></span><small>02 · ENTIDADES</small><h3>Expressive Characters</h3><p>Anatomical customization, equipment, spritesheets, actions, directions, and creature variations.</p><a href="#characters">Create a character <span data-px-icon="external-link"></span></a></article>
+          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="lightbulb"></span></span><small>03 · ATMOSPHERE</small><h3>VFX & Dynamic Lighting</h3><p>Particles, pixel-perfect lighting, wind, weather, and visual states computed in real time.</p><a href="#particles">Explore VFX <span data-px-icon="external-link"></span></a></article>
+          <article class="lp-feature-tile"><span class="lp-feature-icon"><span data-px-icon="code"></span></span><small>04 · DEVELOPMENT</small><h3>Ready to Integrate</h3><p>RGBA buffers, metadata-rich atlases, resolution profiles, and integration utilities.</p><a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">Code & documentation <span data-px-icon="external-link"></span></a></article>
         </div>
       </section>
       <section class="lp-section lp-studio-promo">
-        <div class="lp-studio-copy"><div class="lp-eyebrow">03 / PRUÉBALO TÚ MISMO</div><h2>TU LABORATORIO<br/><span>DE PÍXELES.</span></h2><p>Sin instalar nada. Cambia semillas, colores, animaciones, edades, armaduras y estilos de arte. Exporta sprites nativos y metadatos directamente del navegador.</p><a class="lp-cta lp-cta-primary" href="#characters">ENTRAR AL PLAYGROUND <span data-px-icon="external-link"></span></a></div>
+        <div class="lp-studio-copy"><div class="lp-eyebrow">03 / TRY IT YOURSELF</div><h2>YOUR PIXEL ART<br/><span>DE PIXELS.</span></h2><p>No installation required. Customize seeds, palettes, animation, age, armor, and art styles. Export native sprites and metadata straight from your browser.</p><a class="lp-cta lp-cta-primary" href="#characters">ENTER PLAYGROUND <span data-px-icon="external-link"></span></a></div>
         <div class="lp-studio-demo" aria-hidden="true"><div class="lp-terminal-bar"><i></i><i></i><i></i><span>ppae / studio</span></div><div class="lp-terminal-lines"><div><em>engine</em>.seed <span>=</span> <b>"pixel-world"</b></div><div><em>sprite</em>.generate<span>(</span><b>"hero"</b><span>)</span></div><div><em>animation</em>.play<span>(</span><b>"walk"</b><span>)</span></div><div><em>export</em>.sprite<span>(</span><b>"png"</b><span>)</span></div></div><div class="lp-terminal-result"><span class="lp-led"></span> PROCEDURAL OUTPUT READY</div></div>
       </section>
-      <section class="lp-final-cta"><div class="lp-eyebrow">CÓDIGO ABIERTO · EN DESARROLLO</div><h2>EL PRÓXIMO MUNDO<br/>EMPIEZA <span>AQUÍ.</span></h2><p>Desarrollado para artistas técnicos, creadores de juegos y vibe coders que quieren ir más allá de sprites estáticos.</p><div class="lp-hero-actions"><a class="lp-cta lp-cta-primary" href="#world">ABRIR EL PLAYGROUND <span data-px-icon="external-link"></span></a><a class="lp-cta lp-cta-outline" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">APOYAR EN GITHUB <span data-px-icon="external-link"></span></a></div></section>
+      <section class="lp-final-cta"><div class="lp-eyebrow">CÓDIGO ABIERTO · EN DEVELOPMENT</div><h2>YOUR NEXT WORLD<br/>STARTS <span>HERE.</span></h2><p>Built for technical artists, game developers, and AI-assisted creators who want more than static sprites.</p><div class="lp-hero-actions"><a class="lp-cta lp-cta-primary" href="#world">ABRIR EL PLAYGROUND <span data-px-icon="external-link"></span></a><a class="lp-cta lp-cta-outline" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">SUPPORT ON GITHUB <span data-px-icon="external-link"></span></a></div></section>
     </main>
     <footer class="lp-footer"><span>PPAE ENGINE / 2.0 ALPHA</span><span>PROCEDURAL PIXEL ART · OPEN SOURCE</span><a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">GITHUB <span data-px-icon="external-link"></span></a></footer>
   </div>
   <div class="studio" id="playground-app" hidden>
-    <aside class="sidebar" aria-label="Catálogo de sistemas del motor">
-      <a class="identity" href="#home" aria-label="Volver al inicio de PPAE">
+    <aside class="sidebar" aria-label="Engine systems catalog">
+      <a class="identity" href="#home" aria-label="Back to PPAE home">
         <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
         <span><strong>PPAE</strong><small>ENGINE PLAYGROUND</small></span>
         <span class="identity-version">2.0</span>
       </a>
-      <a class="studio-home-link" href="#home"><span data-px-icon="arrow-left"></span> INICIO / ENGINE</a><div class="sidebar-label">EXPLORADOR DEL MOTOR</div>
-      <nav id="section-nav" class="section-nav" aria-label="Secciones"></nav>
+      <a class="studio-home-link" href="#home"><span data-px-icon="arrow-left"></span> HOME / ENGINE</a><div class="sidebar-label">ENGINE EXPLORER</div>
+      <nav id="section-nav" class="section-nav" aria-label="Sections"></nav>
       <div class="sidebar-bottom">
-        <span class="live-dot"></span> Renderizado procedural real
-        <a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">Ver repositorio <span data-px-icon="external-link"></span></a>
+        <span class="live-dot"></span> Real procedural rendering
+        <a href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">View repository <span data-px-icon="external-link"></span></a>
       </div>
     </aside>
     <div id="mobile-nav-scrim" class="mobile-nav-scrim" aria-hidden="true"></div>
     <div class="workspace">
       <header class="topbar">
-        <div class="breadcrumbs"><span>PPAE Studio</span><span class="chevron">/</span><strong id="crumb-current">Mundo procedural</strong></div>
+        <div class="breadcrumbs"><span>PPAE Studio</span><span class="chevron">/</span><strong id="crumb-current">Procedural World</strong></div>
         <div class="top-actions">
-          <a class="studio-top-home" href="#home"><span data-px-icon="arrow-left"></span> Inicio</a>
-          <span class="engine-status"><span class="live-dot"></span> Motor activo</span>
+          <a class="studio-top-home" href="#home"><span data-px-icon="arrow-left"></span> Home</a>
+          <span class="engine-status"><span class="live-dot"></span> Engine active</span>
           <a class="top-repo" href="https://github.com/Mairon31/ppae-engine" target="_blank" rel="noopener noreferrer">GitHub <span data-px-icon="external-link"></span></a>
-          <button type="button" id="toggle-inspector" class="mobile-inspector-button" aria-expanded="false" aria-label="Abrir controles"><span data-px-icon="gear"></span> Controles</button><button type="button" id="toggle-sidebar" class="mobile-nav-button" aria-expanded="false" aria-label="Abrir navegación"><span data-px-icon="menu"></span></button>
+          <button type="button" id="toggle-inspector" class="mobile-inspector-button" aria-expanded="false" aria-label="Open controls"><span data-px-icon="gear"></span> Controls</button><button type="button" id="toggle-sidebar" class="mobile-nav-button" aria-expanded="false" aria-label="Open navigation"><span data-px-icon="menu"></span></button>
         </div>
       </header>
       <main class="main-content">
         <div class="page-heading">
-          <div><div class="eyebrow">PROCEDURAL PIXEL ART ENGINE / LABORATORIO</div><h1 id="page-title">Mundo procedural</h1><p id="page-description">Un entorno de pruebas conectado a los generadores de PPAE.</p></div>
+          <div><div class="eyebrow">PROCEDURAL PIXEL ART ENGINE / STUDIO</div><h1 id="page-title">Procedural World</h1><p id="page-description">An interactive studio powered by PPAE's real generators.</p></div>
           <div class="build-badge"><span class="live-dot"></span> LIVE PREVIEW <span class="build-version">ALPHA</span></div>
         </div>
-        <section class="preview-shell" aria-label="Visor del motor">
+        <section class="preview-shell" aria-label="Engine preview">
           <div class="preview-toolbar">
-            <div class="preview-tabs"><span class="tab-active">01 &nbsp; VISTA EN DIRECTO</span><span id="preview-subtitle">Generación determinista</span></div>
+            <div class="preview-tabs"><span class="tab-active">01 &nbsp; LIVE PREVIEW</span><span id="preview-subtitle">Deterministic generation</span></div>
             <div class="preview-buttons">
-              <button type="button" id="toggle-grid" class="icon-button" title="Mostrar retícula" aria-pressed="false"><span data-px-icon="grid-3x3"></span></button>
-              <button type="button" id="play-toggle" class="icon-button" title="Pausar o reproducir" aria-label="Pausar o reproducir" aria-pressed="true"><span data-px-icon="pause"></span></button>
-              <button type="button" id="download-sprite" class="icon-button" title="Exportar la salida nativa del generador, sin decoración"><span data-px-icon="download"></span> Sprite</button>
-              <button type="button" id="download-png" class="icon-button" title="Guardar captura del visor"><span data-px-icon="download"></span> Captura</button>
+              <button type="button" id="toggle-grid" class="icon-button" title="Show grid" aria-pressed="false"><span data-px-icon="grid-3x3"></span></button>
+              <button type="button" id="play-toggle" class="icon-button" title="Pause or play" aria-label="Pause or play" aria-pressed="true"><span data-px-icon="pause"></span></button>
+              <button type="button" id="download-sprite" class="icon-button" title="Export the original generated sprite without viewer decorations"><span data-px-icon="download"></span> Sprite</button>
+              <button type="button" id="download-png" class="icon-button" title="Save viewport screenshot"><span data-px-icon="download"></span> Screenshot</button>
             </div>
           </div>
-          <div class="viewport" id="viewport"><canvas id="world-stage" width="960" height="540" aria-label="Escena generada por PPAE"></canvas><div class="canvas-vignette" aria-hidden="true"></div><div class="viewport-top"><span id="stage-mode-label">WORLD / LIVE SCENE</span><span id="stage-coordinates">SEED · PPAE</span></div><div class="viewport-bottom"><span id="stage-action">IDLE</span><span id="stage-frames">FRAME 01 / 04</span></div></div>
-          <div class="preview-footer"><span><span class="live-dot"></span> <strong id="engine-live">LISTO</strong></span><span id="render-stats">—</span><span id="fps-counter">— FPS</span></div>
+          <div class="viewport" id="viewport"><canvas id="world-stage" width="960" height="540" aria-label="Scene generated by PPAE"></canvas><div class="canvas-vignette" aria-hidden="true"></div><div class="viewport-top"><span id="stage-mode-label">WORLD / LIVE SCENE</span><span id="stage-coordinates">SEED · PPAE</span></div><div class="viewport-bottom"><span id="stage-action">IDLE</span><span id="stage-frames">FRAME 01 / 04</span></div></div>
+          <div class="preview-footer"><span><span class="live-dot"></span> <strong id="engine-live">READY</strong></span><span id="render-stats">—</span><span id="fps-counter">— FPS</span></div>
         </section>
-        <div class="section-heading"><div><div class="eyebrow">CATÁLOGO EXPLORABLE</div><h2 id="gallery-title">Variaciones disponibles</h2></div><div class="gallery-nav"><span id="gallery-range">—</span><button type="button" id="gallery-prev" aria-label="Página anterior"><span data-px-icon="arrow-left"></span></button><button type="button" id="gallery-next" aria-label="Página siguiente"><span data-px-icon="arrow-right"></span></button></div></div>
-        <div class="catalog-tools"><label class="catalog-search-label" for="catalog-search">Buscar en el catálogo<input id="catalog-search" type="search" placeholder="Filtrar variantes y recursos…" autocomplete="off"/></label><span id="catalog-summary" class="catalog-summary"></span></div>
+        <div class="section-heading"><div><div class="eyebrow">EXPLORE THE CATALOG</div><h2 id="gallery-title">Available variations</h2></div><div class="gallery-nav"><span id="gallery-range">—</span><button type="button" id="gallery-prev" aria-label="Previous page"><span data-px-icon="arrow-left"></span></button><button type="button" id="gallery-next" aria-label="Next page"><span data-px-icon="arrow-right"></span></button></div></div>
+        <div class="catalog-tools"><label class="catalog-search-label" for="catalog-search">Search catalog<input id="catalog-search" type="search" placeholder="Filter variants and assets..." autocomplete="off"/></label><span id="catalog-summary" class="catalog-summary"></span></div>
         <div id="cards-container" class="cards-grid" aria-live="polite"></div>
-        <section class="bottom-info"><div><strong>Sprites generados, no mockups</strong><p>Las muestras utilizan los generadores públicos de PPAE y semilla determinista. El visor no altera el repositorio ni el mundo guardado.</p></div><div class="bottom-actions"><button type="button" id="download-atlas" class="secondary-button">Exportar spritesheet</button><button type="button" id="download-json" class="secondary-button">Metadatos JSON</button></div></section>
+        <section class="bottom-info"><div><strong>Generated sprites, not mockups</strong><p>Samples use PPAE's public generators and deterministic seeds. Exploring the studio does not modify the repository or saved worlds.</p></div><div class="bottom-actions"><button type="button" id="download-atlas" class="secondary-button">Export spritesheet</button><button type="button" id="download-json" class="secondary-button">JSON metadata</button></div></section>
       </main>
     </div>
     <div id="inspector-scrim" class="inspector-scrim" aria-hidden="true"></div>
-    <aside class="inspector" id="playground-inspector" aria-label="Controles del Playground">
-      <div class="inspector-top"><button type="button" id="close-inspector" class="inspector-close" aria-label="Cerrar controles"><span data-px-icon="close"></span></button><div class="eyebrow">INSPECTOR</div><h2>Propiedades <span class="inspector-symbol"><span data-px-icon="gear"></span></span></h2><p>Ajusta el motor en tiempo real</p></div>
+    <aside class="inspector" id="playground-inspector" aria-label="Controls del Playground">
+      <div class="inspector-top"><button type="button" id="close-inspector" class="inspector-close" aria-label="Close controls"><span data-px-icon="close"></span></button><div class="eyebrow">INSPECTOR</div><h2>Properties <span class="inspector-symbol"><span data-px-icon="gear"></span></span></h2><p>Adjust the engine in real time</p></div>
       <div class="inspector-body">
-        <div class="control-section-title">GENERACIÓN <span>01</span></div>
-        <label>Semilla del mundo<input id="seed-input" value="PixelProject-2026" spellcheck="false"/></label>
-        <button type="button" id="random-seed-btn" class="full-button"><span data-px-icon="refresh"></span> &nbsp; Nueva variante</button>
-        <label>Resolución artística<select id="profile-select">
+        <div class="control-section-title">GENERATION <span>01</span></div>
+        <label>World seed<input id="seed-input" value="PixelProject-2026" spellcheck="false"/></label>
+        <button type="button" id="random-seed-btn" class="full-button"><span data-px-icon="refresh"></span> &nbsp; New variation</button>
+        <label>Art resolution<select id="profile-select">
           <option value="micro-4x4">Micro Art 4×4</option><option value="micro-6x6" selected>Micro Art 6×6</option>
           <option value="classic-8x8">Classic 8×8</option><option value="standard-16x16">Standard 16×16</option>
           <option value="detailed-32x32">Detailed 32×32</option><option value="hybrid-24">Hybrid 24 / 48 px</option>
           <option value="adaptive-auto">Adaptive (auto)</option>
         </select></label>
-        <label>Zoom del visor <strong id="zoom-display">2×</strong><input id="zoom-select" type="range" min="1" max="5" value="2" step="1"/></label>
-        <div class="control-section-title">ANIMACIÓN <span>02</span></div>
-        <label>Acción<select id="action-select"></select></label>
-        <label>Orientación<select id="direction-select"></select></label>
-        <label>Velocidad <strong id="speed-display">1.0×</strong><input id="speed-select" type="range" min="0.25" max="2.5" step="0.25" value="1"/></label>
-        <div class="toggle-row"><span>Reproducción continua</span><input id="loop-toggle" type="checkbox" checked/></div>
+        <label>Preview zoom <strong id="zoom-display">2×</strong><input id="zoom-select" type="range" min="1" max="5" value="2" step="1"/></label>
+        <div class="control-section-title">ANIMATION <span>02</span></div>
+        <label>Action<select id="action-select"></select></label>
+        <label>Direction<select id="direction-select"></select></label>
+        <label>Speed <strong id="speed-display">1.0×</strong><input id="speed-select" type="range" min="0.25" max="2.5" step="0.25" value="1"/></label>
+        <div class="toggle-row"><span>Loop animation</span><input id="loop-toggle" type="checkbox" checked/></div>
         <div class="control-section-title">VARIACIONES <span>03</span></div>
         <label>Estado / etapa<select id="stage-select"></select></label>
-        <label>Complexión / edad<select id="age-select"><option value="adult">Adulto</option><option value="juvenile">Juvenil</option><option value="alpha_elder">Alfa / anciano</option></select></label>
-        <label>Condición<select id="health-select"><option value="healthy">Normal</option><option value="wounded">Herido</option><option value="corrupted">Corrupto</option></select></label>
-        <section id="avatar-lab-controls" class="extended-inspector" aria-label="Personalización completa del avatar" hidden></section>
-        <section id="system-lab-controls" class="extended-inspector" aria-label="Opciones avanzadas del generador" hidden></section>
-        <div class="control-section-title">ESCENA <span>04</span></div>
-        <label>Hora del día<select id="time-select"><option value="noon">Mediodía</option><option value="dawn">Amanecer</option><option value="dusk">Atardecer</option><option value="night">Noche</option></select></label>
-        <label>Clima<select id="weather-select"><option value="clear">Despejado</option><option value="rain">Lluvia</option><option value="snow">Nieve</option><option value="thunderstorm">Tormenta</option></select></label>
-        <div class="toggle-row"><span>Mostrar pivote</span><input id="pivot-toggle" type="checkbox"/></div>
-        <div class="toggle-row"><span>Mostrar hitbox</span><input id="hitbox-toggle" type="checkbox"/></div>
+        <label>Body / age<select id="age-select"><option value="adult">Adult</option><option value="juvenile">Juvenile</option><option value="alpha_elder">Alpha / Elder</option></select></label>
+        <label>Condition<select id="health-select"><option value="healthy">Healthy</option><option value="wounded">Wounded</option><option value="corrupted">Corrupted</option></select></label>
+        <section id="avatar-lab-controls" class="extended-inspector" aria-label="Full avatar customization" hidden></section>
+        <section id="system-lab-controls" class="extended-inspector" aria-label="Advanced generator settings" hidden></section>
+        <div class="control-section-title">SCENE <span>04</span></div>
+        <label>Time of day<select id="time-select"><option value="noon">Noon</option><option value="dawn">Dawn</option><option value="dusk">Dusk</option><option value="night">Night</option></select></label>
+        <label>Weather<select id="weather-select"><option value="clear">Clear</option><option value="rain">Rain</option><option value="snow">Snow</option><option value="thunderstorm">Thunderstorm</option></select></label>
+        <div class="toggle-row"><span>Show pivot</span><input id="pivot-toggle" type="checkbox"/></div>
+        <div class="toggle-row"><span>Show hitbox</span><input id="hitbox-toggle" type="checkbox"/></div>
       </div>
-      <div class="inspector-bottom"><div class="eyebrow">DIAGNÓSTICO EN VIVO</div><div id="telemetry" class="telemetry-box" aria-live="polite">Iniciando motor…</div></div>
+      <div class="inspector-bottom"><div class="eyebrow">LIVE DIAGNOSTICS</div><div id="telemetry" class="telemetry-box" aria-live="polite">Starting engine...</div></div>
     </aside>
   </div>
   <script type="module" src="/src/demo/main.ts"></script>
