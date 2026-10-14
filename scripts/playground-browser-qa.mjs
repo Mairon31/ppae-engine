@@ -22,6 +22,28 @@ try {
     catch { await new Promise(resolve => setTimeout(resolve, 650)); }
   }
   if (!loaded) throw new Error('Vite preview never served compiled /ppae-engine/ assets');
+  await page.waitForFunction(() => {
+    const landing = document.getElementById('landing-page');
+    const c = document.getElementById('landing-world');
+    if (!landing || landing.hidden || !c || document.getElementById('playground-app')?.hidden !== true) return false;
+    const pixels = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    return pixels[3] > 0;
+  },null,{timeout:30000});
+  const landingVisual = await page.locator('#landing-page').evaluate(node => {
+    const style = getComputedStyle(node);
+    const title = document.getElementById('lp-headline');
+    return {background:style.backgroundColor, font:getComputedStyle(title).fontFamily,
+      title:title?.textContent, width:node.getBoundingClientRect().width};
+  });
+  if (!landingVisual.title?.includes('INFINITOS') || !landingVisual.font.includes('Pixelify Sans'))
+    throw new Error('Product landing typography or hero headline did not load: '+JSON.stringify(landingVisual));
+  if (await page.locator('#landing-page .lp-showcase-card').count() !== 4)
+    throw new Error('Product landing is missing generated engine showcases');
+  await page.screenshot({path:join(output,'00-product-landing-desktop.png'),fullPage:true});
+  console.log('LANDING OK: compiled styles, engine canvas, four real generators');
+  await page.locator('.lp-hero .lp-cta-primary').click();
+  await page.waitForFunction(() => !document.getElementById('playground-app')?.hidden
+    && document.getElementById('landing-page')?.hidden);
   const nav = page.locator('#section-nav .nav-link');
   const total = await nav.count();
   if (total < 30) {
@@ -183,6 +205,13 @@ try {
   console.log('NATIVE OUTPUT QA OK: catalog pagination, PNG signature, morphology, palette and profile');
   
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#toggle-inspector').click();
+  if (await page.locator('#toggle-inspector').getAttribute('aria-expanded') !== 'true'
+    || !await page.locator('#playground-app').evaluate(node=>node.classList.contains('inspector-open')))
+    throw new Error('Mobile inspector drawer did not open');
+  await page.locator('#close-inspector').click();
+  if (await page.locator('#toggle-inspector').getAttribute('aria-expanded') !== 'false')
+    throw new Error('Mobile inspector drawer did not close');
   await page.locator('#toggle-sidebar').click();
   if (await page.locator('#toggle-sidebar').getAttribute('aria-expanded') !== 'true')
     throw new Error('Mobile navigation did not open');
@@ -193,8 +222,18 @@ try {
   await page.screenshot({ path: join(output, '33-mobile-vfx.png'), fullPage: true });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (overflow > 1) throw new Error('Horizontal overflow on mobile: ' + overflow + 'px');
+  await page.locator('.studio-top-home').click();
+  await page.waitForFunction(() => !document.getElementById('landing-page')?.hidden
+    && document.getElementById('playground-app')?.hidden);
+  const landingOverflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  if (landingOverflow > 1) throw new Error('Mobile landing horizontal overflow: ' + landingOverflow);
+  await page.screenshot({path:join(output,'35-product-landing-mobile.png'),fullPage:true});
+  await page.locator('#landing-reroll').click();
+  const homepageCanvas = await page.locator('#landing-world').evaluate(node=>node.toDataURL());
+  if (!homepageCanvas.startsWith('data:image/png;base64,')) throw new Error('Live landing variant could not render');
+  console.log('MOBILE LANDING OK: navigation, reroll, responsive layout');
   if (errors.length) throw new Error('Browser errors:\n' + errors.join('\n'));
-  console.log('BROWSER QA PASS: ' + total + ' sections, customizable avatar + JSON, variants and sprite exports, mobile');
+  console.log('BROWSER QA PASS: product landing, ' + total + ' engine labs, avatar, native exports and 390px mobile');
 } finally {
   await browser.close();
 }
