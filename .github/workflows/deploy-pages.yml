@@ -44,8 +44,9 @@ jobs:
           path: dist/demo
 
   deploy:
-    # Pages publication stays protected until PR #2 is merged to master.
-    if: github.ref == 'refs/heads/master'
+    # The playground may deploy from its existing PR branch when github-pages allows it.
+    # The environment's branch policies remain authoritative; no branch or PR merge required.
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/feat/ppae-2-art-overhaul'
     needs: build
     runs-on: ubuntu-latest
     environment:
