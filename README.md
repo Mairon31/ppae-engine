@@ -41,9 +41,9 @@ PPAE began as a technology project for [PixelProject](https://github.com/Mairon3
 
 ### [Explore the product landing →](https://mairon31.github.io/ppae-engine/)
 
-**[Launch the 30-lab Playground →](https://mairon31.github.io/ppae-engine/#world)**
+**[Launch the 32-lab Playground →](https://mairon31.github.io/ppae-engine/#world)**
 
-**30 interactive laboratories. Hundreds of seeded variants. Real engine-generated assets — no prerecorded mockups.**
+**32 interactive laboratories. Hundreds of seeded variants. Real engine-generated assets — no prerecorded mockups.**
 
 Explore a full player appearance editor with seeded randomization, 28 character actions, NPC diversity, creature morph variations, boss states, plant lifecycles, seamless materials, 256 autotile inputs, liquids, world generation, weather, VFX, native resolution profiles, and biome color palettes.
 

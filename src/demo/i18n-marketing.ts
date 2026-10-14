@@ -340,9 +340,9 @@ export const MARKETING_TRANSLATIONS: Readonly<Record<string, readonly [string, s
     "Pixel art procedural, personajes animados, mundos y VFX generados en tiempo real. Explora el motor.",
     "Pixel art procedural, personagens animados, mundos e VFX gerados em tempo real. Explore o motor."
   ],
-  "PPAE Engine generates procedural pixel art, animated sprites, worlds, creatures, vegetation, and VFX. Explore 30 interactive labs.": [
-    "PPAE Engine genera pixel art procedural, sprites animados, mundos, criaturas, vegetación y VFX. Explora 30 laboratorios interactivos.",
-    "O PPAE Engine gera pixel art procedural, sprites animados, mundos, criaturas, vegetação e VFX. Explore 30 laboratórios interativos."
+  "PPAE Engine generates procedural pixel art, animated sprites, worlds, creatures, vegetation, and VFX. Explore 32 interactive labs.": [
+    "PPAE Engine genera pixel art procedural, sprites animados, mundos, criaturas, vegetación y VFX. Explora 32 laboratorios interactivos.",
+    "O PPAE Engine gera pixel art procedural, sprites animados, mundos, criaturas, vegetação e VFX. Explore 32 laboratórios interativos."
   ],
   "PPAE: uncompiled deployment": [
     "PPAE: publicación sin compilar",

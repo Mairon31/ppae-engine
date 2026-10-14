@@ -489,3 +489,8 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - README EN/ES/PT-BR and Playground/coverage/quality/npm guides describe the two new real labs, complete scene telemetry, native profile comparisons and production façade.
 - Browser QA now verifies 32 sections, editable hour, roof, building, live metrics, actual JSON and golden hashes; previous Phase 9–10 screenshots remain in the workflow. Corrected the legacy ES 30-section assertion.
 - Code CI on `8d7c25c9adb345553e3f9f0d7408c6fa85c08610` passed, but this docs HEAD and updated Chromium assertions still require final verification; no npm publication or PR merge.
+
+### Phase 12 — final browser QA correction
+
+- Corrected mobile Portuguese browser QA: navigation is intentionally collapsed in the 390px viewport, so the Playwright test now opens `#toggle-sidebar` before clicking the Art Quality Inspector, and asserts it closes afterward. Earlier CI passed 203 tests and Pages deployment; the previous browser run tested the first 32 labs and Phase 12 exports successfully but failed when clicking a hidden nav item. This is a test interaction issue, not an omitted lab. Final workflows pending.
+- Updated SEO meta, EN/ES/PT-BR marketing metadata, README and Playground guide/coverage counts to **32**.

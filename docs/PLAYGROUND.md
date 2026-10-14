@@ -8,7 +8,7 @@ Run locally: npm ci && npm run dev. This is a fully client-side Vite demo whose 
 
 ## Capabilities
 
-The current Playground exposes **30 engine-backed sections**, including an editable seeded player creator, full animation catalog, NPC/creature/plant lifecycle variations, full autotiling inputs, equipment/HUD, biome palettes, and an actual native-resolution comparator. Every gallery uses real TypeScript generators, not prerecorded image mockups. See [the complete coverage matrix](PLAYGROUND_COVERAGE_MATRIX.md) for one-to-one API mappings and remaining nonvisual subsystems.
+The current Playground exposes **32 engine-backed sections**, including an editable seeded player creator, full animation catalog, NPC/creature/plant lifecycle variations, full autotiling inputs, equipment/HUD, biome palettes, and an actual native-resolution comparator. Every gallery uses real TypeScript generators, not prerecorded image mockups. See [the complete coverage matrix](PLAYGROUND_COVERAGE_MATRIX.md) for one-to-one API mappings and remaining nonvisual subsystems.
 
 Inspector: deterministic seed, 4×4/6×6/8×8/16×16/32×32/hybrid/adaptive profiles, zoom, 8 directions, 28 character or 12 creature actions, speed, loop/pause, tree/crop/boss phases, creature age and health, scene weather/time, optional grid/pivot and buffer bounds, and live rendering telemetry. The viewer caps the redraw rate and defers gallery thumbnails to preserve browser responsiveness. The displayed FPS is viewer FPS, **not** the engine runtime benchmark.
 

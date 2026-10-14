@@ -12,7 +12,7 @@
 4. **Sprite PNG** entrega el `PixelBuffer` nativo, mientras que **Captura** descarga el lienzo del visor, con composición de la interfaz visual. **JSON** exporta el atlas real para personajes/criaturas o datos del generador elegido.
 5. En listas grandes, se genera como máximo una miniatura por fotograma con caché limitada y paginación; el buscador filtra por identificador y etiqueta.
 
-## 30 categorías públicas — rutas y APIs reales
+## 32 categorías públicas — rutas y APIs reales
 
 | Sección (`#hash`) | Procedencia del motor | Variaciones y controles expuestos |
 | --- | --- | --- |

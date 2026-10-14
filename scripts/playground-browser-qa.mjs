@@ -436,9 +436,18 @@ try {
     document.documentElement.lang === 'pt' &&
     document.getElementById('page-title')?.textContent === 'Árvores');
   await localePage.screenshot({path:join(output,'36-playground-portuguese-mobile.png'),fullPage:true});
+  // The sidebar is intentionally collapsed on phones; open it before
+  // using a link to test real touch navigation rather than a hidden click.
+  await localePage.locator('#toggle-sidebar').click();
+  await localePage.waitForFunction(() =>
+    document.querySelector('.studio')?.classList.contains('nav-open') &&
+    document.querySelector('#toggle-sidebar')?.getAttribute('aria-expanded') === 'true');
   await localePage.locator('#section-nav .nav-link')
     .filter({ hasText: 'Inspetor de qualidade artística' }).click();
-  await localePage.waitForFunction(() => location.search.includes('lang=pt') && location.hash === '#quality-inspector');
+  await localePage.waitForFunction(() =>
+    location.search.includes('lang=pt') &&
+    location.hash === '#quality-inspector' &&
+    !document.querySelector('.studio')?.classList.contains('nav-open'));
   await localePage.waitForFunction(() =>
     document.getElementById('page-title')?.textContent === 'Inspetor de qualidade artística' &&
     document.getElementById('quality-live-metrics')?.textContent?.includes('detailed-32x32'));
