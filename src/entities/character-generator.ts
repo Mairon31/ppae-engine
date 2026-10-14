@@ -520,7 +520,7 @@ export class CharacterAvatarGenerator {
         if (!isFacingNorth) {
           const eyeShiftX = Math.round(fx * 1.4 * u);
           const eyeY = hy; // S-facing eyes remain at the established eye anchor.
-          const expression = appearance.expression ?? 'neutral';
+          const expression = action === 'sleeping' ? 'blink' : (appearance.expression ?? 'neutral');
           const brow = appearance.ageGroup === 'elder'
             ? hexToRgba('#cbd5e1') : hairShad;
           if (isProfileSide) {
@@ -702,6 +702,66 @@ export class CharacterAvatarGenerator {
     layers.sort((a, b) => a.zOrder - b.zOrder);
     for (const layer of layers) {
       layer.draw(buf);
+    }
+
+    // Contextual overlays are composed after equipment. They do not change
+    // joint positions or atlas cell dimensions.
+    if (action === 'swimming') {
+      // Waterline and interrupted ripples around the pelvis. Two offset
+      // bands change subtly with the swim cycle, without antialiasing.
+      const wave = frameIndex & 1;
+      const waterY = toScreenY(j.pelvis.y) + Math.round(1.6 * u);
+      const cyan = hexToRgba('#7dd3fc');
+      const blue = hexToRgba('#0284c7');
+      const span = Math.round(5.5 * u);
+      {
+        for (let dx = -span; dx <= span; dx++) {
+          const px = pivotX + dx;
+          if (((dx + frameIndex) & 3) !== 0) {
+            buf.setPixel(px, waterY + (Math.abs(dx) % 3 === 0 ? wave : 0), cyan);
+          } else {
+            buf.setPixel(px, waterY + wave + 1, blue);
+          }
+        }
+      }
+    }
+
+    if (action === 'healing' || action === 'casting_spells') {
+      const glow = hexToRgba(action === 'healing' ? '#4ade80' : '#38bdf8');
+      const glint = hexToRgba(action === 'healing' ? '#bbf7d0' : '#e0f2fe');
+      const pulse = frameIndex % 2;
+      for (const hand of [j.hand_r, j.hand_l]) {
+        const hx = toScreenX(hand.x);
+        const hy = toScreenY(hand.y);
+        buf.setPixel(hx, hy - 2 - pulse, glint);
+        buf.setPixel(hx - 1, hy - 1, glow);
+        buf.setPixel(hx + 1, hy - 1, glow);
+      }
+    } else if (action === 'eating' || action === 'drinking') {
+      const hx = toScreenX(j.hand_r.x), hy = toScreenY(j.hand_r.y);
+      if (action === 'eating') {
+        buf.fillEllipse(hx, hy - 1, Math.max(1, Math.round(1.3 * u)),
+          Math.max(1, Math.round(1.2 * u)), hexToRgba('#ef4444'));
+        buf.setPixel(hx, hy - 2, hexToRgba('#86efac'));
+      } else {
+        buf.fillRect(hx - 1, hy - 3, Math.max(2, Math.round(2 * u)),
+          Math.max(3, Math.round(3 * u)), hexToRgba('#38bdf8'));
+        buf.setPixel(hx, hy - 2, hexToRgba('#e0f2fe'));
+      }
+    } else if (action === 'carrying_objects') {
+      // A single crate bridges both hands in front of the chest.
+      const hx = Math.round((toScreenX(j.hand_r.x) + toScreenX(j.hand_l.x)) / 2);
+      const hy = Math.round((toScreenY(j.hand_r.y) + toScreenY(j.hand_l.y)) / 2)
+        - Math.round(1.6 * u);
+      const crateW = Math.max(4, Math.round(5 * u));
+      const crateH = Math.max(3, Math.round(3.5 * u));
+      const wood = hexToRgba('#b45309'), dark = hexToRgba('#78350f');
+      buf.fillRect(hx - Math.floor(crateW / 2), hy, crateW, crateH, wood);
+      buf.drawLine(hx - Math.floor(crateW / 2), hy,
+        hx + Math.floor(crateW / 2), hy + crateH - 1, dark);
+      buf.drawLine(hx + Math.floor(crateW / 2), hy,
+        hx - Math.floor(crateW / 2), hy + crateH - 1, dark);
+      buf.setPixel(hx, hy + 1, hexToRgba('#fbbf24'));
     }
 
     // Contorno selectivo exterior

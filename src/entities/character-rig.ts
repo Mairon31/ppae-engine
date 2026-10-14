@@ -98,6 +98,7 @@ export class ProceduralCharacterRig {
     let rightArmForward = 0;
     let leftArmForward = 0;
     let rightArmRaiseY = 0;
+    let leftArmRaiseY = 0;
     let weaponSwingAngleDeg = 0;
     let isCollapsedOnGround = false;
 
@@ -130,8 +131,89 @@ export class ProceduralCharacterRig {
         leftArmForward = s * 4.0 * scaleUnit;
         break;
       }
+
+      case 'sprint': {
+        const s = Math.sin(phase);
+        bobY = Math.abs(Math.round(Math.cos(phase * 2) * 2.5));
+        torsoLeanX = Math.round(fx * 3 * scaleUnit);
+        torsoLeanY = Math.round(fy * 2.2 * scaleUnit);
+        rightStride = s * 5.8 * scaleUnit;
+        leftStride = -s * 5.8 * scaleUnit;
+        rightFootLift = s > 0 ? Math.round(s * 4 * scaleUnit) : 0;
+        leftFootLift = s < 0 ? Math.round(-s * 4 * scaleUnit) : 0;
+        rightArmForward = -s * 4.8 * scaleUnit;
+        leftArmForward = s * 4.8 * scaleUnit;
+        rightArmRaiseY = -Math.round(1.2 * scaleUnit);
+        leftArmRaiseY = -Math.round(1.2 * scaleUnit);
+        weaponSwingAngleDeg = -35;
+        break;
+      }
+      case 'sneak': {
+        const s = Math.sin(phase);
+        bobY = Math.round(2 * scaleUnit + Math.sin(phase * 2) * .6);
+        torsoLeanX = Math.round(fx * 1.5 * scaleUnit);
+        torsoLeanY = Math.round(fy * 1.2 * scaleUnit);
+        rightStride = s * 2 * scaleUnit;
+        leftStride = -s * 2 * scaleUnit;
+        rightFootLift = s > 0 ? Math.round(s * 1.2 * scaleUnit) : 0;
+        leftFootLift = s < 0 ? Math.round(-s * 1.2 * scaleUnit) : 0;
+        rightArmForward = -s * 1.2 * scaleUnit;
+        leftArmForward = s * 1.2 * scaleUnit;
+        weaponSwingAngleDeg = -25;
+        break;
+      }
+      case 'heavy_attack': {
+        const progress = frameIndex / Math.max(1, totalFrames - 1);
+        if (progress < .42) {
+          bobY = -Math.round(scaleUnit);
+          torsoLeanX = -Math.round(fx * 1.8 * scaleUnit);
+          rightArmRaiseY = -Math.round(6.5 * scaleUnit);
+          leftArmRaiseY = -Math.round(5 * scaleUnit);
+          rightArmForward = -3.2 * scaleUnit;
+          leftArmForward = -2 * scaleUnit;
+          weaponSwingAngleDeg = -75;
+        } else if (progress < .78) {
+          bobY = Math.round(1.8 * scaleUnit);
+          torsoLeanX = Math.round(fx * 3.4 * scaleUnit);
+          torsoLeanY = Math.round(fy * 2.4 * scaleUnit);
+          rightArmRaiseY = Math.round(2.2 * scaleUnit);
+          leftArmRaiseY = Math.round(1.5 * scaleUnit);
+          rightArmForward = 6.8 * scaleUnit;
+          leftArmForward = 4.2 * scaleUnit;
+          weaponSwingAngleDeg = 68;
+        } else {
+          bobY = Math.round(scaleUnit);
+          rightArmForward = 2.5 * scaleUnit;
+          weaponSwingAngleDeg = 25;
+        }
+        break;
+      }
+      case 'block': {
+        bobY = Math.round(1.2 * scaleUnit);
+        torsoLeanX = -Math.round(fx * .8 * scaleUnit);
+        leftArmForward = 3.6 * scaleUnit;
+        leftArmRaiseY = -Math.round(2.4 * scaleUnit);
+        rightArmForward = -1.5 * scaleUnit;
+        rightArmRaiseY = -Math.round(1.5 * scaleUnit);
+        weaponSwingAngleDeg = -40;
+        break;
+      }
+      case 'dodge': {
+        const progress = frameIndex / Math.max(1, totalFrames - 1);
+        const wave = Math.sin(progress * Math.PI);
+        bobY = Math.round(2.6 * wave * scaleUnit);
+        torsoLeanX = Math.round((rx * 3.2 - fx * 2) * wave * scaleUnit);
+        torsoLeanY = Math.round((ry * 2.2 - fy * 1.5) * wave * scaleUnit);
+        rightStride = 2.5 * wave * scaleUnit;
+        leftStride = -2.5 * wave * scaleUnit;
+        rightArmRaiseY = -Math.round(2 * wave * scaleUnit);
+        leftArmRaiseY = -Math.round(2 * wave * scaleUnit);
+        break;
+      }
       case 'attack':
-      case 'use_tool': {
+      case 'use_tool':
+      case 'mining':
+      case 'chopping': {
         // Secuencia: preparación (wind-up) -> impacto (strike) -> recuperación (recover)
         const progress = frameIndex / Math.max(1, totalFrames - 1);
         if (progress < 0.34) {
@@ -152,6 +234,119 @@ export class ProceduralCharacterRig {
           rightArmForward = 2.0 * scaleUnit;
           weaponSwingAngleDeg = 15;
         }
+        break;
+      }
+      case 'farming':
+      case 'digging': {
+        const progress = frameIndex / Math.max(1, totalFrames - 1);
+        bobY = Math.round(1.4 * scaleUnit);
+        torsoLeanX = Math.round(fx * 2 * scaleUnit);
+        torsoLeanY = Math.round(fy * 1.5 * scaleUnit);
+        if (progress < .5) {
+          rightArmForward = 4.2 * scaleUnit;
+          leftArmForward = 2.8 * scaleUnit;
+          rightArmRaiseY = Math.round(2.5 * scaleUnit);
+          weaponSwingAngleDeg = 55;
+        } else {
+          rightArmForward = 1.8 * scaleUnit;
+          leftArmForward = 1.2 * scaleUnit;
+          rightArmRaiseY = -Math.round(2.2 * scaleUnit);
+          weaponSwingAngleDeg = -20;
+        }
+        break;
+      }
+      case 'harvesting': {
+        const reach = Math.sin(phase);
+        bobY = Math.round(2.8 * scaleUnit);
+        torsoLeanX = Math.round(fx * 2.2 * scaleUnit);
+        torsoLeanY = Math.round(fy * 1.8 * scaleUnit);
+        rightArmForward = (3.2 + reach * 1.4) * scaleUnit;
+        leftArmForward = (3 - reach * 1.2) * scaleUnit;
+        rightArmRaiseY = Math.round(1.8 * scaleUnit);
+        leftArmRaiseY = Math.round(1.8 * scaleUnit);
+        break;
+      }
+      case 'fishing': {
+        if (frameIndex === 0) {
+          rightArmRaiseY = -Math.round(4.5 * scaleUnit);
+          rightArmForward = -2 * scaleUnit;
+          weaponSwingAngleDeg = -50;
+        } else {
+          const bob = Math.sin(phase) * .8;
+          rightArmForward = 3.8 * scaleUnit;
+          rightArmRaiseY = Math.round((-1.2 + bob) * scaleUnit);
+          weaponSwingAngleDeg = 18;
+        }
+        break;
+      }
+      case 'building':
+      case 'crafting': {
+        const strike = Math.sin(phase * 2);
+        torsoLeanX = Math.round(fx * 1.2 * scaleUnit);
+        rightArmForward = (2.8 + strike * 1.6) * scaleUnit;
+        leftArmForward = 2.2 * scaleUnit;
+        rightArmRaiseY = Math.round((-1.5 + strike * 2.2) * scaleUnit);
+        leftArmRaiseY = -Math.round(scaleUnit);
+        weaponSwingAngleDeg = Math.round(strike * 35);
+        break;
+      }
+      case 'healing':
+      case 'casting_spells': {
+        const pulse = Math.sin(phase);
+        bobY = -Math.round((1.2 + Math.abs(pulse)) * scaleUnit);
+        rightArmRaiseY = -Math.round((4.5 + pulse * 1.2) * scaleUnit);
+        leftArmRaiseY = -Math.round((4 - pulse) * scaleUnit);
+        rightArmForward = 2.4 * scaleUnit;
+        leftArmForward = 2.4 * scaleUnit;
+        weaponSwingAngleDeg = -65;
+        break;
+      }
+      case 'eating':
+      case 'drinking': {
+        const chew = Math.sin(phase * 2);
+        rightArmRaiseY = -Math.round((4.2 + chew * .6) * scaleUnit);
+        rightArmForward = 1.5 * scaleUnit;
+        weaponSwingAngleDeg = -80;
+        break;
+      }
+      case 'swimming': {
+        const stroke = Math.sin(phase);
+        bobY = Math.round((3.4 + stroke * .8) * scaleUnit);
+        torsoLeanX = Math.round(fx * 1.8 * scaleUnit);
+        rightArmForward = Math.cos(phase) * 3.8 * scaleUnit;
+        leftArmForward = Math.cos(phase) * 3.8 * scaleUnit;
+        rightArmRaiseY = -Math.round(1.8 * scaleUnit);
+        leftArmRaiseY = -Math.round(1.8 * scaleUnit);
+        rightStride = stroke * 2 * scaleUnit;
+        leftStride = -stroke * 2 * scaleUnit;
+        break;
+      }
+      case 'sitting': {
+        bobY = Math.round(3.2 * scaleUnit);
+        rightStride = 2.6 * scaleUnit;
+        leftStride = 2.6 * scaleUnit;
+        rightArmForward = 1.2 * scaleUnit;
+        leftArmForward = 1.2 * scaleUnit;
+        break;
+      }
+      case 'sleeping': {
+        bobY = Math.round(legLen + torsoLen * .52);
+        torsoLeanX = Math.round(rx * 3.8 * scaleUnit);
+        isCollapsedOnGround = true;
+        weaponSwingAngleDeg = 85;
+        break;
+      }
+      case 'carrying_objects': {
+        const s = Math.sin(phase);
+        bobY = Math.abs(Math.round(Math.cos(phase * 2)));
+        rightStride = s * 2.4 * scaleUnit;
+        leftStride = -s * 2.4 * scaleUnit;
+        rightFootLift = s > 0 ? Math.round(s * 1.5 * scaleUnit) : 0;
+        leftFootLift = s < 0 ? Math.round(-s * 1.5 * scaleUnit) : 0;
+        rightArmForward = 3.2 * scaleUnit;
+        leftArmForward = 3.2 * scaleUnit;
+        rightArmRaiseY = -Math.round(2.8 * scaleUnit);
+        leftArmRaiseY = -Math.round(2.8 * scaleUnit);
         break;
       }
       case 'hurt': {
@@ -195,7 +390,7 @@ export class ProceduralCharacterRig {
     const handLX =
       shoulderLX + Math.round(fx * leftArmForward - rx * 1.0);
     const handLY =
-      shoulderLY + Math.round(3.5 * scaleUnit + fy * leftArmForward * 0.6);
+      shoulderLY + Math.round(3.5 * scaleUnit + fy * leftArmForward * 0.6 + leftArmRaiseY);
 
     // Two-segment arms; elbows bend away from the torso and backward
     // relative to the facing direction, including attack/use-tool poses.

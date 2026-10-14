@@ -21,6 +21,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | 4B — Road Junctions and Animated Shorelines | VERIFIED | Caminos direccionales, animación de orillas y regresión de bifurcaciones |
 | 5A — Advanced Character Anatomy Engine | VERIFIED | 16 articulaciones, cabello en capas, cráneo/mandíbula, rostro, torso y equipo por dirección |
 | 5B — Character Customization and NPC Anatomy QA | VERIFIED | Atuendos, mochilas, complexión/edad y control de continuidad en 8 direcciones |
+| 6A — Advanced Animation System: 28 Actions | IMPLEMENTED | Clips, cinemática contextual de 28 acciones, 8 direcciones y eventos de fotograma |
 
 ## Fase 1A — 14 de octubre de 2026
 
@@ -185,6 +186,18 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 - **Cobertura:** seis grupos de regresiones: continuidad héroe, NPC deterministas, vestimenta, mochila/facial, variantes fantásticas y spritesheets/anclajes.
 - **Estado:** VERIFIED técnicamente. Commit de implementación `1b7a8bd63d4646696e7386cd19d9c3686c43ef5c`. GitHub Actions https://github.com/Mairon31/ppae-engine/actions/runs/38600924526: `npm test` **22 suites / 128 tests** (6 nuevos 5B) y `npm run build` íntegro (TypeScript, declaraciones, biblioteca y demo) exitosos. Sigue pendiente inspeccionar visualmente las ocho vistas de cada oficio.
 - **Próximo bloque:** 6A — Advanced Animation System y catálogo ampliado de acciones.
+
+## Fase 6A — 14 de octubre de 2026
+
+- **Referencia:** base de Gemini `217f76b393cda5b9755119a67f8b56d854df4520` desactualizada; HEAD real `76b69704b88966391534f1142392daa9989cc119`. Misma rama `feat/ppae-2-art-overhaul`, PR #2.
+- **Archivos:** MODIFY `src/core/contracts.ts`, `src/entities/character-rig.ts`, `src/entities/character-generator.ts`, `src/animation/state-machine.ts`; ADD `tests/ppae-advanced-animation-6a.test.ts`; actualización de este documento.
+- **Contratos:** 28 acciones de personajes y 22 tipos de eventos de animación/gameplay. Se conservan los siete identificadores anteriores y sus eventos.
+- **Rig:** `evaluatePose` incorpora 21 acciones nuevas con oscilación, zancadas, flexión de extremidades, inclinación/descenso postural y swing de arma contextual en las ocho direcciones, incluyendo el brazo izquierdo con elevación independiente.
+- **Render:** overlays contextualizados para magia/curación, consumo, caja cargada y estela de nado; sueño con ojos cerrados y marca de colapso en pose. Se conserva la arquitectura por capas de 5A–5B y compatibilidad de anclajes.
+- **Máquina:** 28 `DEFAULT_CHARACTER_CLIPS` con cuadros, cadencias, prioridades, interrupciones, looping y eventos; `fallbackAction` admite `sprint`, `sneak` y `swimming` además de estados originales.
+- **Pruebas:** seis tests adicionales de catálogo/8 direcciones/determinismo, poses contextuales, movilidad de manos, eventos FSM, regresión legacy y spritesheets mixtos.
+- **Estado:** IMPLEMENTED, pendiente de ejecutar `npm test`, `npm run build` y auditoría visual del Animation Inspector en 8 direcciones. No se declara paridad artística basándose solo en tests.
+- **Siguiente fase:** 6B — SpeciesAnimationCapabilityRegistry y spritesheets de criaturas.
 
 ## Convenciones de estado
 

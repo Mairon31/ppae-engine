@@ -659,13 +659,14 @@ export const ALL_DIRECTIONS_8: readonly Direction8[] = [
 ] as const;
 
 export type CharacterActionId =
-  | 'idle'
-  | 'walk'
-  | 'run'
-  | 'attack'
-  | 'use_tool'
-  | 'hurt'
-  | 'death';
+  | 'idle' | 'walk' | 'run' | 'sprint' | 'sneak'
+  | 'attack' | 'heavy_attack' | 'block' | 'dodge' | 'use_tool'
+  | 'hurt' | 'death'
+  | 'healing' | 'eating' | 'drinking'
+  | 'mining' | 'chopping' | 'harvesting' | 'fishing'
+  | 'farming' | 'digging' | 'building' | 'crafting'
+  | 'swimming' | 'sleeping' | 'sitting'
+  | 'casting_spells' | 'carrying_objects';
 
 export type BodyBuildType = 'slim' | 'standard' | 'sturdy';
 export type HairStyleId =
@@ -786,13 +787,14 @@ export interface CharacterRigPose {
 }
 
 export type AnimationEventId =
-  | 'footstep_left'
-  | 'footstep_right'
-  | 'attack_hit'
-  | 'tool_strike'
-  | 'hurt_impact'
-  | 'death_collapse'
-  | 'clip_complete';
+  | 'footstep_left' | 'footstep_right'
+  | 'attack_hit' | 'heavy_attack_cleave'
+  | 'block_guard_up' | 'dodge_iframe_start'
+  | 'tool_strike' | 'mine_pick_impact' | 'chop_axe_impact'
+  | 'harvest_gather' | 'fish_cast_line' | 'farm_hoe_till'
+  | 'dig_shovel_scoop' | 'build_hammer_hit' | 'craft_work_tick'
+  | 'consume_item_effect' | 'heal_pulse' | 'spell_cast_release'
+  | 'swim_stroke' | 'hurt_impact' | 'death_collapse' | 'clip_complete';
 
 export interface AnimationFrameEvent {
   readonly frameIndex: number;
