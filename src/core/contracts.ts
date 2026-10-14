@@ -315,3 +315,157 @@ export interface WorldTileSample {
     readonly variantSeed: number;
   };
 }
+// ============================================================================
+// PHASE 3 CONTRACTS: CHARACTER ANATOMY, 8-DIRECTION RIGGING, ASM & SPRITESHEETS
+// ============================================================================
+
+export type Direction8 = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
+export const ALL_DIRECTIONS_8: readonly Direction8[] = [
+  'S',
+  'SE',
+  'E',
+  'NE',
+  'N',
+  'NW',
+  'W',
+  'SW'
+] as const;
+
+export type CharacterActionId =
+  | 'idle'
+  | 'walk'
+  | 'run'
+  | 'attack'
+  | 'use_tool'
+  | 'hurt'
+  | 'death';
+
+export type BodyBuildType = 'slim' | 'standard' | 'sturdy';
+export type HairStyleId = 'short_crop' | 'long_adventure' | 'ponytail' | 'mohawk' | 'bald';
+export type BeardStyleId = 'none' | 'stubble' | 'full_beard' | 'mustache';
+export type HelmetStyleId = 'none' | 'knight_helm' | 'ranger_hood' | 'straw_hat' | 'crown';
+export type ArmorStyleId = 'cloth_tunic' | 'leather_vest' | 'iron_plate' | 'mage_robe';
+export type MainHandItemId = 'none' | 'iron_sword' | 'woodcutter_axe' | 'mining_pickaxe' | 'oak_staff';
+export type OffHandItemId = 'none' | 'wooden_shield' | 'knight_kite_shield' | 'lantern';
+export type VisualStatusEffect = 'none' | 'hurt_flash' | 'poisoned' | 'frozen' | 'burning';
+
+export interface EntityAppearance {
+  readonly schemaVersion: string;
+  readonly entityId: string;
+  readonly seed: number;
+  readonly bodyBuild: BodyBuildType;
+  readonly heightScale: number; // Rango artístico permitido: [0.9, 1.1]
+  readonly skinColorHex: string;
+  readonly skinShadowHex: string;
+  readonly eyeColorHex: string;
+  readonly hairStyle: HairStyleId;
+  readonly hairColorHex: string;
+  readonly hairShadowHex: string;
+  readonly beardStyle: BeardStyleId;
+  readonly hasFacialScar: boolean;
+  readonly scarSide: 'left' | 'right'; // Asimetría anatómica real
+}
+
+export interface EquipmentLoadout {
+  readonly helmet: HelmetStyleId;
+  readonly helmetPrimaryHex: string;
+  readonly armor: ArmorStyleId;
+  readonly armorPrimaryHex: string;
+  readonly armorSecondaryHex: string;
+  readonly hasCape: boolean;
+  readonly capeColorHex: string;
+  readonly bootsColorHex: string;
+  readonly glovesColorHex: string;
+  readonly mainHand: MainHandItemId; // Siempre equipado en la mano derecha anatómica
+  readonly offHand: OffHandItemId;   // Siempre equipado en la mano izquierda anatómica
+}
+
+export type AnatomicalJointId =
+  | 'root'
+  | 'pelvis'
+  | 'torso'
+  | 'head'
+  | 'shoulder_r'
+  | 'shoulder_l'
+  | 'hand_r'
+  | 'hand_l'
+  | 'foot_r'
+  | 'foot_l'
+  | 'weapon_tip';
+
+export interface JointTransform2D {
+  readonly jointId: AnatomicalJointId;
+  readonly x: number; // En texels relativos al centro horizontal del lienzo
+  readonly y: number; // En texels relativos al pivote de suelo (root = 0)
+  readonly zOrder: number; // Mayor valor se dibuja más cerca de la cámara
+}
+
+export interface CharacterRigPose {
+  readonly action: CharacterActionId;
+  readonly direction: Direction8;
+  readonly frameIndex: number;
+  readonly totalFrames: number;
+  readonly isCollapsedOnGround: boolean;
+  readonly weaponSwingAngleDeg: number;
+  readonly joints: Readonly<Record<AnatomicalJointId, JointTransform2D>>;
+}
+
+export type AnimationEventId =
+  | 'footstep_left'
+  | 'footstep_right'
+  | 'attack_hit'
+  | 'tool_strike'
+  | 'hurt_impact'
+  | 'death_collapse'
+  | 'clip_complete';
+
+export interface AnimationFrameEvent {
+  readonly frameIndex: number;
+  readonly eventId: AnimationEventId;
+  readonly payload?: Readonly<Record<string, string | number | boolean>>;
+}
+
+export interface AnimationClipDefinition {
+  readonly schemaVersion: string;
+  readonly action: CharacterActionId;
+  readonly frameCount: number;
+  readonly frameDurationMs: number;
+  readonly loop: boolean;
+  readonly priority: number;
+  readonly interruptible: boolean;
+  readonly events: readonly AnimationFrameEvent[];
+}
+
+export interface SpritesheetFrameMetadata {
+  readonly frameKey: string;
+  readonly action: CharacterActionId;
+  readonly direction: Direction8;
+  readonly frameIndex: number;
+  readonly atlasX: number;
+  readonly atlasY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly innerX: number;
+  readonly innerY: number;
+  readonly innerWidth: number;
+  readonly innerHeight: number;
+  readonly durationMs: number;
+  readonly pivotTexel: readonly [number, number];
+  readonly anchors: Readonly<Record<string, AnchorPoint>>;
+  readonly hitbox: LogicalHitbox;
+  readonly events: readonly AnimationEventId[];
+}
+
+export interface CompiledSpritesheetMetadata {
+  readonly schemaVersion: string;
+  readonly entityId: string;
+  readonly profileId: GranularityProfileId;
+  readonly sheetWidth: number;
+  readonly sheetHeight: number;
+  readonly paddingPx: number;
+  readonly directions: readonly Direction8[];
+  readonly actions: readonly CharacterActionId[];
+  readonly frames: Readonly<Record<string, SpritesheetFrameMetadata>>;
+  readonly sequenceOrder: Readonly<Record<string, readonly string[]>>;
+}
