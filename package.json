@@ -1,17 +1,33 @@
 {
   "name": "@pixelproject/ppae",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha.1",
   "description": "Procedural Pixel Art Engine (PPAE) for PixelProject",
   "type": "module",
+  "main": "./dist/library/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/library/index.js"
+    }
+  },
+  "files": ["dist/library", "dist/**/*.d.ts", "LICENSE", "README.md"],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "typecheck:package": "tsc -p tsconfig.package-node.json",
+    "build:lib": "tsc -p tsconfig.build.json && node scripts/fix-declaration-extensions.mjs && vite build --config vite.config.lib.ts",
+    "build:demo": "vite build",
+    "build": "npm run build:lib && npm run typecheck:package && npm run build:demo",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "typescript": "^5.6.2",
-    "vite": "^5.4.8",
-    "vitest": "^2.1.2"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   }
 }

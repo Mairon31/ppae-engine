@@ -383,6 +383,7 @@ export class CharacterAvatarGenerator {
   }
 
   private applyStatusTint(buf: PixelBuffer, status: VisualStatusEffect): void {
+    if (status === 'none') return;
     const tintMap: Record<Exclude<VisualStatusEffect, 'none'>, RGBAColor> = {
       hurt_flash: { r: 255, g: 245, b: 245, a: 255 },
       poisoned: { r: 74, g: 222, b: 128, a: 255 },

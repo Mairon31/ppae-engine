@@ -1,4 +1,5 @@
 import { ArtStyleProfile, ItemEquipmentDefinition } from '../core/contracts';
+import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 import { EquipmentGenerator } from './equipment-generator';
 

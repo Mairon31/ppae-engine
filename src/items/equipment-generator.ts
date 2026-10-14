@@ -1,10 +1,7 @@
 import {
   ArtStyleProfile,
-  EquipmentItemCategory,
   ItemEquipmentDefinition,
   ItemMaterialTier,
-  ItemWearState,
-  PPAE_SCHEMA_VERSION
 } from '../core/contracts';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';

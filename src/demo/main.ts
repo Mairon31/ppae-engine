@@ -8,7 +8,6 @@ import {
   DEFAULT_HERO_EQUIPMENT,
   DEFAULT_STYLE_PROFILES,
   DeterministicWorldField,
-  EquipmentGenerator,
   FarmingAndCropGenerator,
   GranularityProfileId,
   InventoryIconGenerator,
@@ -18,7 +17,8 @@ import {
   PixelBuffer,
   PixelNineSliceLibrary,
   PPAE_SCHEMA_VERSION,
-  StructureGenerator
+  StructureGenerator,
+  DEFAULT_STRUCTURE_CATALOG
 } from '../index';
 
 const seedInput = document.getElementById('seed-input') as HTMLInputElement;
@@ -32,7 +32,6 @@ const worldField = new DeterministicWorldField(seedInput.value.trim() || 'PixelP
 const chunkRenderer = new ChunkWorldRenderer(worldField);
 const structureGen = new StructureGenerator();
 const avatarGen = new CharacterAvatarGenerator();
-const equipmentGen = new EquipmentGenerator();
 const iconGen = new InventoryIconGenerator();
 const farmingGen = new FarmingAndCropGenerator();
 const nineSliceLib = new PixelNineSliceLibrary();

@@ -6,7 +6,8 @@ import {
   PPAEEngine,
   PPAEPerformanceBenchmarkSuite,
   PhaserPPAEAdapter,
-  PHASE1_DEFAULT_ASSETS
+  PHASE1_DEFAULT_ASSETS,
+  PPAE_SCHEMA_VERSION
 } from '../src/index';
 
 describe('PPAE Phase 8 — Atlas Packer, LOD, Culling, Phaser Adapter & Benchmarks', () => {
@@ -49,14 +50,19 @@ describe('PPAE Phase 8 — Atlas Packer, LOD, Culling, Phaser Adapter & Benchmar
     expect(visible[0].id).toBe('e1');
   });
 
-  it('passes performance benchmark report criteria under 16.6ms per frame budget', () => {
+  it('reports CPU generation measurements without claiming renderer performance', () => {
     const suite = new PPAEPerformanceBenchmarkSuite();
     const report = suite.runBenchmarks(15);
 
     expect(report.schemaVersion).toBe(PPAE_SCHEMA_VERSION);
     expect(report.totalGeneratedAssets).toBe(15);
-    expect(report.p95FrameTimeMs).toBeLessThan(16.6);
-    expect(report.passedAllBenchmarks).toBe(true);
+    expect(report.workload).toBe('asset-generation');
+    expect(report.measuredSampleCount).toBe(15);
+    expect(report.warmupSampleCount).toBe(5);
+    expect(report.p95GenerationTimeMs).toBeGreaterThanOrEqual(0);
+    expect(report.rendererMetricsMeasured).toBe(false);
+    expect(report.passedMemoryBudget).toBe(true);
+    expect(() => suite.runBenchmarks(0)).toThrow(RangeError);
   });
 
   it('provides metadata for Phaser 3 adapter integration', () => {

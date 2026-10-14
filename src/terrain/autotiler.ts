@@ -43,11 +43,14 @@ export class TerrainAutotiler {
         const oy = my * profile.moduleSize + ((h >>> 4) % profile.moduleSize);
 
         if (mat.patternType === 'organic_tuft') {
-          if ((h & 3) === 0) {
+          // Keep the low-resolution base readable at PixelProject's 16px
+          // logical scale: frequent micro-tufts become visual noise after
+          // nearest-neighbor downsampling from the canonical PPAE surface.
+          if ((h & 7) === 0) {
             setWrapped(ox, oy, shadowColor);
             setWrapped(ox, oy - 1, highlightColor);
             setWrapped(ox + 1, oy - 1, highlightColor);
-          } else if ((h & 7) === 1) {
+          } else if ((h & 31) === 1) {
             setWrapped(ox, oy, accentColor);
           }
         } else if (mat.patternType === 'granular_sand') {

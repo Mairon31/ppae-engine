@@ -76,7 +76,20 @@ describe('PPAE Phase 7 — Equipment, Inventory Icons, Farming, Crops & Nine-Sli
     const witheredCrop = farming.renderCropStage('wheat', 'withered', false, profile);
 
     expect(soilWet.width).toBe(24);
-    expect(seedCrop.buffer.height).toBeLessThan(matureCrop.buffer.height);
+    const opaqueHeight = (buffer: typeof seedCrop.buffer): number => {
+      let top = buffer.height;
+      let bottom = -1;
+      for (let y = 0; y < buffer.height; y++) {
+        for (let x = 0; x < buffer.width; x++) {
+          if (buffer.getPixel(x, y).a > 0) {
+            top = Math.min(top, y);
+            bottom = Math.max(bottom, y);
+          }
+        }
+      }
+      return bottom < top ? 0 : bottom - top + 1;
+    };
+    expect(opaqueHeight(seedCrop.buffer)).toBeLessThan(opaqueHeight(matureCrop.buffer));
     expect(Array.from(matureCrop.buffer.data)).not.toEqual(Array.from(witheredCrop.buffer.data));
   });
 

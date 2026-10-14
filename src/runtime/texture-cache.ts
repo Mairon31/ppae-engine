@@ -9,21 +9,29 @@ import { PixelBuffer } from '../rasterizer/pixel-buffer';
 
 interface CacheNode {
   readonly key: string;
-  readonly artifact: GeneratedAssetArtifact;
+  artifact: GeneratedAssetArtifact;
+  memoryBytes: number;
   refCount: number;
   lastAccessedTick: number;
 }
 
 export class BoundedTextureCache {
+  private static readonly GENERATION_TIME_HISTORY_LIMIT = 256;
   private readonly store = new Map<string, CacheNode>();
   private readonly generationTimesMs: number[] = [];
+  private generationTimeCursor = 0;
+  private totalGeneratedCount = 0;
   private currentMemoryBytes = 0;
   private accessTick = 0;
   private hits = 0;
   private misses = 0;
   private evictedCount = 0;
 
-  constructor(public readonly maxMemoryBudgetBytes = 16 * 1024 * 1024) {} // 16 MB por defecto
+  constructor(public readonly maxMemoryBudgetBytes = 16 * 1024 * 1024) {
+    if (!Number.isSafeInteger(maxMemoryBudgetBytes) || maxMemoryBudgetBytes < 0) {
+      throw new RangeError(`Invalid texture cache memory budget: ${maxMemoryBudgetBytes}`);
+    }
+  } // 16 MB por defecto
 
   public get(key: string): GeneratedAssetArtifact | undefined {
     const node = this.store.get(key);
@@ -37,23 +45,42 @@ export class BoundedTextureCache {
   }
 
   public put(key: string, artifact: GeneratedAssetArtifact): void {
+    const incomingBytes = this.validateArtifact(key, artifact);
+    this.recordGenerationTime(artifact.metadata.generationTimeMs);
+
+    // A cache is optional for generation; skip artifacts that cannot fit on their own.
+    if (incomingBytes > this.maxMemoryBudgetBytes) return;
+
     const existing = this.store.get(key);
-    if (existing) {
-      this.currentMemoryBytes -= existing.artifact.metadata.memoryBytes;
-      this.store.delete(key);
+    // A retained key is a live handle. Keep its artifact stable until the owner
+    // releases it; replacing it would make the referenced memory unaccounted.
+    if (existing && existing.refCount > 0 && existing.artifact !== artifact) return;
+    const memoryAfterReplacement = this.currentMemoryBytes - (existing?.memoryBytes ?? 0) + incomingBytes;
+    const bytesToFree = Math.max(0, memoryAfterReplacement - this.maxMemoryBudgetBytes);
+    const victims = this.findEvictionCandidates(key, bytesToFree);
+    if (victims === undefined) return;
+
+    for (const victim of victims) {
+      this.store.delete(victim.key);
+      this.currentMemoryBytes -= victim.memoryBytes;
+      this.evictedCount++;
     }
 
-    const incomingBytes = artifact.metadata.memoryBytes;
-    this.evictIfNeeded(incomingBytes);
-
-    this.store.set(key, {
-      key,
-      artifact,
-      refCount: 1,
-      lastAccessedTick: ++this.accessTick
-    });
+    if (existing) {
+      this.currentMemoryBytes -= existing.memoryBytes;
+      existing.artifact = artifact;
+      existing.memoryBytes = incomingBytes;
+      existing.lastAccessedTick = ++this.accessTick;
+    } else {
+      this.store.set(key, {
+        key,
+        artifact,
+        memoryBytes: incomingBytes,
+        refCount: 0,
+        lastAccessedTick: ++this.accessTick
+      });
+    }
     this.currentMemoryBytes += incomingBytes;
-    this.generationTimesMs.push(artifact.metadata.generationTimeMs);
   }
 
   public retain(key: string): void {
@@ -74,8 +101,8 @@ export class BoundedTextureCache {
   public invalidateByPrefix(prefix: string): number {
     let removed = 0;
     for (const [k, node] of this.store.entries()) {
-      if (k.startsWith(prefix)) {
-        this.currentMemoryBytes -= node.artifact.metadata.memoryBytes;
+      if (k.startsWith(prefix) && node.refCount === 0) {
+        this.currentMemoryBytes -= node.memoryBytes;
         this.store.delete(k);
         removed++;
       }
@@ -158,7 +185,7 @@ export class BoundedTextureCache {
     };
 
     return {
-      totalGeneratedCount: this.generationTimesMs.length,
+      totalGeneratedCount: this.totalGeneratedCount,
       cacheHits: this.hits,
       cacheMisses: this.misses,
       cacheHitRate: totalRequests > 0 ? Number((this.hits / totalRequests).toFixed(3)) : 0,
@@ -172,26 +199,84 @@ export class BoundedTextureCache {
     };
   }
 
-  private evictIfNeeded(requiredBytes: number): void {
-    while (
-      this.currentMemoryBytes + requiredBytes > this.maxMemoryBudgetBytes &&
-      this.store.size > 0
-    ) {
-      let oldestKey: string | undefined;
-      let oldestTick = Infinity;
-
-      for (const [key, node] of this.store.entries()) {
-        if (node.lastAccessedTick < oldestTick) {
-          oldestTick = node.lastAccessedTick;
-          oldestKey = key;
-        }
-      }
-
-      if (!oldestKey) break;
-      const victim = this.store.get(oldestKey)!;
-      this.currentMemoryBytes -= victim.artifact.metadata.memoryBytes;
-      this.store.delete(oldestKey);
-      this.evictedCount++;
+  private validateArtifact(key: string, artifact: GeneratedAssetArtifact): number {
+    if (typeof key !== 'string' || key.trim().length === 0) {
+      throw new TypeError('Texture cache key must be a non-empty string');
     }
+    if (!artifact || typeof artifact !== 'object' || !artifact.metadata || typeof artifact.metadata !== 'object') {
+      throw new TypeError('Texture cache artifact metadata is required');
+    }
+    if (!(artifact.pixels instanceof Uint8ClampedArray)) {
+      throw new TypeError('Texture cache artifact pixels must be a Uint8ClampedArray');
+    }
+    if (artifact.pixels.byteOffset !== 0 || artifact.pixels.byteLength !== artifact.pixels.buffer.byteLength) {
+      throw new TypeError('Texture cache artifact pixels must own their complete backing buffer');
+    }
+
+    const metadata = artifact.metadata;
+    const isPositiveSafeInteger = (value: number): boolean => Number.isSafeInteger(value) && value > 0;
+    if (typeof metadata.cacheKey !== 'string' || metadata.cacheKey.trim().length === 0) {
+      throw new TypeError('Texture cache artifact cacheKey must be a non-empty string');
+    }
+    if (metadata.cacheKey !== key) {
+      throw new TypeError('Texture cache key must match artifact metadata.cacheKey');
+    }
+    if (
+      !isPositiveSafeInteger(metadata.texelWidth) ||
+      !isPositiveSafeInteger(metadata.texelHeight) ||
+      !isPositiveSafeInteger(metadata.innerWidth) ||
+      !isPositiveSafeInteger(metadata.innerHeight) ||
+      !Number.isSafeInteger(metadata.paddingPx) ||
+      metadata.paddingPx < 0 ||
+      metadata.texelWidth !== metadata.innerWidth + metadata.paddingPx * 2 ||
+      metadata.texelHeight !== metadata.innerHeight + metadata.paddingPx * 2
+    ) {
+      throw new TypeError('Texture cache artifact dimensions or padding are invalid');
+    }
+
+    const expectedBytes = metadata.texelWidth * metadata.texelHeight * 4;
+    if (
+      !Number.isSafeInteger(expectedBytes) ||
+      artifact.pixels.byteLength !== expectedBytes ||
+      !Number.isSafeInteger(metadata.memoryBytes) ||
+      metadata.memoryBytes !== artifact.pixels.byteLength
+    ) {
+      throw new TypeError('Texture cache artifact memory metadata does not match its pixel buffer');
+    }
+    if (!Number.isFinite(metadata.generationTimeMs) || metadata.generationTimeMs < 0) {
+      throw new TypeError('Texture cache artifact generation time must be finite and non-negative');
+    }
+
+    return artifact.pixels.buffer.byteLength;
+  }
+
+  private recordGenerationTime(generationTimeMs: number): void {
+    this.totalGeneratedCount++;
+    const historyLimit = BoundedTextureCache.GENERATION_TIME_HISTORY_LIMIT;
+    if (this.generationTimesMs.length < historyLimit) {
+      this.generationTimesMs.push(generationTimeMs);
+      return;
+    }
+
+    this.generationTimesMs[this.generationTimeCursor] = generationTimeMs;
+    this.generationTimeCursor = (this.generationTimeCursor + 1) % historyLimit;
+  }
+
+  private findEvictionCandidates(key: string, bytesToFree: number): CacheNode[] | undefined {
+    if (bytesToFree === 0) return [];
+
+    const candidates = Array.from(this.store.values())
+      .filter((node) => node.key !== key && node.refCount === 0)
+      .sort((a, b) => a.lastAccessedTick - b.lastAccessedTick);
+    const victims: CacheNode[] = [];
+    let availableBytes = 0;
+
+    for (const candidate of candidates) {
+      victims.push(candidate);
+      availableBytes += candidate.memoryBytes;
+      if (availableBytes >= bytesToFree) return victims;
+    }
+
+    return undefined;
   }
 }

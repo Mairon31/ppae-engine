@@ -10,8 +10,13 @@ export class PixelBuffer {
   public readonly data: Uint8ClampedArray;
 
   constructor(width: number, height: number) {
-    this.width = Math.max(1, Math.floor(width));
-    this.height = Math.max(1, Math.floor(height));
+    if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height)
+      || width < 1 || height < 1 || width > 16_384 || height > 16_384
+      || width * height * 4 > 256 * 1024 * 1024) {
+      throw new RangeError(`Invalid PixelBuffer dimensions: ${width}x${height}`);
+    }
+    this.width = width;
+    this.height = height;
     this.data = new Uint8ClampedArray(this.width * this.height * 4);
   }
 
@@ -193,15 +198,34 @@ export class PixelBuffer {
     }
   }
 
-  /**
-   * Crea un nuevo PixelBuffer con padding/extrusión en los bordes para evitar sangrado en atlas
-   */
+  /** Adds a transparent gutter. It does not alter pixels in the visible region. */
   public withPadding(paddingPx: number): PixelBuffer {
-    if (paddingPx <= 0) return this;
+    return this.withBorder(paddingPx, false);
+  }
+
+  /** Repeats edge RGBA texels into the gutter to prevent atlas filtering bleed. */
+  public withExtrudedPadding(paddingPx: number): PixelBuffer {
+    return this.withBorder(paddingPx, true);
+  }
+
+  private withBorder(paddingPx: number, extrude: boolean): PixelBuffer {
+    if (!Number.isSafeInteger(paddingPx) || paddingPx < 0 || paddingPx > 256) {
+      throw new RangeError(`Invalid PixelBuffer padding: ${paddingPx}`);
+    }
+    if (paddingPx === 0) return this;
     const out = new PixelBuffer(this.width + paddingPx * 2, this.height + paddingPx * 2);
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        out.setPixel(x + paddingPx, y + paddingPx, this.getPixel(x, y));
+    for (let y = 0; y < out.height; y++) {
+      for (let x = 0; x < out.width; x++) {
+        const sourceX = x - paddingPx;
+        const sourceY = y - paddingPx;
+        if (this.inBounds(sourceX, sourceY)) {
+          out.setPixel(x, y, this.getPixel(sourceX, sourceY));
+        } else if (extrude) {
+          out.setPixel(x, y, this.getPixel(
+            Math.max(0, Math.min(this.width - 1, sourceX)),
+            Math.max(0, Math.min(this.height - 1, sourceY))
+          ));
+        }
       }
     }
     return out;

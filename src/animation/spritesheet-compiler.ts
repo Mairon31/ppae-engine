@@ -81,7 +81,7 @@ export class SpritesheetCompiler {
             profile
           );
 
-          const paddedFrame = rendered.buffer.withPadding(pad);
+      const paddedFrame = rendered.buffer.withExtrudedPadding(pad);
           const atlasX = f * cellW;
           const atlasY = currentRow * cellH;
 

@@ -12,7 +12,28 @@ import { deriveDeterministicSeed, SeededRNG } from '../core/deterministic';
 import { PaletteManager } from '../palette/palette-manager';
 import { BoundedTextureCache } from '../runtime/texture-cache';
 
-export const GENERATOR_ENGINE_VERSION = '1.0.0';
+export const GENERATOR_ENGINE_VERSION = '1.0.1';
+
+function stableSerialize(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).sort().map(key =>
+      `${JSON.stringify(key)}:${stableSerialize(record[key])}`
+    ).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'undefined';
+}
+
+function stableContentHash(value: unknown): string {
+  const serialized = stableSerialize(value);
+  let hash = 0xcbf29ce484222325n;
+  for (let i = 0; i < serialized.length; i++) {
+    hash ^= BigInt(serialized.charCodeAt(i));
+    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+  }
+  return hash.toString(16).padStart(16, '0');
+}
 
 /**
  * Catálogo inicial de definiciones de recursos de Fase 1
@@ -147,10 +168,16 @@ export class PPAEEngine {
       GENERATOR_ENGINE_VERSION
     );
 
+    const contentRevision = stableContentHash({
+      assetDefinition,
+      styleProfile,
+      palette
+    });
     const cacheKey = [
       assetDefinition.id,
       styleProfile.id,
       palette.id,
+      contentRevision,
       resolvedSeed,
       stateTag,
       `v${GENERATOR_ENGINE_VERSION}`
@@ -174,7 +201,7 @@ export class PPAEEngine {
     );
 
     // 4. Padding / Border Extrusion for Atlas safety
-    const paddedBuffer = rawBuffer.withPadding(styleProfile.extrudePaddingPx);
+    const paddedBuffer = rawBuffer.withExtrudedPadding(styleProfile.extrudePaddingPx);
     const pad = styleProfile.extrudePaddingPx;
 
     // 5. Contrast & Color Budget Verification

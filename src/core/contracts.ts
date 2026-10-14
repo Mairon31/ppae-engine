@@ -118,7 +118,7 @@ export interface GeneratedTextureMetadata {
   readonly anchors: Readonly<Record<string, AnchorPoint>>;
   readonly logicalHitbox: LogicalHitbox;
   readonly uniqueColorCount: number;
-  readonly contrastRatioAgainstBiome: number;
+  readonly contrastRatioAgainstBiome: number | null;
   readonly generationTimeMs: number;
   readonly memoryBytes: number;
 }
@@ -872,14 +872,18 @@ export interface CullingViewportRect {
 
 export interface BenchmarkMetricsReport {
   readonly schemaVersion: string;
+  readonly workload: 'asset-generation';
+  readonly measuredSampleCount: number;
+  readonly warmupSampleCount: number;
   readonly totalGeneratedAssets: number;
   readonly averageGenerationTimeMs: number;
-  readonly p50FrameTimeMs: number;
-  readonly p95FrameTimeMs: number;
-  readonly p99FrameTimeMs: number;
-  readonly activeDrawCalls: number;
+  readonly p50GenerationTimeMs: number;
+  readonly p95GenerationTimeMs: number;
+  readonly p99GenerationTimeMs: number;
   readonly estimatedMemoryUsageBytes: number;
-  readonly passedAllBenchmarks: boolean;
+  readonly memoryBudgetBytes: number;
+  readonly rendererMetricsMeasured: false;
+  readonly passedMemoryBudget: boolean;
 }
 
 export interface PhaserAdapterConfig {
