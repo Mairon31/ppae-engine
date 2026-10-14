@@ -187,7 +187,7 @@ function frameInfo(): { frame: number; count: number; duration: number } {
     const clip = DEFAULT_CHARACTER_CLIPS[state.action];
     return { frame: state.frame % clip.frameCount, count: clip.frameCount, duration: clip.frameDurationMs };
   }
-  if (state.section === 'creatures') {
+  if (state.section === 'creatures' || state.section === 'creature-variants') {
     const act = capabilities.resolveSupportedAction(state.selected as CreatureSpeciesId, state.creatureAction);
     const clip = DEFAULT_CREATURE_CLIPS[act];
     return { frame: state.frame % clip.frameCount, count: clip.frameCount, duration: clip.frameDurationMs };
@@ -360,18 +360,24 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return avatar.renderCharacterFrame(preset.appearance, preset.equipment,
         action, state.direction, tick % clip.frameCount, clip.frameCount, p, state.avatarStatus).buffer;
     }
-    case 'npcs': {
-      const npc = customization.generateNpcPreset(id as NpcProfessionArchetypeId, n);
+    case 'npcs':
+    case 'npc-variants': {
+      const [profession, variant] = section === 'npc-variants' ? id.split(':') : [id, '0'];
+      const npc = customization.generateNpcPreset(profession as NpcProfessionArchetypeId,
+        state.seed + ':npc:' + variant);
       const clip = DEFAULT_CHARACTER_CLIPS[state.action];
       return avatar.renderCharacterFrame(npc.appearance, npc.equipment, state.action,
         state.direction, tick % clip.frameCount, clip.frameCount, p).buffer;
     }
-    case 'creatures': {
-      const action = capabilities.resolveSupportedAction(id as CreatureSpeciesId, state.creatureAction);
+    case 'creatures':
+    case 'creature-variants': {
+      const [species, age, health] = section === 'creature-variants'
+        ? id.split(':') : [id, state.age, state.health];
+      const action = capabilities.resolveSupportedAction(species as CreatureSpeciesId, state.creatureAction);
       const clip = DEFAULT_CREATURE_CLIPS[action];
-      return creatures.renderCreatureFrame(id as CreatureSpeciesId, action, state.direction,
+      return creatures.renderCreatureFrame(species as CreatureSpeciesId, action, state.direction,
         tick % clip.frameCount, clip.frameCount, p, n,
-        { ageStage: state.age, healthState: state.health }).buffer;
+        { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState }).buffer;
     }
     case 'bosses': {
       const boss = id === BOSS_IDS[1] ? createCorruptedTreantBossState(n) : createDefaultColossusBossState(n);
@@ -383,10 +389,13 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return rendered.buffer;
     }
     case 'trees':
-    case 'tree-archetypes': {
-      const [family, archetypeId] = section === 'tree-archetypes' ? id.split(':') : [id, undefined];
+    case 'tree-archetypes':
+    case 'tree-lifecycle': {
+      const [family, value] = section === 'trees' ? [id, undefined] : id.split(':');
+      const archetypeId = section === 'tree-archetypes' ? value : undefined;
+      const lifecycleStage = section === 'tree-lifecycle' ? value : state.stage;
       return nature.generateTreeStage(family as TreeSpeciesId,
-        section === 'tree-archetypes' ? 'mature' : state.stage as TreeLifecycleStage, p, n, {
+        section === 'tree-archetypes' ? 'mature' : lifecycleStage as TreeLifecycleStage, p, n, {
         ...(archetypeId ? { archetypeId } : {}),
         envState: state.treeEnvironment === 'normal' && state.weather === 'snow'
           ? 'snowy' : state.treeEnvironment,
@@ -397,6 +406,10 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       Math.round(Math.sin(elapsed / 500) * p.moduleSize / 6)).buffer;
     case 'geology': return nature.generateGeologicalResource(id as GeologicalResourceKind, p, n).buffer;
     case 'terrain': return baseScene('terrain', p, tick, id);
+    case 'terrain-variants': {
+      const [material, index] = id.split(':');
+      return terrain.generateSeamlessBaseTile(material as TerrainMaterialId, p, Number(index));
+    }
     case 'autotiling':
       return terrain.composeAutotiledSurface(state.terrainMaterial,
         Number(id), p, state.terrainUnderlay, n % 16);
@@ -412,10 +425,12 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
     }
     case 'interiors': return interiors.renderInterior(DEFAULT_COTTAGE_INTERIOR, p).roomBuffer;
     case 'caves': return caves.generateChamber({ ...DEFAULT_CRYSTAL_CAVERN, seed: n }, p).chamberBuffer;
-    case 'farming': {
+    case 'farming':
+    case 'crop-lifecycle': {
+      const [species, stage] = section === 'crop-lifecycle' ? id.split(':') : [id, state.stage];
       const soil = farms.renderTilledSoilTile(true, p);
-      const crop = farms.renderCropStage(id as CropSpeciesId,
-        state.stage as typeof CROP_STAGES[number], true, p);
+      const crop = farms.renderCropStage(species as CropSpeciesId,
+        stage as typeof CROP_STAGES[number], true, p);
       blend(soil, crop.buffer, 0, 0);
       return soil;
     }
