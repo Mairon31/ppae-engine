@@ -28,7 +28,8 @@
     "build:demo": "vite build && node scripts/verify-pages-output.mjs",
     "build": "npm run build:lib && npm run typecheck:package && npm run build:demo",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "preview": "vite preview --base /ppae-engine/"
   },
   "devDependencies": {
     "typescript": "^5.6.2",
