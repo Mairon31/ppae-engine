@@ -1,5 +1,7 @@
 <div align="center">
 
+**Languages:** **English** | [Español](docs/i18n/README.es.md) | [Português (Brasil)](docs/i18n/README.pt-BR.md)
+
 # PPAE Engine
 
 ### Procedural Pixel Art Engine
@@ -32,14 +34,6 @@ PPAE began as a technology project for [PixelProject](https://github.com/Mairon3
 > **What PPAE is:** a procedural pixel-art generation library with a visual Playground and game-integration utilities.  
 > **What it is not:** a complete game engine with built-in gameplay, physics, networking, or an editor comparable to Godot or Unity.
 
-<details>
-<summary><strong>Español — ¿Qué es PPAE?</strong></summary>
-
-PPAE es un motor de generación procedural de pixel art escrito en TypeScript. Permite generar personajes, NPC, criaturas, jefes, árboles, vegetación, terreno, agua, construcciones, animaciones y efectos visuales a partir de reglas y semillas reproducibles. Incluye un **Playground interactivo** para inspeccionar los resultados y exportar sprites y spritesheets. Está pensado para desarrolladores independientes, artistas técnicos y creadores que construyen videojuegos con código o herramientas de IA.
-
-**[Visitar la landing de PPAE](https://mairon31.github.io/ppae-engine/)** · **[Ver cómo contribuir](#contributing)**
-
-</details>
 
 ## See the engine in action
 
