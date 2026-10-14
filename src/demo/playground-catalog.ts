@@ -45,7 +45,9 @@ export const PLAYGROUND_SECTIONS = [
   { id: 'weather', label: 'Weather & Wind', group: 'Systems', description: '11 weather states, branched lightning, and layered fog' },
   { id: 'lighting', label: 'Lighting', group: 'Systems', description: 'Solar cast shadows, day phases, and light maps' },
   { id: 'palettes', label: 'Engine Palettes', group: 'Art Diagnostics', description: 'Real palette ramps across biomes and seasons' },
-  { id: 'resolution-profiles', label: 'Resolution Comparison', group: 'Art Diagnostics', description: 'One species rendered natively at 4, 6, 8, 16, and 32' }
+  { id: 'resolution-profiles', label: 'Resolution Comparison', group: 'Art Diagnostics', description: 'One species rendered natively at 4, 6, 8, 16, and 32' },
+  { id: 'integrated-scene', label: 'Production Scene Inspector', group: 'Art Diagnostics', description: 'Unified world rendering with editable scene settings and live telemetry' },
+  { id: 'quality-inspector', label: 'Art Quality Inspector', group: 'Art Diagnostics', description: 'Five native-resolution comparisons and ten verified golden references' }
 ] as const;
 
 export type PlaygroundSectionId = (typeof PLAYGROUND_SECTIONS)[number]['id'];
@@ -117,11 +119,17 @@ export const PLAYGROUND_OPTIONS: Readonly<Record<PlaygroundSectionId, readonly s
   weather: Object.keys(DEFAULT_WEATHER_STATES),
   lighting: ['dawn', 'morning', 'noon', 'afternoon', 'dusk', 'night', 'underground_dark'],
   palettes: PALETTE_OPTIONS,
-  'resolution-profiles': RESOLUTION_OPTIONS
+  'resolution-profiles': RESOLUTION_OPTIONS,
+  'integrated-scene': ['integrated_world','boss_preview','interior_preview','cave_preview'],
+  'quality-inspector': ['hero','oak_tree','crystal_geode','golden_registry']
 };
 
 const LABELS: Record<string, string> = {
   hero: 'Default avatar',
+  integrated_world: 'Unified World Scene', boss_preview: 'Boss Preview',
+  interior_preview: 'Interior Preview', cave_preview: 'Cave Preview',
+  oak_tree: 'Oak Comparison', crystal_geode: 'Geode Comparison',
+  golden_registry: 'Golden Seed Registry',
   shallow_water: 'Shallow Water', deep_water: 'Deep Water',
   hud_panel: 'Nine-slice Panel', health_bar: 'Health', mana_bar: 'Mana', stamina_bar: 'Stamina',
   world_overview: 'Procedural Overview', world_wildlife: 'Wildlife Habitat',

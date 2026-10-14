@@ -222,3 +222,6 @@
   .studio .mobile-nav-button{width:36px;min-width:36px;padding:5px}
   .studio .top-actions .site-language-control select{width:86px;max-width:86px}
 }
+
+/* Phase 12: real-time technical telemetry, pixel-sharp and scroll-safe. */
+.live-diagnostics { overflow-x:auto; max-width:100%; margin:12px 0 0; padding:12px; border:1px solid var(--border, #46566b); border-radius:4px; background:rgba(7,13,20,.55); color:inherit; font:11px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
