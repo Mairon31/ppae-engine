@@ -439,13 +439,13 @@ function comparisonStrip(kind: 'hero' | 'oak_tree' | 'crystal_geode'): PixelBuff
   return buffer;
 }
 
-function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProfile, tick: number): PixelBuffer {
+function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProfile, tick: number, thumbnail = false): PixelBuffer {
   const n = stableSubjectSeed(section, id);
   switch (section) {
     case 'world': return worldScene(p, tick);
     case 'integrated-scene': {
       const frame = productionShowcase.renderWorldSceneFrame({
-        ...productionConfig(), requestedProfileId: p.id, frameIndex: tick
+        ...productionConfig(), requestedProfileId: thumbnail ? p.id : state.profile, frameIndex: tick
       });
       currentSceneMetrics = frame.telemetry;
       if (id === 'boss_preview') return frame.bossPreviewBuffer;
@@ -454,6 +454,15 @@ function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProf
       return frame.sceneBuffer;
     }
     case 'quality-inspector':
+      if (thumbnail) {
+        const seed = fnv1aHash32(state.seed + ':' + id);
+        if (id === 'oak_tree')
+          return nature.generateTreeStage('oak', 'mature', p, seed).buffer;
+        if (id === 'crystal_geode')
+          return nature.generateGeologicalResource('crystal_geode', p, seed).buffer;
+        return avatar.renderCharacterFrame(currentCharacter().appearance,
+          currentCharacter().equipment,'idle','S',0,4,p).buffer;
+      }
       return comparisonStrip(id === 'oak_tree' || id === 'crystal_geode' ? id : 'hero');
     case 'characters':
     case 'character-actions': {
@@ -775,7 +784,7 @@ function previewCard(section: PlaygroundSectionId, id: string, canvas: HTMLCanva
     pool.renderParticles(b, p);
     toThumbnail(canvas, b);
   } else {
-    toThumbnail(canvas, renderSubject(section, id, p, 0));
+    toThumbnail(canvas, renderSubject(section, id, p, 0, true));
   }
 }
 function filteredItems(section: PlaygroundSectionId): readonly string[] {

@@ -9,6 +9,13 @@ import {
   validateAssetDefinition
 } from '../core/contracts';
 import { deriveDeterministicSeed, SeededRNG } from '../core/deterministic';
+import type { ShowcaseSceneConfig } from '../core/contracts';
+import {
+  PPAEInteractiveShowcaseController
+} from '../showcase/interactive-inspector';
+import type {
+  MultiResolutionComparisonItem, RenderedShowcaseSceneFrame
+} from '../showcase/interactive-inspector';
 import { PaletteManager } from '../palette/palette-manager';
 import { BoundedTextureCache } from '../runtime/texture-cache';
 
@@ -117,6 +124,7 @@ export class PPAEEngine {
   public readonly cache: BoundedTextureCache;
   private readonly grammarExecutor: ProceduralGrammarExecutor;
   private readonly definitions = new Map<string, ProceduralAssetDefinition>();
+  private productionShowcase: PPAEInteractiveShowcaseController | null = null;
 
   constructor(memoryBudgetBytes = 16 * 1024 * 1024) {
     this.paletteManager = new PaletteManager();
@@ -126,6 +134,26 @@ export class PPAEEngine {
     for (const def of Object.values(PHASE1_DEFAULT_ASSETS)) {
       this.registerAssetDefinition(def);
     }
+  }
+
+  /**
+   * Optional production scene path (Phase 12). The expensive controllers are
+   * lazily allocated, preserving fast construction for standalone sprite users.
+   */
+  public renderProductionScene(config: Partial<ShowcaseSceneConfig> = {}): RenderedShowcaseSceneFrame {
+    return this.resolveProductionShowcase().renderWorldSceneFrame(config);
+  }
+
+  /** Five native resolution variants plus quality diagnostics for the same seed. */
+  public compareProductionProfiles(
+    kind: 'hero' | 'oak_tree' | 'crystal_geode' = 'hero',
+    seed = 2026
+  ): readonly MultiResolutionComparisonItem[] {
+    return this.resolveProductionShowcase().renderMultiResolutionComparisonStrip(kind, seed);
+  }
+
+  private resolveProductionShowcase(): PPAEInteractiveShowcaseController {
+    return this.productionShowcase ??= new PPAEInteractiveShowcaseController();
   }
 
   public registerAssetDefinition(definition: ProceduralAssetDefinition): void {

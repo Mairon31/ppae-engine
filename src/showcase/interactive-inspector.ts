@@ -554,26 +554,6 @@ export class PPAEInteractiveShowcaseController {
     return this.spritesheetCompiler;
   }
 
-  private blitOpaque(
-    dest: PixelBuffer,
-    src: PixelBuffer,
-    offsetX: number,
-    offsetY: number
-  ): void {
-    for (let y = 0; y < src.height; y++) {
-      const dy = offsetY + y;
-      if (dy < 0 || dy >= dest.height) continue;
-      for (let x = 0; x < src.width; x++) {
-        const dx = offsetX + x;
-        if (dx < 0 || dx >= dest.width) continue;
-        const c = src.getPixel(x, y);
-        if (c.a > 0) {
-          dest.setPixel(dx, dy, c);
-        }
-      }
-    }
-  }
-
   private blitAlpha(
     dest: PixelBuffer,
     src: PixelBuffer,

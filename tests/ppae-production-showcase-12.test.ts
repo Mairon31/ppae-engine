@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PPAEInteractiveShowcaseController, ProceduralArtQualityEvaluator
+  PPAEInteractiveShowcaseController, ProceduralArtQualityEvaluator, PPAEEngine
 } from '../src/index';
 
 describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution Inspector & Master Plan Closure', () => {
@@ -102,4 +102,17 @@ describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution In
       }
     }
   });
+
+  it('exposes the integrated scene through the production PPAEEngine façade', () => {
+    const engine = new PPAEEngine();
+    const scene = engine.renderProductionScene({
+      requestedProfileId: 'micro-4x4', worldSeed: 'phase12-facade',
+      frameIndex: 1, weatherCondition: 'clear'
+    });
+    expect(scene.telemetry.resolvedProfileId).toBe('micro-4x4');
+    expect(scene.sceneBuffer.countUniqueOpaqueColors()).toBeGreaterThan(6);
+    expect(scene.telemetry.heroDimensionSpec.artCompositionUnits.moduleSizeTexels).toBe(4);
+    expect(typeof engine.compareProductionProfiles).toBe('function');
+  });
+
 });

@@ -477,3 +477,6 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Solar-shadow caster logical coordinates now derive from the actual rasterized tree/hero/chunk prop pixel positions; ambient solar-hour grade reuses the Phase 10 lighting engine.
 - Roof precipitation shelter is relocated into scene logical coordinates, disabled for roof cutaway; world seed now influences NPC/creature/VFX/boss presets rather than being only terrain seed. Seed streams remain deterministic.
 - Implementation requires CI, 32-lab Chromium and real screenshot QA for visual overlap/readability before marking Phase 12 verified.
+
+- `PPAEEngine.renderProductionScene` and `PPAEEngine.compareProductionProfiles` expose the integrated controller to existing production consumers via lazy allocation; single-asset engine construction and existing API semantics are preserved.
+- Removed dead `blitOpaque` method after switching to alpha-safe composite, addressing TS6133 strict build failure. The browser's thumbnail rendering is bounded to the micro-4x4 generator for quality galleries while the main viewer shows all five actual tiers. Adaptive resolution remains delegated to the showcase controller for full-size render calls.
