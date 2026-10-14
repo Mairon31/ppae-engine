@@ -1018,21 +1018,26 @@ function downloadUrl(url: string, filename: string): void {
   document.body.appendChild(link); link.click(); link.remove();
 }
 function exportSheet(kind: 'png' | 'json'): void {
-  if (!['characters','character-actions','npcs','creatures'].includes(state.section)) return;
+  if (!['characters','character-actions','npcs','npc-variants','creatures','creature-variants'].includes(state.section)) return;
   const p = profile();
   const directions = ALL_DIRECTIONS_8;
-  const selectedAction = state.section === 'creatures' ? state.creatureAction : state.action;
+  const selectedAction = ['creatures','creature-variants'].includes(state.section) ? state.creatureAction : state.action;
   const name = state.section + '-' + state.selected + '-' + String(selectedAction) + '-' + p.id;
-  if (state.section === 'creatures') {
-    const result = compiler.compileCreatureSheet(state.selected as CreatureSpeciesId, p,
-      [state.creatureAction], directions, seedNumber());
+  if (state.section === 'creatures' || state.section === 'creature-variants') {
+    const [species, age, health] = state.section === 'creature-variants'
+      ? state.selected.split(':') : [state.selected, state.age, state.health];
+    const result = compiler.compileCreatureSheet(species as CreatureSpeciesId, p,
+      [state.creatureAction], directions, seedNumber(),
+      { ageStage: age as CreatureAgeStage, healthState: health as CreatureHealthState });
     if (kind === 'png') downloadUrl(encodePng(result.atlasBuffer), name + '.png');
     else downloadUrl(URL.createObjectURL(new Blob([JSON.stringify(result.metadata, null, 2)],
       { type: 'application/json' })), name + '.json');
   } else {
-    const npc = state.section === 'npcs' ?
-      customization.generateNpcPreset(state.selected as NpcProfessionArchetypeId, seedNumber()) :
-      currentCharacter();
+    const [profession, variation] = state.section === 'npc-variants'
+      ? state.selected.split(':') : [state.selected, '0'];
+    const npc = ['npcs','npc-variants'].includes(state.section) ?
+      customization.generateNpcPreset(profession as NpcProfessionArchetypeId,
+        state.seed + ':npc:' + variation) : currentCharacter();
     const result = compiler.compileCharacterSheet(npc.appearance, npc.equipment, p,
       [state.action], directions);
     if (kind === 'png') downloadUrl(encodePng(result.atlasBuffer), name + '.png');
