@@ -1,8 +1,8 @@
 # PPAE Engine — Interactive Playground
 
-GitHub Pages (publicación pendiente de fusión a master): https://mairon31.github.io/ppae-engine/
+GitHub Pages: https://mairon31.github.io/ppae-engine/
 
-La rama feat/ppae-2-art-overhaul compila el Playground en Actions, pero no intenta publicar en el entorno protegido github-pages. El workflow de Pages desplegará la nueva versión tras la fusión autorizada del PR #2; no se han cambiado ni fusionado commits a master.
+La rama `feat/ppae-2-art-overhaul` y el PR #2 permanecen abiertos, sin modificar `master`. El workflow `.github/workflows/deploy-pages.yml` ahora permite publicar el `dist/demo` compilado de esta rama en `github-pages`. GitHub Actions registró un despliegue exitoso el 14-10-2026 (https://github.com/Mairon31/ppae-engine/actions/runs/38613821723). Esto demuestra que el job ejecutó `actions/deploy-pages`, **no** confirma por sí solo que el navegador reciba la versión compilada correcta: existen ejecuciones paralelas de `pages build and deployment` (Pages/Jekyll). Para evitar que la publicación nativa de rama sustituya a Vite, el propietario debe configurar **Settings → Pages → Build and deployment → Source = GitHub Actions** si aún figura **Deploy from a branch**. No se ha cambiado `master` ni fusionado el PR.
 
 Run locally: npm ci && npm run dev. This is a fully client-side Vite demo whose entrypoint is src/demo/main.ts and UI is index.html + src/demo/playground.css.
 
@@ -23,3 +23,24 @@ VFX is **visual effects**, generated with PixelParticleEngine (flames, smoke, mi
 World scenes are intentionally bounded to an 8×8 chunk; gallery thumbnails use micro-4x4 generation and stage settings may render larger native resolutions. No sprites are enlarged to fake native generator detail. The world and characters are demonstration previews, not a complete playable game. Hitbox overlay is a generic buffer boundary, not actual physics collision; the atlas metadata contains creature hitboxes.
 
 Source of truth: the existing engine APIs. npm test runs tests/ppae-playground.test.ts alongside previous suites; npm run build validates declarations, library, TypeScript and Pages demo. Automated tests do **not** replace browser QA of art parity or visual consistency.
+
+
+## Build and publication verification
+
+- `npm run build:demo` ejecuta Vite y `scripts/verify-pages-output.mjs`; falla si faltan `dist/demo/index.html`, CSS/JS compilados, assets con `/ppae-engine/assets/` o si quedan rutas de desarrollo `/src/demo/*.ts`.
+- El workflow sube exclusivamente `dist/demo` con `actions/upload-pages-artifact@v4` y ejecuta `actions/deploy-pages@v4`. Su éxito no demuestra ausencia de errores HTTP, CORS o MIME en el dominio público.
+- Para comprobación manual: abrir `https://mairon31.github.io/ppae-engine/`, inspeccionar **Network** y verificar que `index.html` referencia `/ppae-engine/assets/*.js` y `*.css`, ambos con HTTP 200 y tipos de contenido `text/javascript` y `text/css`. No debe aparecer un intento de importar `/src/demo/main.ts`.
+- En GitHub **Settings → Pages**, seleccionar **GitHub Actions** como fuente si hay dos flujos de publicación; mantener la rama del PR abierta. Verificar también que el entorno `github-pages` permite desplegar desde `feat/ppae-2-art-overhaul`; la ejecución exitosa citada indica que lo permitió al menos para ese commit.
+
+## Browser QA evidence
+
+`.github/workflows/playground-browser-qa.yml` instala Chromium y abre la compilación Vite servida en `/ppae-engine/`. `scripts/playground-browser-qa.mjs` visita las 17 secciones reales, espera Canvas y miniaturas generadas, revisa errores de JavaScript/HTTP, prueba 32×32 y orientación NE, exporta PNG y atlas PNG/JSON, prueba criatura juvenil/herida SW y navegación móvil a 390 px. Los screenshots y archivos exportados se guardan como artefacto `ppae-playground-chromium-qa` durante 14 días.
+
+La ejecución y aprobación de este workflow deben comprobarse en Actions; su definición sola no acredita navegador funcional. Las capturas requieren inspección humana para evaluar siluetas, anatomía, paletas y calidad artística. Una prueba automatizada sin errores no equivale a auditoría visual artesanal.
+
+## Performance and UX changes (14-10-2026)
+
+- Las tarjetas se generan con una muestra real por `requestAnimationFrame` para evitar bloquear el hilo con una página completa. Los trabajos de páginas antiguas se cancelan al navegar.
+- Caché LRU de 36 miniaturas `198×112`, invalidada al cambiar la semilla y discriminada por controles que alteran la imagen. Los sprites originales de alta resolución no se mantienen en esa caché.
+- El reproductor sincroniza su estado accesible cuando finaliza un clip sin bucle y permite reanudarlo desde el inicio; las emisiones de VFX respetan reloj y velocidad del reproductor.
+- Navegación móvil con scrim de cierre, tecla Escape, foco visible y compactación bajo 390 px.
