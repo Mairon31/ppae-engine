@@ -682,3 +682,106 @@ export interface CaveChamberDefinition {
   readonly exitStairsTileX: number;
   readonly exitStairsTileY: number;
 }
+// ============================================================================
+// PHASE 6 CONTRACTS: DYNAMIC LIGHTING, DAY/NIGHT, WEATHER, WIND & PARTICLE VFX
+// ============================================================================
+
+export type TimeOfDayPhase =
+  | 'dawn'
+  | 'morning'
+  | 'noon'
+  | 'afternoon'
+  | 'dusk'
+  | 'night'
+  | 'underground_dark';
+
+export type LightSourceKind =
+  | 'campfire'
+  | 'torch'
+  | 'lantern'
+  | 'furnace'
+  | 'lava_glow'
+  | 'bioluminescent_crystal'
+  | 'spell_projectile'
+  | 'window_interior';
+
+export interface LightSourceDefinition {
+  readonly schemaVersion: string;
+  readonly lightId: string;
+  readonly kind: LightSourceKind;
+  readonly worldX: number; // En unidades lógicas (base 16 por tile)
+  readonly worldY: number;
+  readonly radiusLogical: number;
+  readonly colorHex: string;
+  readonly intensity: number; // [0.0 a 1.5]
+  readonly priority: number;  // Mayor prioridad prevalece bajo límite de presupuesto
+  readonly flickerSpeed: number;
+  readonly flickerAmplitude: number; // [0.0 a 0.35]
+  readonly castsShadows: boolean;
+  readonly enabled: boolean;
+}
+
+export interface AmbientLightProfile {
+  readonly phase: TimeOfDayPhase;
+  readonly ambientColorHex: string;
+  readonly ambientIntensity: number; // [0.08 en noche cerrada/cueva hasta 1.0 en mediodía]
+  readonly shadowLengthMultiplier: number;
+}
+
+export type WeatherConditionId =
+  | 'clear'
+  | 'sunny'
+  | 'overcast'
+  | 'drizzle'
+  | 'rain'
+  | 'thunderstorm'
+  | 'snow'
+  | 'blizzard'
+  | 'dense_fog'
+  | 'sandstorm'
+  | 'volcanic_ash';
+
+export interface WeatherVisualState {
+  readonly schemaVersion: string;
+  readonly condition: WeatherConditionId;
+  readonly intensity: number; // [0.0 a 1.0]
+  readonly windAngleRad: number;
+  readonly windSpeed: number; // [0.0 a 1.0]
+  readonly fogDensity: number; // [0.0 a 1.0]
+  readonly lightningFlashIntensity: number; // [0.0 a 1.0]
+}
+
+export interface WindVectorSample {
+  readonly vx: number;
+  readonly vy: number;
+  readonly strength: number; // [0.0 a 1.0]
+  readonly canopyPixelShiftX: number; // Desplazamiento discreto entero en texels (-2, -1, 0, 1, 2)
+  readonly canopyPixelShiftY: number;
+}
+
+export type VFXPresetId =
+  | 'campfire_flames'
+  | 'ember_smoke'
+  | 'wood_chop_chips'
+  | 'stone_mine_sparks'
+  | 'falling_leaves'
+  | 'rain_splash'
+  | 'water_ripple'
+  | 'combat_hit_sparks'
+  | 'healing_aura'
+  | 'forest_fireflies';
+
+export interface ParticleEmitterDefinition {
+  readonly schemaVersion: string;
+  readonly presetId: VFXPresetId;
+  readonly spawnCount: number;
+  readonly minLifetimeMs: number;
+  readonly maxLifetimeMs: number;
+  readonly minSpeedTexelsPerSec: number;
+  readonly maxSpeedTexelsPerSec: number;
+  readonly gravityTexelsPerSec2: number;
+  readonly windInfluence: number; // [0.0 a 1.0]
+  readonly sizeTexels: 1 | 2 | 3;
+  readonly colorRampHex: readonly [string, string, string]; // Inicio -> Medio -> Final
+  readonly collidesWithFloor: boolean;
+}
