@@ -1,0 +1,202 @@
+/**
+ * PPAE Core Data Contracts & Runtime Schema Validators
+ * Version: 1.0.0
+ */
+
+export const PPAE_SCHEMA_VERSION = '1.0.0' as const;
+
+export type GranularityProfileId = 'micro-4x4' | 'micro-6x6' | 'hybrid-24';
+
+export type AssetCategory =
+  | 'terrain'
+  | 'tree'
+  | 'bush_flora'
+  | 'mineral_rock'
+  | 'weapon_blade'
+  | 'character'
+  | 'creature'
+  | 'structure';
+
+export type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter';
+export type BiomeId = 'meadow' | 'forest' | 'desert' | 'tundra' | 'volcanic' | 'corrupted';
+
+export interface RGBAColor {
+  readonly r: number; // 0-255
+  readonly g: number; // 0-255
+  readonly b: number; // 0-255
+  readonly a: number; // 0-255
+}
+
+export interface ColorRamp {
+  readonly id: string;
+  readonly shadow: RGBAColor;
+  readonly midtone: RGBAColor;
+  readonly highlight: RGBAColor;
+  readonly accent: RGBAColor;
+  readonly outline: RGBAColor;
+}
+
+export interface PaletteDefinition {
+  readonly schemaVersion: string;
+  readonly id: string;
+  readonly name: string;
+  readonly biome: BiomeId;
+  readonly season: SeasonId;
+  readonly maxColorsPerAsset: number;
+  readonly minContrastRatio: number;
+  readonly backgroundReference: RGBAColor;
+  readonly ramps: Readonly<Record<string, ColorRamp>>;
+}
+
+export interface ArtStyleProfile {
+  readonly schemaVersion: string;
+  readonly id: GranularityProfileId;
+  readonly moduleSize: 4 | 6;
+  readonly canonicalTileTexels: 24 | 48;
+  readonly logicalTileUnits: 16;
+  readonly outlineMode: 'none' | 'selective-dark' | 'full-silhouette';
+  readonly shadingSteps: 2 | 3 | 4;
+  readonly lightDirectionVector: readonly [number, number]; // Normalizado, ej. [-0.7, -0.7] (Noroeste)
+  readonly allowDithering: boolean;
+  readonly extrudePaddingPx: number;
+}
+
+export interface AnchorPoint {
+  readonly id: string;
+  readonly texelX: number;
+  readonly texelY: number;
+  readonly normalizedX: number;
+  readonly normalizedY: number;
+}
+
+export interface LogicalHitbox {
+  readonly offsetX: number; // En unidades lógicas (base 16)
+  readonly offsetY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly collidable: boolean;
+}
+
+export interface ProceduralAssetDefinition {
+  readonly schemaVersion: string;
+  readonly id: string;
+  readonly category: AssetCategory;
+  readonly archetype: string;
+  readonly widthInModules: number;
+  readonly heightInModules: number;
+  readonly primaryRampId: string;
+  readonly secondaryRampId: string;
+  readonly accentRampId?: string;
+  readonly symmetry: 'none' | 'vertical' | 'radial';
+  readonly pivotNormalized: readonly [number, number]; // [0.5, 0.9] para base de apoyo
+  readonly logicalHitbox: LogicalHitbox;
+  readonly parameters: Readonly<Record<string, number | string | boolean>>;
+}
+
+export interface AssetGenerationRequest {
+  readonly worldSeed: string | number;
+  readonly assetDefinition: ProceduralAssetDefinition;
+  readonly styleProfile: ArtStyleProfile;
+  readonly palette: PaletteDefinition;
+  readonly variantIndex?: number;
+  readonly stateTag?: 'intact' | 'damaged' | 'snowy' | 'wind_sway';
+}
+
+export interface GeneratedTextureMetadata {
+  readonly cacheKey: string;
+  readonly assetId: string;
+  readonly category: AssetCategory;
+  readonly generatorVersion: string;
+  readonly resolvedSeed: number;
+  readonly profileId: GranularityProfileId;
+  readonly texelWidth: number;
+  readonly texelHeight: number;
+  readonly innerWidth: number;
+  readonly innerHeight: number;
+  readonly paddingPx: number;
+  readonly pivotTexel: readonly [number, number];
+  readonly anchors: Readonly<Record<string, AnchorPoint>>;
+  readonly logicalHitbox: LogicalHitbox;
+  readonly uniqueColorCount: number;
+  readonly contrastRatioAgainstBiome: number;
+  readonly generationTimeMs: number;
+  readonly memoryBytes: number;
+}
+
+export interface GeneratedAssetArtifact {
+  readonly metadata: GeneratedTextureMetadata;
+  readonly pixels: Uint8ClampedArray;
+}
+
+export interface TextureAtlasEntry {
+  readonly cacheKey: string;
+  readonly atlasX: number;
+  readonly atlasY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly metadata: GeneratedTextureMetadata;
+}
+
+export interface TextureAtlasMetadata {
+  readonly schemaVersion: string;
+  readonly atlasId: string;
+  readonly width: number;
+  readonly height: number;
+  readonly entries: Readonly<Record<string, TextureAtlasEntry>>;
+}
+
+export interface EngineTelemetrySnapshot {
+  readonly totalGeneratedCount: number;
+  readonly cacheHits: number;
+  readonly cacheMisses: number;
+  readonly cacheHitRate: number;
+  readonly activeCacheEntries: number;
+  readonly memoryUsedBytes: number;
+  readonly memoryBudgetBytes: number;
+  readonly evictedEntriesCount: number;
+  readonly genTimeP50Ms: number;
+  readonly genTimeP95Ms: number;
+  readonly genTimeP99Ms: number;
+}
+
+/**
+ * Validación estricta de contratos en runtime
+ */
+export class ContractValidationError extends Error {
+  constructor(message: string) {
+    super(`[PPAE ContractValidationError] ${message}`);
+    this.name = 'ContractValidationError';
+  }
+}
+
+export function validateArtStyleProfile(profile: ArtStyleProfile): void {
+  if (profile.schemaVersion !== PPAE_SCHEMA_VERSION) {
+    throw new ContractValidationError(`Unsupported schemaVersion: ${profile.schemaVersion}`);
+  }
+  if (profile.moduleSize !== 4 && profile.moduleSize !== 6) {
+    throw new ContractValidationError(`moduleSize must be 4 or 6, received ${profile.moduleSize}`);
+  }
+  if (profile.canonicalTileTexels % profile.moduleSize !== 0) {
+    throw new ContractValidationError(
+      `canonicalTileTexels (${profile.canonicalTileTexels}) must be a multiple of moduleSize (${profile.moduleSize})`
+    );
+  }
+  if (profile.extrudePaddingPx < 0 || profile.extrudePaddingPx > 4) {
+    throw new ContractValidationError('extrudePaddingPx must be between 0 and 4');
+  }
+}
+
+export function validateAssetDefinition(def: ProceduralAssetDefinition): void {
+  if (!def.id || def.id.trim().length === 0) {
+    throw new ContractValidationError('Asset definition requires a non-empty id');
+  }
+  if (def.widthInModules < 1 || def.heightInModules < 1) {
+    throw new ContractValidationError(
+      `Asset ${def.id} dimensions in modules must be >= 1 (got ${def.widthInModules}x${def.heightInModules})`
+    );
+  }
+  const [px, py] = def.pivotNormalized;
+  if (px < 0 || px > 1 || py < 0 || py > 1) {
+    throw new ContractValidationError(`Asset ${def.id} pivotNormalized must be within [0, 1]`);
+  }
+}
