@@ -10,6 +10,7 @@ import {
   CreatureSpritesheetFrameMetadata,
   Direction8,
   EntityAppearance,
+  VisualStatusEffect,
   EquipmentLoadout,
   LogicalHitbox,
   PPAE_SCHEMA_VERSION,
@@ -45,7 +46,8 @@ export class SpritesheetCompiler {
     equipment: EquipmentLoadout,
     profile: ArtStyleProfile,
     actions: readonly CharacterActionId[] = ['idle', 'walk', 'attack'],
-    directions: readonly Direction8[] = ALL_DIRECTIONS_8
+    directions: readonly Direction8[] = ALL_DIRECTIONS_8,
+    statusEffect: VisualStatusEffect = 'none'
   ): SpritesheetCompilationResult {
     const pad = profile.extrudePaddingPx;
     const baseFrameW = 6 * profile.moduleSize;
@@ -92,7 +94,8 @@ export class SpritesheetCompiler {
             direction,
             f,
             clip.frameCount,
-            profile
+            profile,
+            statusEffect
           );
 
       const paddedFrame = rendered.buffer.withExtrudedPadding(pad);
