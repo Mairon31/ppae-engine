@@ -249,21 +249,82 @@ export interface BiomeVisualDefinition {
  */
 export type AutotileMask8 = number;
 
-export type TreeSpeciesId = 'oak' | 'pine' | 'palm' | 'birch' | 'corrupted_thorn';
+export type BotanicalFamilyId =
+  | 'oak'
+  | 'pine'
+  | 'birch'
+  | 'palm'
+  | 'tropical'
+  | 'mangrove'
+  | 'willow'
+  | 'fruit_tree'
+  | 'bamboo'
+  | 'dead_tree'
+  | 'fantasy_lumin'
+  | 'corrupted_thorn';
+
+export type TreeSpeciesId = BotanicalFamilyId;
 
 export type TreeLifecycleStage =
+  | 'seed'
+  | 'sprout'
   | 'sapling'
+  | 'young'
+  | 'immature'
   | 'mature'
   | 'ancient'
+  | 'damaged'
   | 'dead'
   | 'burned'
   | 'stump'
   | 'fallen_log';
 
+export type TreeCrownArchitecture =
+  | 'spreading_dome'
+  | 'layered_tiers'
+  | 'weeping_cascade'
+  | 'columnar_spire'
+  | 'umbrella_canopy'
+  | 'fragmented_open'
+  | 'windswept_asymmetric'
+  | 'radial_fronds'
+  | 'segmented_culms'
+  | 'gnarled_bare';
+
+export type TreeTrunkPosture =
+  | 'upright'
+  | 'leaning'
+  | 'curved_s'
+  | 'forked_twin'
+  | 'gnarled_twisted'
+  | 'multi_stemmed'
+  | 'buttressed_wide';
+
+export type TreeRootStructure =
+  | 'compact_flare'
+  | 'spreading_surface'
+  | 'aerial_prop'
+  | 'buttress_ridges'
+  | 'sunken';
+
+export type FoliageClusterDistribution =
+  | 'dense_billowing'
+  | 'stratified_pads'
+  | 'pendulous_fronds'
+  | 'sparse_tufts'
+  | 'vertical_plumes'
+  | 'none';
+
 export interface TreeSpeciesDefinition {
   readonly schemaVersion: string;
   readonly speciesId: TreeSpeciesId;
-  readonly canopyShape: 'rounded_clusters' | 'conical_tiers' | 'radial_fronds' | 'slender_column' | 'twisted_branches';
+  readonly canopyShape:
+    | 'rounded_clusters'
+    | 'conical_tiers'
+    | 'radial_fronds'
+    | 'slender_column'
+    | 'twisted_branches'
+    | TreeCrownArchitecture;
   readonly trunkWidthModules: number;
   readonly baseHeightModules: number;
   readonly woodColors: {
@@ -279,6 +340,113 @@ export interface TreeSpeciesDefinition {
     readonly highlight: string;
     readonly fruitOrAccent?: string;
   };
+}
+
+/** Nivel B: arquetipo morfológico dentro de una familia botánica. */
+export interface TreeMorphologyArchetype {
+  readonly archetypeId: string;
+  readonly familyId: BotanicalFamilyId;
+  readonly displayName: string;
+  readonly crownArchitecture: TreeCrownArchitecture;
+  readonly trunkPosture: TreeTrunkPosture;
+  readonly rootStructure: TreeRootStructure;
+  readonly foliageDistribution: FoliageClusterDistribution;
+  readonly widthModulesRange: readonly [number, number];
+  readonly heightModulesRange: readonly [number, number];
+  readonly trunkHeightRatioRange: readonly [number, number];
+  readonly trunkSlendernessRange: readonly [number, number];
+  readonly maxLeanAngleRad: number;
+  readonly asymmetryBiasRange: readonly [number, number];
+  readonly primaryBranchCountRange: readonly [number, number];
+  readonly secondaryBranchCountRange: readonly [number, number];
+  readonly canopyOpenness: number;
+  readonly exposedBranchRatio: number;
+  readonly allowsFruitOrBlossom: boolean;
+}
+
+export interface TreeSkeletonNode {
+  readonly nodeId: string;
+  readonly x: number;
+  readonly y: number;
+  readonly radiusPx: number;
+  readonly depthOrder: number;
+}
+
+export interface TreeBranchSegment {
+  readonly segmentId: string;
+  readonly fromNodeId: string;
+  readonly toNodeId: string;
+  readonly startX: number;
+  readonly startY: number;
+  readonly controlX: number;
+  readonly controlY: number;
+  readonly endX: number;
+  readonly endY: number;
+  readonly startRadiusPx: number;
+  readonly endRadiusPx: number;
+  readonly order: 0 | 1 | 2;
+  readonly isExposedDeadwood: boolean;
+}
+
+export interface TreeRootTendril {
+  readonly rootId: string;
+  readonly startX: number;
+  readonly startY: number;
+  readonly endX: number;
+  readonly endY: number;
+  readonly thicknessPx: number;
+  readonly isAerialProp: boolean;
+}
+
+export interface TreeFoliageMassNode {
+  readonly massId: string;
+  readonly attachedNodeId: string;
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly radiusX: number;
+  readonly radiusY: number;
+  readonly lobeCount: number;
+  readonly angleTiltRad: number;
+  readonly density: number;
+  readonly layerDepth: 'back' | 'mid' | 'front';
+  readonly dropLengthPx?: number;
+}
+
+export interface TreeStructuralSkeleton {
+  readonly pivotX: number;
+  readonly pivotY: number;
+  readonly nodes: readonly TreeSkeletonNode[];
+  readonly segments: readonly TreeBranchSegment[];
+  readonly roots: readonly TreeRootTendril[];
+  readonly foliageMasses: readonly TreeFoliageMassNode[];
+}
+
+export interface TreeSilhouetteMetrics {
+  readonly aspectRatio: number;
+  readonly canopyWidthToHeightRatio: number;
+  readonly trunkToTotalHeightRatio: number;
+  readonly horizontalAsymmetry: number;
+  readonly branchSpreadSpanPx: number;
+  readonly foliageMassCount: number;
+  readonly canopyOpennessScore: number;
+}
+
+export interface TreeMorphologyDescriptor {
+  readonly schemaVersion: string;
+  readonly seed: number;
+  readonly familyId: BotanicalFamilyId;
+  readonly archetypeId: string;
+  readonly stage: TreeLifecycleStage;
+  readonly crownArchitecture: TreeCrownArchitecture;
+  readonly trunkPosture: TreeTrunkPosture;
+  readonly rootStructure: TreeRootStructure;
+  readonly foliageDistribution: FoliageClusterDistribution;
+  readonly canvasWidthModules: number;
+  readonly canvasHeightModules: number;
+  readonly canvasWidthTexels: number;
+  readonly canvasHeightTexels: number;
+  readonly skeleton: TreeStructuralSkeleton;
+  readonly metrics: TreeSilhouetteMetrics;
 }
 
 export type SecondaryFloraKind =

@@ -8,10 +8,12 @@ import {
   TreeSpeciesId
 } from '../core/contracts';
 import { SeededRNG } from '../core/deterministic';
+import { BOTANICAL_SPECIES_DEFINITIONS } from './tree-morphology';
 import { hexToRgba } from '../palette/palette-manager';
 import { PixelBuffer } from '../rasterizer/pixel-buffer';
 
 export const TREE_SPECIES_CATALOG: Readonly<Record<TreeSpeciesId, TreeSpeciesDefinition>> = {
+  ...BOTANICAL_SPECIES_DEFINITIONS,
   oak: {
     schemaVersion: PPAE_SCHEMA_VERSION,
     speciesId: 'oak',
