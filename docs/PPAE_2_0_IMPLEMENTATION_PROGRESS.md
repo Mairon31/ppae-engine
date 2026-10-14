@@ -463,3 +463,5 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Audited against actual branch head `01547bd6a3c0bb927c791bf8e016c4e7dc4473d5`, preserving Phase 11. User-supplied patches referenced an older historical commit; adapted to current contract names and existing boss renderer API.
 - Added typed scene config/telemetry, unified controller, live catalog inventory, deterministic scene and multi-resolution quality comparison, plus new regression suite.
 - **Status: IMPLEMENTED, pending CI and real interactive Playground integration.** Browser UI must expose a dedicated inspector and actual telemetry before completion. No master edits, no npm release.
+
+- **Baseline integration corrective commit:** `TREE_LIFECYCLE_RULES` was not an exported symbol, `PixelBuffer.clone` and `PixelParticleEngine.reset` did not exist in the actual engine. Added canonical exported tree stages and switched to explicit RGBA buffer copy and frame-local particle pool, avoiding hidden state that breaks deterministic redraw. Capturing comparison tier metrics before enforcing quality gate.

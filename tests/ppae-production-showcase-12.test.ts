@@ -78,6 +78,7 @@ describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution In
 
   it('generates multi-resolution comparison strips (4x4 to 32x32) where every tier passes quality evaluation', () => {
     for (const kind of ['hero', 'oak_tree', 'crystal_geode'] as const) {
+      const details: unknown[] = [];
       const strip = showcase.renderMultiResolutionComparisonStrip(kind, 2026);
       expect(strip.length).toBe(5);
 
@@ -85,7 +86,11 @@ describe('PPAE 2.0 Phase 12 — Full Production Integration, Multi-Resolution In
       for (const item of strip) {
         expect(item.buffer.width).toBeGreaterThan(prevWidth);
         prevWidth = item.buffer.width;
-        expect(item.qualityReport.passed).toBe(true);
+        details.push({ kind, tier: item.profileId, score: item.qualityReport.overallScore, defects: item.qualityReport.defects });
+      }
+      console.info('PHASE12_COMPARISON', JSON.stringify(details));
+      for (const item of strip) {
+        expect(item.qualityReport.passed, kind + ':' + item.profileId + ':' + item.qualityReport.defects.join(',')).toBe(true);
       }
     }
   });

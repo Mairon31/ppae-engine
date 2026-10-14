@@ -15,6 +15,12 @@ import type {
 import { PPAE_SCHEMA_VERSION } from '../core/contracts';
 import { fnv1aHash32, SeededRNG } from '../core/deterministic';
 
+/** Canonical, independently named stages available to the shared runtime catalog. */
+export const TREE_LIFECYCLE_STAGES: readonly TreeLifecycleStage[] = [
+  'seed', 'sprout', 'sapling', 'young', 'immature', 'mature',
+  'ancient', 'damaged', 'dead', 'burned', 'stump', 'fallen_log'
+] as const;
+
 /** Nivel A: doce familias botánicas con paletas propias. */
 function species(
   speciesId: BotanicalFamilyId,

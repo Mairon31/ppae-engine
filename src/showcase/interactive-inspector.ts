@@ -64,7 +64,7 @@ import { GEOLOGICAL_ARCHETYPE_CATALOG } from '../vegetation/geology-morphology';
 import { NatureGenerator } from '../vegetation/nature-generator';
 import {
   BOTANICAL_SPECIES_DEFINITIONS,
-  TREE_LIFECYCLE_RULES
+  TREE_LIFECYCLE_STAGES
 } from '../vegetation/tree-morphology';
 import {
   PixelParticleEngine,
@@ -126,7 +126,6 @@ export class PPAEInteractiveShowcaseController {
   private readonly caveGen = new CaveDungeonGenerator();
   private readonly lightingEngine = new PixelPerfectLightingEngine(16);
   private readonly weatherSystem = new WeatherAndWindSystem();
-  private readonly particleEngine = new PixelParticleEngine(256);
   private readonly qualityEvaluator = new ProceduralArtQualityEvaluator();
   private readonly spritesheetCompiler = new SpritesheetCompiler();
 
@@ -140,7 +139,7 @@ export class PPAEInteractiveShowcaseController {
     return {
       resolutionProfiles: Object.keys(DEFAULT_STYLE_PROFILES) as GranularityProfileId[],
       treeFamiliesCount: Object.keys(BOTANICAL_SPECIES_DEFINITIONS).length,
-      treeLifecycleStagesCount: Object.keys(TREE_LIFECYCLE_RULES).length,
+      treeLifecycleStagesCount: TREE_LIFECYCLE_STAGES.length,
       geologicalFormationsCount: Object.keys(GEOLOGICAL_ARCHETYPE_CATALOG).length,
       floraSpeciesCount: Object.keys(FLORA_SPECIES_CATALOG).length,
       canonicalAutotileMasksCount: CANONICAL_47_AUTOTILE_MASKS.length,
@@ -210,7 +209,8 @@ export class PPAEInteractiveShowcaseController {
 
     const sceneW = renderedChunk.terrainBuffer.width;
     const sceneH = renderedChunk.terrainBuffer.height;
-    const sceneBuffer = renderedChunk.terrainBuffer.clone();
+    const sceneBuffer = new PixelBuffer(sceneW, sceneH);
+    sceneBuffer.data.set(renderedChunk.terrainBuffer.data);
 
     const cameraWorldRect: LogicalRect = {
       x: 0,
@@ -361,16 +361,16 @@ export class PPAEInteractiveShowcaseController {
     }
 
     // 6. Emisión y renderizado de partículas VFX (Fase 10)
-    this.particleEngine.reset();
-    this.particleEngine.emitBurst(
+    const particleEngine = new PixelParticleEngine(256);
+    particleEngine.emitBurst(
       cfg.activeVfxPreset,
       Math.floor(sceneW * 0.5),
       Math.floor(sceneH * 0.55),
       2026,
       8
     );
-    this.particleEngine.update(40, windSample);
-    const activeParticlesRendered = this.particleEngine.renderParticles(sceneBuffer, profile);
+    particleEngine.update(40, windSample);
+    const activeParticlesRendered = particleEngine.renderParticles(sceneBuffer, profile);
 
     // 7. Clima dinámico, niebla multicapa y relámpagos ramificados con supresión bajo techo (Fase 10)
     const weatherState =
