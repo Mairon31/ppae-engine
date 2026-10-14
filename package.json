@@ -29,7 +29,8 @@
     "build": "npm run build:lib && npm run typecheck:package && npm run build:demo",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview --base /ppae-engine/"
+    "preview": "vite preview --base /ppae-engine/",
+    "check:package": "node scripts/verify-npm-package.mjs"
   },
   "devDependencies": {
     "typescript": "^5.6.2",
