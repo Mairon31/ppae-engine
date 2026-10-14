@@ -9,7 +9,7 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 | Fase | Estado | Resumen |
 | --- | --- | --- |
 | 1A — Procedural Tree Morphology Architecture | VERIFIED | Contratos, 12 familias, arquetipos, esqueleto y métricas |
-| 1B — Tree Skeleton Rasterization | IMPLEMENTED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
+| 1B — Tree Skeleton Rasterization | VERIFIED | Rasterización de tronco, bifurcaciones, raíces y ramas curvas |
 | 1C — Advanced Canopy / Foliage | PENDING | Follaje avanzado y diferenciación por especie |
 
 ## Fase 1A — 14 de octubre de 2026
@@ -30,14 +30,14 @@ Objetivo: arquitectura y rasterizado morfológico para pixel art procedural
 ## Fase 1B — 14 de octubre de 2026
 
 - **Base indicada por Gemini:** `217f76b393cda5b9755119a67f8b56d854df4520`, con los cambios de Fase 1A supuestos. Ese commit original no contiene 1A; se integró realmente sobre `b3343b1f07f78f6c108cc42af46ae4eee9453c9f`.
-- **Commit de implementación:** se completará con el SHA real tras publicar el lote.
+- **Commit de implementación:** `aabccd4f671082d8ac45188e598206a84eadd9b6`.
 - **Archivos:** MODIFY `src/vegetation/tree-morphology.ts`, MODIFY `src/index.ts`, ADD `src/vegetation/tree-skeleton-rasterizer.ts`, ADD `tests/ppae-tree-skeleton-1b.test.ts`, MODIFY este documento.
 - **Entregado:** fustes gemelos conectados por horquilla real, cañas múltiples con nodos de base propios, masa foliar secundaria anclada al esqueleto preexistente, rasterizado Bézier con taper, sombreado cilíndrico, gramáticas de corteza por familia y etapa, raíces zanco y superficiales, exposición de madera muerta, capas de profundidad y viento discreto.
 - **Integración:** el resolver 1A ya contenía ramas secundarias. Se conservaron y no se duplicaron; el diff de Gemini se adaptó semánticamente.
 - **Pruebas nuevas:** ocho comprobaciones Vitest para determinismo, morfología, corteza, capas, viento, conectividad, raíces y estados especiales.
-- **Verificación técnica:** pendiente de ejecutar `npm test` y `npm run build` mediante GitHub Actions en la rama/PR.
+- **Verificación técnica:** VERIFIED. GitHub Actions: https://github.com/Mairon31/ppae-engine/actions/runs/38587161738 — 11 suites/56 tests aprobados (8 nuevos de 1B), `npm run build` correcto, declaraciones TypeScript, build de biblioteca y build de demo correctos.
 - **Verificación visual:** pendiente de captura y revisión de capas: el rasterizador es una API independiente. La integración en los sprites finales y las copas se reserva a Fase 1C.
-- **Estado actual:** IMPLEMENTED (no VERIFIED hasta obtener resultados de CI).
+- **Estado actual:** VERIFIED (implementación y CI). Inspección visual de sprites compuestos pendiente para Fase 1C.
 - **Próxima fase:** FASE 1C — Generación Avanzada de Copas, Masas de Follaje Asimétricas e Integración Multicapa con el Esqueleto.
 
 ## Convenciones de estado
