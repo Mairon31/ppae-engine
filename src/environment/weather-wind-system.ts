@@ -316,38 +316,49 @@ export class WeatherAndWindSystem {
       }
     }
 
-    // Two real depth layers of pixel fog. Factor x/y waves so trig complexity
-    // is O(width + height), rather than evaluating sin/cos per texel.
+    // Two independently drifting, stratified fog banks. Generate each bank's
+    // curved centerline and thickness per x; this costs O(width) trig calls,
+    // not O(width * height). Bayer dithering softens ONLY the pixelated banks'
+    // feathered edges, rather than turning the whole screen into a dot grid.
     if (state.fogDensity > 0.05) {
-      const fogColor =
-        state.condition === 'sandstorm' ? hexToRgba('#d97706') :
+      const fogColor = state.condition === 'sandstorm' ? hexToRgba('#d97706') :
         state.condition === 'volcanic_ash' ? hexToRgba('#64748b') :
         hexToRgba('#cbd5e1');
-      const farWaveX = new Float32Array(widthTexels);
-      const nearWaveX = new Float32Array(widthTexels);
+      const farCenter = new Float32Array(widthTexels);
+      const nearCenter = new Float32Array(widthTexels);
+      const farThickness = new Float32Array(widthTexels);
+      const nearThickness = new Float32Array(widthTexels);
+      const farDrift = timeSeconds * 3.4;
+      const nearDrift = timeSeconds * 7.2;
       for (let x = 0; x < widthTexels; x++) {
-        farWaveX[x] = Math.sin((x + timeSeconds * 3.5) * 0.053) +
-          Math.cos((x - timeSeconds * 1.8) * 0.027);
-        nearWaveX[x] = Math.sin((x - timeSeconds * 7.5) * 0.092) +
-          Math.cos((x + timeSeconds * 4.1) * 0.041);
+        farCenter[x] = heightTexels * 0.29 +
+          Math.sin((x + farDrift) * 0.038) * heightTexels * 0.075 +
+          Math.sin((x - farDrift * 0.6) * 0.11) * heightTexels * 0.025;
+        nearCenter[x] = heightTexels * 0.73 +
+          Math.sin((x - nearDrift) * 0.027) * heightTexels * 0.085 +
+          Math.cos((x + nearDrift * 0.5) * 0.093) * heightTexels * 0.03;
+        farThickness[x] = heightTexels * (0.08 + state.fogDensity * 0.115) +
+          Math.cos((x + farDrift) * 0.047) * heightTexels * 0.012;
+        nearThickness[x] = heightTexels * (0.09 + state.fogDensity * 0.135) +
+          Math.sin((x - nearDrift) * 0.041) * heightTexels * 0.017;
       }
       for (let y = 0; y < heightTexels; y++) {
-        const farY = Math.sin(y * 0.073 + timeSeconds * 0.4);
-        const nearY = Math.cos(y * 0.105 - timeSeconds * 0.65);
         for (let x = 0; x < widthTexels; x++) {
-          const farBank = farWaveX[x] + farY;
-          const nearBank = nearWaveX[x] + nearY;
-          const farCover = farBank > 0.65 - state.fogDensity * 1.15;
-          const nearCover = nearBank > 1.2 - state.fogDensity * 1.1;
-          if (!farCover && !nearCover) continue;
-          const bayer = BAYER_FOG_4X4[y & 3][x & 3];
-          if (nearCover ? bayer > Math.min(15, Math.round(state.fogDensity * 17)) :
-              bayer > Math.round(state.fogDensity * 11)) continue;
-          const existing = overlayBuffer.getPixel(x, y);
-          if (existing.a !== 0) continue; // Keep precipitation visible above fog.
+          const farDistance = Math.abs(y - farCenter[x]);
+          const nearDistance = Math.abs(y - nearCenter[x]);
+          const farWeight = Math.max(0, Math.min(1, (farThickness[x] - farDistance) /
+            Math.max(2, farThickness[x] * 0.33)));
+          const nearWeight = Math.max(0, Math.min(1, (nearThickness[x] - nearDistance) /
+            Math.max(2, nearThickness[x] * 0.38)));
+          const isNear = nearWeight * 1.2 >= farWeight;
+          const feather = isNear ? nearWeight : farWeight;
+          if (feather <= 0) continue;
+          if (feather < 1 && feather < (BAYER_FOG_4X4[y & 3][x & 3] + 0.5) / 16) continue;
+          if (overlayBuffer.getPixel(x, y).a !== 0) continue;
           overlayBuffer.setPixel(x, y, {
             r: fogColor.r, g: fogColor.g, b: fogColor.b,
-            a: Math.min(220, Math.round(state.fogDensity * (nearCover ? 178 : 110)))
+            a: Math.min(215, Math.round(state.fogDensity * (isNear ? 174 : 110) *
+              (0.78 + feather * 0.22)))
           });
         }
       }

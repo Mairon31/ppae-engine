@@ -147,6 +147,16 @@ describe('PPAE 2.0 Phase 10 — Directional Solar Shadows, Branched Lightning, F
     }
     expect(fogPixels).toBeGreaterThan(100);
     expect(fogPixels).toBeLessThan(96 * 64);
+    // Stratified banks: rows through both layers are denser than exposed sky.
+    const coveredRow = (row: number) => {
+      let count = 0;
+      for (let x = 0; x < first.width; x++) {
+        if (first.getPixel(x, row).a > 0) count++;
+      }
+      return count;
+    };
+    expect(coveredRow(20)).toBeGreaterThan(coveredRow(0));
+    expect(coveredRow(44)).toBeGreaterThan(coveredRow(0));
     expect(weather.generateLightningBolt(96, 64, 77))
       .toEqual(weather.generateLightningBolt(96, 64, 77));
     expect(weather.generateLightningBolt(96, 64, 77))

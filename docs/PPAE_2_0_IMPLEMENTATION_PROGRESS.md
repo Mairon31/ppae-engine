@@ -397,3 +397,9 @@ No modificar `master`, no modificar `Mairon31/pixelproject` y no fusionar el PR 
 - Added self-overdraw regression (single caster is darkened at most once), seeded fog reproducibility and coverage, lightning seed sensitivity.
 - Chromium workflow now captures dawn/dusk generated-oak shadows, branched thunderstorms, dense fog and shaped frost/poison effects; validates actual solar vector and emitter geometry through exported JSON.
 - Updated the Playground coverage matrix for weather, lighting, VFX and live overworld cast shadows. **Status: implementation complete; CI and Chromium on this QA commit PENDING.**
+
+### Phase 10 — Visual correction: fog stratification
+
+- Real browser evidence from https://github.com/Mairon31/ppae-engine/actions/runs/38645492544 showed repeating elliptical clear holes in dense fog, despite passing functional smoke tests.
+- Replaced separable x/y threshold checker pattern with two independent, animated centerline banks, thickness modulation, graded alphas and Bayer dithering restricted to bank edges. Per-column precomputation preserves O(width + height + pixels) runtime without trigonometric calls per pixel.
+- Added bank-stratification assertions to the Phase-10 unit suite. **Pending** CI and updated Chromium screenshot review; phase not yet marked fully verified.
