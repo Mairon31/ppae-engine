@@ -287,7 +287,7 @@ export class MultiSegmentBossRenderer {
     // Roots remain attached to the standing core and fork toward the ground.
     if (state.deathStage !== 'stage_3_monolith_collapse') {
       for (const side of [-1, 1]) {
-        const x0 = cx + side * Math.round(4 * u);
+        const x0 = cx + side * Math.round(rx * .4);
         const x1 = cx + side * Math.round(8 * u);
         const y0 = cy + Math.round(7 * u);
         const y1 = groundY - Math.round(2 * u);
