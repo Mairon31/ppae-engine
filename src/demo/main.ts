@@ -149,8 +149,9 @@ let vfxBurstIndex = 0;
 
 function thumbnailKey(section: PlaygroundSectionId, id: string): string {
   return [
-    section, id, state.seed, state.selected, state.stage, state.age, state.health,
-    state.time, state.weather, state.direction, state.action, state.creatureAction
+    section, id, state.seed, section === 'world' ? state.selected : '',
+    state.stage, state.age, state.health, state.time, state.weather,
+    state.direction, state.action, state.creatureAction
   ].join('|');
 }
 function restoreThumbnail(key: string, canvas: HTMLCanvasElement): boolean {
@@ -184,6 +185,10 @@ function currentCharacter() {
 }
 function seedNumber(extra = ''): number {
   return fnv1aHash32(state.seed + ':' + state.selected + ':' + extra);
+}
+/** Catalog assets must not mutate when a different card becomes selected. */
+function stableSubjectSeed(section: PlaygroundSectionId, id: string): number {
+  return fnv1aHash32(state.seed + ':subject:' + section + ':' + id);
 }
 function profile(): ArtStyleProfile {
   if (state.profile !== 'adaptive-auto') return DEFAULT_STYLE_PROFILES[state.profile];
@@ -363,7 +368,7 @@ function worldScene(p: ArtStyleProfile, tick: number, previewId = state.selected
   return scene;
 }
 function renderSubject(section: PlaygroundSectionId, id: string, p: ArtStyleProfile, tick: number): PixelBuffer {
-  const n = seedNumber(id);
+  const n = stableSubjectSeed(section, id);
   switch (section) {
     case 'world': return worldScene(p, tick);
     case 'characters':
@@ -1149,7 +1154,7 @@ function exportTechnicalJSON(): void {
   const buffer = renderSubject(state.section, id, p, state.frame);
   const data: Record<string, unknown> = {
     engine: 'PPAE Engine 2.0', section: state.section,
-    id, seed: state.seed, seedHash: seedNumber(id), styleProfile: p.id,
+    id, seed: state.seed, seedHash: stableSubjectSeed(state.section, id), styleProfile: p.id,
     nativeBuffer: { width: buffer.width, height: buffer.height,
       encoding: 'RGBA8', uniqueOpaqueColors: buffer.countUniqueOpaqueColors() }
   };
@@ -1164,19 +1169,19 @@ function exportTechnicalJSON(): void {
       };
       const artifact = nature.generateTreeStage(family as TreeSpeciesId,
         (state.section === 'tree-lifecycle' ? value : state.section === 'tree-archetypes'
-          ? 'mature' : state.stage) as TreeLifecycleStage, p, seedNumber(id), options);
+          ? 'mature' : state.stage) as TreeLifecycleStage, p, stableSubjectSeed(state.section,id), options);
       data.morphology = artifact.morphology;
       data.anchors = artifact.anchors;
       data.pivotTexel = artifact.pivotTexel;
       break;
     }
     case 'flora': {
-      const artifact = nature.generateSecondaryFlora(id as SecondaryFloraKind, p, seedNumber(id));
+      const artifact = nature.generateSecondaryFlora(id as SecondaryFloraKind, p, stableSubjectSeed(state.section,id));
       data.morphology = artifact.flora; data.anchors = artifact.anchors;
       break;
     }
     case 'geology': {
-      const artifact = nature.generateGeologicalResource(id as GeologicalResourceKind, p, seedNumber(id));
+      const artifact = nature.generateGeologicalResource(id as GeologicalResourceKind, p, stableSubjectSeed(state.section,id));
       data.morphology = artifact.geology; data.anchors = artifact.anchors;
       break;
     }
