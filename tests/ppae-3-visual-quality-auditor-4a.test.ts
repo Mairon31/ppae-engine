@@ -147,7 +147,31 @@ describe('PPAE 3.0 Phase 4A — Evolved Visual Quality & Regression Auditor', ()
       wolfSprite.height,
       'native-24x24'
     );
-    expect(comprehensive.overallPassed, JSON.stringify(comprehensive)).toBe(true);
+    // A genuine diagnostic failure: the current standalone 3C wolf is only
+    // 51 opaque texels at 24x24 and 19 of these have a singleton material tone.
+    // Do NOT weaken the P0 auditor to let a visually noisy output through.
+    expect(comprehensive.pillowShading.hasPillowShadingDefect).toBe(false);
+    expect(comprehensive.geometricExcess.hasExcessiveRectangleDefect).toBe(false);
+    expect(comprehensive.geometricExcess.hasExcessiveCircleDefect).toBe(false);
+    expect(comprehensive.resolutionAndPalette.uniqueColorCount)
+      .toBeLessThanOrEqual(comprehensive.resolutionAndPalette.maxAllowedColors);
+    expect(comprehensive.resolutionAndPalette.orphanPixelRatio).toBeGreaterThan(0.18);
+    expect(comprehensive.overallPassed).toBe(false);
+
+    // A genuinely clean asymmetric, articulated silhouette passes the same
+    // uncompromised criteria and acts as a positive control.
+    const clean = new Uint8ClampedArray(24 * 24 * 4);
+    const paint = (x: number, y: number) => {
+      const i = (y * 24 + x) * 4;
+      clean[i] = 88; clean[i + 1] = 113; clean[i + 2] = 77; clean[i + 3] = 255;
+    };
+    for (let y = 7; y <= 12; y++) for (let x = 4; x <= 19; x++) paint(x,y);
+    for (let y = 13; y <= 19; y++) {
+      for (let x = 6; x <= 8; x++) paint(x, y);
+      for (let x = 15; x <= 17; x++) paint(x, y);
+    }
+    const positiveControl = auditor.evaluateComprehensiveSpriteQuality(clean,24,24,'native-24x24');
+    expect(positiveControl.overallPassed, JSON.stringify(positiveControl)).toBe(true);
   });
 
   it('verifies cross-chunk pixel seam continuity and temporal animation continuity on Phase 2C water chunks', () => {

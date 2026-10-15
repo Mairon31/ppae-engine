@@ -197,6 +197,8 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 
 **Interface correction:** Phase 2B does not expose `auditBlockyShorelineArtifacts`. Phase 4A supplies a **blue-water color-mask heuristic** itself, using tile-grid transition alignment; this is not a terrain-class semantic/bathymetric proof for swamp or non-blue water. Real signed-distance shoreline and material masks must be audited separately. CI Phase 11 golden-seed benchmarks remain authoritative; no canonical hashes are modified. These functions are opt-in until wired into producers and browser visual QA.
 
+**First real regression discovered (not suppressed):** [CI run 38761035937](https://github.com/Mairon31/ppae-engine/actions/runs/38761035937) identified excessive same-color singleton material tones in the standalone 3C wolf at 24×24 (19/51 opaque pixels, orphan ratio **0.3725**, versus allowed **0.18**). Pillow shading, geometric excess and palette count pass. Phase 4A asserts that the wolf fails the quality gate while a clean articulated positive-control silhouette passes. **3C wolf cluster cleanup remains P0 corrective work**; do not misrepresent a passing auditor test as passing creature artwork.
+
 **Gate honesty:** passing synthetic cases and the golden tests is not proof that every real generated tree/cave/crop is visually correct. Treat the P0 code/API delivery and the final P0 visual acceptance as separate statuses.
 
 
