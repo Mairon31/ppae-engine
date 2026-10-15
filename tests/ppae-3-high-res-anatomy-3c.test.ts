@@ -41,7 +41,7 @@ describe('PPAE 3.0 Phase 3C — High-Resolution Secondary Anatomy & Material Clu
 
         expect(sprite.width).toBe(modSize);
         expect(sprite.height).toBe(modSize);
-        expect(sprite.secondaryFeatureCount).toBeGreaterThan(0);
+        expect(sprite.secondaryFeatureCount, `${speciesId} @ ${modSize}px`).toBeGreaterThan(0);
 
         // Must pass true native resolution check (no k x k nearest-neighbor block upscaling)
         const upscaleAudit = verifyTrueNativeResolutionBuffer(

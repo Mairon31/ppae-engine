@@ -330,6 +330,16 @@ export class HighResAnatomySynthesizer {
       }
     }
 
+    // At 16px and other constrained resolutions the rasterizer may leave
+    // no interior texels large enough for a multi-pixel pattern. Preserve one
+    // anatomically anchored, opaque identifier instead of reporting a
+    // secondary feature that was never actually drawn.
+    if (secondaryFeatureCount === 0 && width >= 16) {
+      secondaryFeatureCount += this.stampMinimalAnatomicalFeature(
+        params.speciesId, rgba, partRoleBuffer, width, height
+      );
+    }
+
     // Pass 2: Re-stamp crisp directional eyes on top so secondary coat patterns never obscure gaze
     this.stampCrispEyes(
       rgba,
@@ -358,6 +368,54 @@ export class HighResAnatomySynthesizer {
       budget,
       secondaryFeatureCount,
     };
+  }
+
+  /**
+   * Minimal high-resolution identifier when every interior texel was consumed
+   * by outlines/occlusion. Never expand alpha or invent detached geometry.
+   * Selects a visible texel belonging to a species-relevant anatomical part.
+   */
+  private stampMinimalAnatomicalFeature(
+    speciesId: AnatomicalSpeciesId,
+    rgba: Uint8ClampedArray,
+    roleBuffer: Int16Array,
+    width: number,
+    height: number
+  ): number {
+    const roles: Readonly<Record<AnatomicalSpeciesId, readonly AnatomicalPartRole[]>> = {
+      'bovine-cow': ['thorax', 'abdomen', 'jaw-muzzle', 'pelvis'],
+      'ovine-sheep': ['thorax', 'neck', 'abdomen'],
+      'canine-wolf': ['thorax', 'neck', 'tail'],
+      'avian-chicken': ['jaw-muzzle', 'wing', 'horn-or-crest'],
+      'humanoid-biped': ['cranium', 'pelvis', 'thorax'],
+      'amorphous-corrupt': ['udder-or-core', 'abdomen', 'thorax'],
+    };
+    const speciesColor: Readonly<Record<AnatomicalSpeciesId, RgbaColor>> = {
+      'bovine-cow': SECONDARY_ACCENT_COLORS.cowBlackSpotMid,
+      'ovine-sheep': DEFAULT_ANATOMICAL_MATERIAL_RAMPS['wool-fleece'].outlineColor,
+      'canine-wolf': SECONDARY_ACCENT_COLORS.wolfDorsalDark,
+      'avian-chicken': SECONDARY_ACCENT_COLORS.chickenBeakGold,
+      'humanoid-biped': SECONDARY_ACCENT_COLORS.humanoidHairDark,
+      'amorphous-corrupt': SECONDARY_ACCENT_COLORS.corruptVeinDark,
+    };
+    // Prefer a central opaque texel of the correct anatomical role.
+    for (const role of roles[speciesId]) {
+      const target = PART_ROLE_ORDER.indexOf(role);
+      let best = -1;
+      let smallest = Number.POSITIVE_INFINITY;
+      for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+        const i = y * width + x;
+        if (roleBuffer[i] !== target || rgba[i * 4 + 3] !== 255) continue;
+        const distance = Math.abs(x - width * 0.5) + Math.abs(y - height * 0.5);
+        if (distance < smallest) { best = i; smallest = distance; }
+      }
+      if (best !== -1) {
+        setPixelRgba(rgba, width, best % width, Math.floor(best / width), speciesColor[speciesId]);
+        return 1;
+      }
+    }
+    // No visible target anatomy: do not claim that a feature was drawn.
+    return 0;
   }
 
   private applySpeciesSecondaryDetailAtTexel(ctx: {

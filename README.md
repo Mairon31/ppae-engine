@@ -1,6 +1,6 @@
 <div align="center">
 
-**Languages:** **English** | [Español](docs/i18n/README.es.md) | [Português (Brasil)](docs/i18n/README.pt-BR.md)
+**Languages:** **English** | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md)
 
 # PPAE Engine
 
@@ -11,13 +11,13 @@
 A deterministic, modular pixel-art generation toolkit for 2D games.  
 Create characters, creatures, environments, animation frames, and visual effects from TypeScript — with reproducible results and inspectable source code.
 
-[![Project status](https://img.shields.io/badge/status-active%20alpha-E5A44F?style=flat-square)](https://github.com/Mairon31/ppae-engine/pull/2)
+[![Project status](https://img.shields.io/badge/status-active%20alpha-E5A44F?style=flat-square)](https://github.com/Mairon31/ppae-engine/tree/master)
 [![Version](https://img.shields.io/badge/version-0.2.0--alpha.1-7AA2F7?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](tsconfig.json)
-[![CI](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml/badge.svg?branch=feat%2Fppae-2-art-overhaul)](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml)
+[![CI](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml/badge.svg?branch=master)](https://github.com/Mairon31/ppae-engine/actions/workflows/ppae-2-ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-8CAB72?style=flat-square)](LICENSE)
 
-**[Discover PPAE Engine](https://mairon31.github.io/ppae-engine/)** · **[Read the technical documentation](docs/PLAYGROUND.md)** · **[Contribute on GitHub](https://github.com/Mairon31/ppae-engine/issues)**
+**[Explore the Playground](https://mairon31.github.io/ppae-engine/)** · **[View source on master](https://github.com/Mairon31/ppae-engine/tree/master)** · **[Contribute on GitHub](https://github.com/Mairon31/ppae-engine/issues)**
 
 </div>
 
@@ -35,6 +35,10 @@ PPAE began as a technology project for [PixelProject](https://github.com/Mairon3
 > **What it is not:** a complete game engine with built-in gameplay, physics, networking, or an editor comparable to Godot or Unity.
 
 
+## AI-assisted development disclosure
+
+> **Transparency notice:** PPAE Engine is developed with assistance from artificial intelligence tools for programming, tests, documentation and technical exploration. AI assistance does not guarantee error-free or production-ready results. Maintainers are responsible for accepting changes, and users should independently review and validate outputs.
+
 ## See the engine in action
 
 <div align="center">
@@ -49,30 +53,9 @@ Explore a full player appearance editor with seeded randomization, 28 character 
 
 </div>
 
-<!--
-SCREENSHOT SHOWCASE — TO BE ADDED MANUALLY.
-
-1. Upload your own screenshots to docs/media/ (or update these paths).
-2. Uncomment the HTML block below after the images exist.
-3. Prefer lossless PNG captures with consistent framing. The Playground itself
-   remains the authoritative interactive demonstration.
-
-<div align="center">
-  <img src="docs/media/playground-overview.png" alt="PPAE procedural pixel-art world showcase" width="100%" />
-  <p>
-    <img src="docs/media/playground-characters.png" alt="Character anatomy and directional animation" width="49%" />
-    <img src="docs/media/playground-creatures.png" alt="Procedural creatures and boss anatomy" width="49%" />
-  </p>
-  <p>
-    <img src="docs/media/playground-vegetation.png" alt="Botanical morphology and lifecycle variations" width="49%" />
-    <img src="docs/media/playground-vfx.png" alt="Pixel art particles and visual effects" width="49%" />
-  </p>
-</div>
--->
-
 The Playground lets you change **seed, resolution, direction, action, lifecycle stage, creature age and health, zoom, playback speed, time of day, and weather**, plus editable avatar anatomy, hairstyle, clothing, skin/hair/armor colors, accessories, and status effects. Export **native sprite PNG, viewport screenshots, PNG spritesheets, structured JSON atlases, or per-system metadata**. Browse every section with search and pagination.
 
-[Product landing and Pages deployment →](docs/SITE_LANDING_AND_PAGES.md) · [Playground guide →](docs/PLAYGROUND.md) · [Complete 32-section coverage matrix →](docs/PLAYGROUND_COVERAGE_MATRIX.md)
+**Public developer documentation is planned for GitHub Pages.** Until it launches, use the Playground and the examples in this README.
 
 ## What can PPAE generate?
 
@@ -89,7 +72,7 @@ The Playground lets you change **seed, resolution, direction, action, lifecycle 
 | **Art quality diagnostics** | Quantitative silhouette and palette checks, directional lighting/noise heuristics, tile-seam audits and a versioned 10-specimen reference registry with RGBA fingerprints. |
 | **Production scene and visual inspector** | Lazy production-engine scene composition, Y-sorted world objects, solar lighting, roof cutaway, live telemetry and five native-resolution quality comparisons; 32 working Playground labs. |
 
-These systems exist in the current development branch. Visual polish, runtime performance, and feature coverage continue to evolve during alpha development.
+These capabilities are available from the default `master` branch. New work is merged when ready; visual polish, performance, and feature coverage continue to evolve during alpha.
 
 ## Designed for developers — including vibe coders
 
@@ -141,10 +124,10 @@ Hybrid and adaptive profiles are also implemented. Here, **module size** describ
 
 **Requirements:** Node.js `^20.19.0` or `>=22.12.0` and npm.
 
-The active PPAE 2.0 work is currently on the `feat/ppae-2-art-overhaul` branch and [Pull Request #2](https://github.com/Mairon31/ppae-engine/pull/2).
+Use the default **`master`** branch for the current public version. Other branches may contain experimental, unmerged work.
 
 ```bash
-git clone --branch feat/ppae-2-art-overhaul https://github.com/Mairon31/ppae-engine.git
+git clone --branch master https://github.com/Mairon31/ppae-engine.git
 cd ppae-engine
 npm ci
 npm run dev
@@ -168,7 +151,7 @@ The full build produces:
 - `dist/` — package TypeScript declarations.
 - `dist/demo/` — Vite-built standalone Playground for GitHub Pages.
 
-**Distribution note:** the package is named `@pixelproject/ppae` (currently `0.2.0-alpha.1`) in `package.json`. Publishing has not been performed. The npm tarball contains only the compiled engine, public TypeScript declarations, README, license and package metadata; the product landing, Playground, tests and technical documentation stay in GitHub. CI verifies this with `npm pack --dry-run`. See the [npm distribution guide](docs/NPM_DISTRIBUTION.md). Build this repository and install or link the local package in your game project.
+**Distribution note:** the package is named `@pixelproject/ppae` (currently `0.2.0-alpha.1`) in `package.json`; it has not yet been published to npm. Its distributable contains the compiled engine, public TypeScript declarations, README, license and package metadata, excluding the landing page, Playground and tests. CI audits the bundle with `npm pack --dry-run`. Until an official release, build and link or install it locally.
 
 ## Use the engine in TypeScript
 
@@ -285,7 +268,7 @@ The `PhaserPPAEAdapter` provides a canvas-texture registration path for generate
 
 ## Current status & roadmap
 
-PPAE is under **active alpha development**. The existing implementation covers the documented phases through **Phase 12**; new work builds on top of these systems rather than starting a replacement engine.
+PPAE is under **active alpha development**. The default `master` branch includes the existing engine systems through Phase 12. Further improvements are merged incrementally.
 
 | Area | Status |
 | :--- | :--- |
@@ -297,7 +280,7 @@ PPAE is under **active alpha development**. The existing implementation covers t
 | Full artistic validation across every seed/profile | Ongoing |
 | Broader game-framework integrations and profiling | Opportunities for contributors |
 
-**Follow development:** [Implementation progress](docs/PPAE_2_0_IMPLEMENTATION_PROGRESS.md) · [Playground architecture and QA](docs/PLAYGROUND.md) · [Open PR #2](https://github.com/Mairon31/ppae-engine/pull/2)
+**Follow development:** [Master commits](https://github.com/Mairon31/ppae-engine/commits/master) · [Issues](https://github.com/Mairon31/ppae-engine/issues) · [Open pull requests](https://github.com/Mairon31/ppae-engine/pulls)
 
 We intentionally distinguish **implemented features** from **fully production-validated behavior**. Automated build success is not a substitute for reviewing visual quality, gameplay suitability, or frame times in a real game.
 
@@ -313,7 +296,7 @@ High-impact areas include:
 4. **Game integrations** — reliable asset export pipelines, Phaser workflows, and interoperable runtime interfaces.
 5. **Developer experience** — examples, documentation, debugging tools, typed APIs, and Playground usability.
 
-**How to help:** [Browse issues](https://github.com/Mairon31/ppae-engine/issues), [propose an improvement](https://github.com/Mairon31/ppae-engine/issues/new), or review [the active development PR](https://github.com/Mairon31/ppae-engine/pull/2). For substantial changes, open an issue with the problem, expected behavior, and proposed approach before starting a large implementation. Keep pull requests focused and include tests and before/after captures for visual work.
+**How to help:** [Browse issues](https://github.com/Mairon31/ppae-engine/issues), [propose an improvement](https://github.com/Mairon31/ppae-engine/issues/new), or review [open pull requests](https://github.com/Mairon31/ppae-engine/pulls). For substantial changes, open an issue with the problem, expected behavior, and proposed approach before starting a large implementation. Keep pull requests focused and include tests and before/after captures for visual work.
 
 Contributions from experienced engineers and newcomers are welcome. Reproducible bug reports and thoughtful design criticism are valuable contributions too.
 
