@@ -182,14 +182,23 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 
 ## FASE 4: Quality assurance
 
-### FASE 4A: Anatomy, terrain, geometry and temporal diagnostics
+### FASE 4A: Geometric, Anatomical & Shoreline Quality Metrics
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada — standalone visual-regression auditor and regression fixtures
+- [x] Aplicada al repositorio — public barrel export; no changes to Phase 11 canonical references
+- [ ] Compilación aprobada — CI pending
+- [ ] Pruebas automatizadas aprobadas — CI pending
+- [ ] Revisión visual aprobada — before/after screenshots pending
+- [ ] Verificada — automatic gate integration into real producers pending
+
+**Implementation:** `src/quality/visual-regression-auditor-30.ts`, `tests/ppae-3-visual-quality-auditor-4a.test.ts` and `src/core/ppae-3-phase1-barrel.ts`.
+
+**Checks:** branch distal radius, parental cross-section, foliage-free live tips, repeated textured tile cells, bounding box/circular silhouette ratios, palette/orphan detail budgets, RGBA seams, animation temporal continuity, 3B eight-direction projection, pillow-shading heuristics and a no-silent-hash-change policy for RGBA Golden References.
+
+**Interface correction:** Phase 2B does not expose `auditBlockyShorelineArtifacts`. Phase 4A supplies a **blue-water color-mask heuristic** itself, using tile-grid transition alignment; this is not a terrain-class semantic/bathymetric proof for swamp or non-blue water. Real signed-distance shoreline and material masks must be audited separately. CI Phase 11 golden-seed benchmarks remain authoritative; no canonical hashes are modified. These functions are opt-in until wired into producers and browser visual QA.
+
+**Gate honesty:** passing synthetic cases and the golden tests is not proof that every real generated tree/cave/crop is visually correct. Treat the P0 code/API delivery and the final P0 visual acceptance as separate statuses.
+
 
 ## FASE 5: Trees, flora and geology
 

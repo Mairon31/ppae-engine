@@ -14,3 +14,4 @@ export * from '../terrain/bathymetric-water-animator';
 export * from '../entities/species-anatomical-skeleton';
 export * from '../entities/eight-direction-projection';
 export * from '../entities/high-res-anatomy-synthesizer';
+export * from '../quality/visual-regression-auditor-30';
