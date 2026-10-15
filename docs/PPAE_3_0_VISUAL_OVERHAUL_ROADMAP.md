@@ -44,6 +44,19 @@
 
 **Scope:** `src/core/resolution-contract-bridge.ts`, `src/rasterizer/surface-cluster-rasterizer.ts`, `tests/ppae-3-surface-rasterizer-1b.test.ts`; root public exports. Bridges the actual current profile constants rather than re-declaring incompatible tile sizes. `hybrid-24` is module 4/tile 48; `native-24x24` remains module 24/tile 96. The current adaptive selection is dynamic with 8/32 fallback; no new profile is usable in the legacy renderers yet. Surface raster samples a full art module by default; full tile requires explicit extent. Golden RGBA references unchanged.
 
+#### FASE 1B.2 — Multi-chunk coordinate adapter, art primitives and diagnostic barrel
+- [ ] Pendiente
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [ ] Compilación aprobada — CI pending
+- [ ] Pruebas automatizadas aprobadas — CI pending
+- [ ] Revisión visual aprobada — module output gallery not yet reviewed
+- [ ] Verificada — implementation of full legacy consumers remains pending
+
+**Code delivered:** `src/core/coordinate-resolution-adapter.ts`, `src/rasterizer/pixel-perfect-primitives.ts`, `src/core/ppae-3-phase1-barrel.ts`, `tests/ppae-3-coordinate-primitives-1b2.test.ts`, and root `src/index.ts` exports. Uses the existing 16-world-units-per-tile coordinate contract, retains native-24x24 as 24/96 and hybrid-24 as 4/48. Atlas slot computations use canonical tile size, not the module size. Pillow-shading scores are conservative heuristics, not artistic certification. Coordinate seams are mathematically continuous but this does not establish terrain pixel/color seamlessness.
+
+**Deferred full Phase 1B integration:** The legacy `GranularityProfileId`, `ArtModuleSize`, `CanonicalTileTexelSize`, `DEFAULT_STYLE_PROFILES` and downstream renderers remain unchanged. New sizes render in the standalone surface API, **not** yet in all game assets or Playground. Complete native consumer migration and visual acceptance before closing Phase 1B or proceeding as though Phases 2–11 have full native parity.
+
 #### FASE 1B.2 — Native support in legacy public contracts and consumers
 - [x] Pendiente
 - [ ] Implementación entregada
