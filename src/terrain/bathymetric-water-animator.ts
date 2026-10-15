@@ -169,7 +169,7 @@ export class BathymetricWaterAnimator {
   // At very low resolution, one fixed tone per depth band avoids excessive
   // palettes and false gradients. Water glints/foam/bed/night remain discrete.
   const maxTones=budget.maxRampTonesPerMaterial;
-  const lowDetail=budget.maxUniqueColorsPerSprite<=10;
+  const lowDetail=budget.maxUniqueColorsPerSprite<=14;
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
    const i=y*width+x;
    if(base.stratumBuffer[i]!==0)continue;
