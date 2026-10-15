@@ -25,6 +25,25 @@
 
 ### FASE 1B: Integrate public profile contracts, generators and renderer
 - [ ] Pendiente
+
+#### FASE 1B.1 — Standalone resolution contract bridge and material surface rasterizer
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [ ] Compilación aprobada — en validación
+- [ ] Pruebas automatizadas aprobadas — en validación
+- [ ] Revisión visual aprobada — requiere galería de salida real
+- [ ] Verificada — pendiente QA visual y entrega 1B.2
+
+**Scope:** `src/core/resolution-contract-bridge.ts`, `src/rasterizer/surface-cluster-rasterizer.ts`, `tests/ppae-3-surface-rasterizer-1b.test.ts`; root public exports. Bridges the actual current profile constants rather than re-declaring incompatible tile sizes. `hybrid-24` is module 4/tile 48; `native-24x24` remains module 24/tile 96. The current adaptive selection is dynamic with 8/32 fallback; no new profile is usable in the legacy renderers yet. Surface raster samples a full art module by default; full tile requires explicit extent. Golden RGBA references unchanged.
+
+#### FASE 1B.2 — Native support in legacy public contracts and consumers
+- [x] Pendiente
+- [ ] Implementación entregada
+- [ ] Aplicada al repositorio
+- [ ] Compilación aprobada
+- [ ] Pruebas automatizadas aprobadas
+- [ ] Revisión visual aprobada
+- [ ] Verificada
 - [ ] Implementación entregada
 - [ ] Aplicada al repositorio
 - [ ] Compilación aprobada
