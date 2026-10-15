@@ -168,7 +168,15 @@ export const UNIFIED_SURFACE_DETAIL_BUDGETS:
       [id,buildBudget(id as UnifiedGranularityProfileId)])
   )) as Readonly<Record<UnifiedGranularityProfileId,UnifiedSurfaceDetailBudget>>;
 
-/** This is readiness for the *five added sizes*, not legacy profiles. */
+/**
+ * Standalone 3A/3B/3C entity synthesis can accept all ten registered art
+ * module sizes. This is NOT a claim that legacy CreatureGenerator, the
+ * character generator, or the Playground have migrated to this API.
+ */
+export const STANDALONE_ENTITY_ANATOMY_TEN_RESOLUTION_AVAILABLE = true as const;
+
+/** Full subsystem readiness means consumer integration AND visual QA,
+ * not merely standalone support for the ten module sizes. */
 export const SUBSYSTEM_TEN_RESOLUTION_READINESS:
   Readonly<Record<SubsystemSupportStage,boolean>> = Object.freeze({
     'core-coordinates':false, // standalone grid only; not wired into all legacy consumers

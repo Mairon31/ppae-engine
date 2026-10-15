@@ -158,14 +158,23 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 
 **Unfinished:** 3C adds species-specific material texture and secondary anatomy. 1B.3 still requires full legacy consumer integration. Current creature cards and Playground are unchanged by this standalone projection API; do not mark full rendering parity verified.
 
-### FASE 3C: Higher-resolution textures and poses
+### FASE 3C: High-Resolution Secondary Anatomy & Material Cluster Shading
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada — species-specific secondary anatomy
+- [x] Aplicada al repositorio — standalone public API in barrel
+- [ ] Compilación aprobada — CI pending
+- [ ] Pruebas automatizadas aprobadas — CI pending
+- [ ] Revisión visual aprobada — inspect 6 species × 8 angles × 10 modules in browser
+- [ ] Verificada — consumer migration and visual parity pending
+
+**Code:** `src/entities/high-res-anatomy-synthesizer.ts`, `tests/ppae-3-high-res-anatomy-3c.test.ts`, `src/core/ppae-3-phase1-barrel.ts` and `src/core/resolution-contract-bridge.ts`.
+
+**Features:** Distinct cow piebald/muzzle/hooves, sheep fleece, wolf dorsal counter-shading and mane, avian beak/feathers, humanoid hair/clothing, corrupt-gel core and veins. Samples anatomical role metadata over the 3B projected rig. Wool, fur, hair and veins use segment-local coordinates for stability across rotations; result includes RGBA + role buffer and feature count.
+
+**Support contract:** `STANDALONE_ENTITY_ANATOMY_TEN_RESOLUTION_AVAILABLE = true` means the new independent synthesizer accepts all ten native module sizes. `SUBSYSTEM_TEN_RESOLUTION_READINESS['entity-anatomy']` remains **false** because traditional `CreatureGenerator` and `CharacterGenerator` plus Playground still use legacy paths. Phase 1B.3 and visual review are not bypassed.
+
+**Quality caveat:** `verifyTrueNativeResolutionBuffer` reports suspected upscale or inconclusive, not proof of native art. Pillow shading is a heuristic, not an automatic artistic certificate. Full 3D-coherent pattern sampling, anatomy quality, pixel readability at 4x4, and before/after screenshots remain to be verified during QA; do not claim Phase 3 fully visually accepted.
+
 
 ## FASE 4: Quality assurance
 
