@@ -48,7 +48,7 @@ describe('International PPAE landing and Playground language', () => {
     expect(translatedLiteral('ONE ENGINE.','en')).toBe('ONE ENGINE.');
   });
 
-  it('keeps README translations separate and excluded from npm', () => {
+  it('keeps public README translations in root and excludes internal documentation links', () => {
     const readme = sourceFile('README.md');
     expect(readme).toContain('(README.es.md)');
     expect(readme).toContain('(README.pt-BR.md)');

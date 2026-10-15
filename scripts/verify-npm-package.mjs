@@ -18,8 +18,11 @@ try {
 if (!metadata || !Array.isArray(metadata.files)) throw new Error('Empty npm package manifest');
 
 const fileNames = metadata.files.map(({ path }) => path);
+// npm always includes matching root README variants even when "files" is a
+// whitelist and .npmignore lists them. Explicitly allow ONLY the two public
+// translated READMEs; still block /docs and all application/site artifacts.
 const allowed = name =>
-  ['package.json', 'README.md', 'LICENSE'].includes(name) ||
+  ['package.json', 'README.md', 'README.es.md', 'README.pt-BR.md', 'LICENSE'].includes(name) ||
   /^dist\/library\/.+\.(?:js|mjs|cjs)(?:\.map)?$/.test(name) ||
   /^dist\/(?!demo\/).+\.d\.(?:ts|mts|cts)$/.test(name);
 
