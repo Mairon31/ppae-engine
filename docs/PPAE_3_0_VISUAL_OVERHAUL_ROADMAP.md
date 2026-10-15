@@ -186,8 +186,8 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 - [ ] Pendiente
 - [x] Implementación entregada — standalone visual-regression auditor and regression fixtures
 - [x] Aplicada al repositorio — public barrel export; no changes to Phase 11 canonical references
-- [ ] Compilación aprobada — CI pending
-- [ ] Pruebas automatizadas aprobadas — CI pending
+- [x] Compilación aprobada — TypeScript declarations, library and demo build PASS
+- [x] Pruebas automatizadas aprobadas — 277/277 tests, 46/46 suites
 - [ ] Revisión visual aprobada — before/after screenshots pending
 - [ ] Verificada — automatic gate integration into real producers pending
 
@@ -196,6 +196,8 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 **Checks:** branch distal radius, parental cross-section, foliage-free live tips, repeated textured tile cells, bounding box/circular silhouette ratios, palette/orphan detail budgets, RGBA seams, animation temporal continuity, 3B eight-direction projection, pillow-shading heuristics and a no-silent-hash-change policy for RGBA Golden References.
 
 **Interface correction:** Phase 2B does not expose `auditBlockyShorelineArtifacts`. Phase 4A supplies a **blue-water color-mask heuristic** itself, using tile-grid transition alignment; this is not a terrain-class semantic/bathymetric proof for swamp or non-blue water. Real signed-distance shoreline and material masks must be audited separately. CI Phase 11 golden-seed benchmarks remain authoritative; no canonical hashes are modified. These functions are opt-in until wired into producers and browser visual QA.
+
+**CI evidence:** [Run 38761284552](https://github.com/Mairon31/ppae-engine/actions/runs/38761284552) — 277/277 tests, 46/46 suites PASS; TypeScript, production library, demo build, 68-file npm pack audit and 197813 compressed bytes PASS. All ten Phase 11 Golden Reference hashes remain unchanged, verified by the existing benchmark tests.
 
 **First real regression discovered (not suppressed):** [CI run 38761035937](https://github.com/Mairon31/ppae-engine/actions/runs/38761035937) identified excessive same-color singleton material tones in the standalone 3C wolf at 24×24 (19/51 opaque pixels, orphan ratio **0.3725**, versus allowed **0.18**). Pillow shading, geometric excess and palette count pass. Phase 4A asserts that the wolf fails the quality gate while a clean articulated positive-control silhouette passes. **3C wolf cluster cleanup remains P0 corrective work**; do not misrepresent a passing auditor test as passing creature artwork.
 
