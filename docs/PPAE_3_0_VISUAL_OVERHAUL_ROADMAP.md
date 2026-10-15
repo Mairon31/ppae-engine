@@ -29,10 +29,18 @@
 #### FASE 1B.1 — Standalone resolution contract bridge and material surface rasterizer
 - [x] Implementación entregada
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — en validación
-- [ ] Pruebas automatizadas aprobadas — en validación
-- [ ] Revisión visual aprobada — requiere galería de salida real
-- [ ] Verificada — pendiente QA visual y entrega 1B.2
+- [x] Compilación aprobada — TypeScript, biblioteca y Playground
+- [x] Pruebas automatizadas aprobadas — 225/225 tests, 38/38 suites
+- [ ] Revisión visual aprobada — requiere galería real antes/después y revisión artística
+- [ ] Verificada — pendiente revisión visual y cableado de consumidores en 1B.2
+
+**Evidencia de implementación:** [GitHub Actions 38678948836](https://github.com/Mairon31/ppae-engine/actions/runs/38678948836) (225 tests, 38 suites, build PASS, npm package audit PASS). Paquete: 56 archivos, 151774 bytes comprimidos; no publicado.
+
+**Correcciones respecto al borrador de Gemini Argon:** El módulo artístico no equivale al tile canónico. Por ejemplo, `micro-4x4` usa 4/24, `standard-16x16` usa 16/64, `native-24x24` se registró en 1A como 24/96 y `hybrid-24` conserva 4/48. Un tile representa **16 unidades lógicas de mundo** en el motor actual, no una. `adaptive-auto` utiliza la selección dinámica actual, con 8/32 solo como fallback declarativo. No se proclama integración nativa en otros generadores.
+
+**Superficie nueva:** el rasterizador genera por defecto un buffer de un módulo artístico; permite solicitar explícitamente un tile canónico completo. La salida incluye `PixelBuffer` real y datos RGBA de alfa binario, máscaras de material y normales, todos probados. Un SDF con iluminación normalizada no demuestra por sí solo que las figuras resulten artísticamente mejores: falta QA de escenas y assets.
+
+**FASE 1B.2 pendiente:** integrar `ArtStyleProfile`, `GranularityProfileId`, `CoordinateSystem`, rasterizadores dependientes y validación de todos los consumidores en sus contratos reales. Los cinco perfiles nuevos todavía no están expuestos como modos completos del motor y el Playground.
 
 **Scope:** `src/core/resolution-contract-bridge.ts`, `src/rasterizer/surface-cluster-rasterizer.ts`, `tests/ppae-3-surface-rasterizer-1b.test.ts`; root public exports. Bridges the actual current profile constants rather than re-declaring incompatible tile sizes. `hybrid-24` is module 4/tile 48; `native-24x24` remains module 24/tile 96. The current adaptive selection is dynamic with 8/32 fallback; no new profile is usable in the legacy renderers yet. Surface raster samples a full art module by default; full tile requires explicit extent. Golden RGBA references unchanged.
 
