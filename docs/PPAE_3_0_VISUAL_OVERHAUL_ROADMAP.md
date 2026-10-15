@@ -12,12 +12,16 @@
 
 ### FASE 1A: Registry, budgets and integer grid (this delivery)
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [x] Compilación aprobada
+- [x] Pruebas automatizadas aprobadas
+- [ ] Revisión visual aprobada — se realizará tras integrar un generador en FASE 1B/1C
+- [ ] Verificada — pendiente revisión visual, sin activar perfiles nuevos en producción
+
+**Evidencia técnica:** [CI del commit b959703](https://github.com/Mairon31/ppae-engine/actions/runs/38677272934), 37 suites / 214 tests, incluidos 10 tests de 1A; npm build y package audit PASS. Paquete de 54 archivos / 142624 bytes comprimidos, no publicado.
+
+**Limitaciones:** Los cinco tamaños nuevos todavía no son seleccionables en el Playground. El método de bloques RGBA detecta patrones compatibles con reescalado, pero no puede acreditar por sí mismo la procedencia nativa de una imagen.
 
 ### FASE 1B: Integrate public profile contracts, generators and renderer
 - [ ] Pendiente
