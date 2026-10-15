@@ -48,12 +48,13 @@ describe('International PPAE landing and Playground language', () => {
     expect(translatedLiteral('ONE ENGINE.','en')).toBe('ONE ENGINE.');
   });
 
-  it('keeps README translations separate and excluded from npm', () => {
+  it('keeps public README translations in root and excludes internal documentation links', () => {
     const readme = sourceFile('README.md');
-    expect(readme).toContain('docs/i18n/README.es.md');
-    expect(readme).toContain('docs/i18n/README.pt-BR.md');
+    expect(readme).toContain('(README.es.md)');
+    expect(readme).toContain('(README.pt-BR.md)');
+    expect(readme).not.toContain('docs/');
     expect(readme).not.toContain('<summary><strong>Español');
-    for (const file of ['docs/i18n/README.es.md','docs/i18n/README.pt-BR.md']) {
+    for (const file of ['README.es.md','README.pt-BR.md']) {
       const translated = sourceFile(file);
       expect(translated).toContain('PPAE Engine');
       expect(translated).toContain('npm run build');

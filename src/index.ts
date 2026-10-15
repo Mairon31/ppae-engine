@@ -1,6 +1,7 @@
 export * from './core/contracts';
 export * from './core/deterministic';
 export * from './core/coordinates';
+export * from './core/ppae-3-phase1-barrel';
 export * from './palette/palette-manager';
 export * from './rasterizer/pixel-buffer';
 export * from './art-generator/grammars';
