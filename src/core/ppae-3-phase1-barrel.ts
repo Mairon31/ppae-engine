@@ -8,3 +8,4 @@ export * from './resolution-contract-bridge';
 export * from './coordinate-resolution-adapter';
 export * from '../rasterizer/surface-cluster-rasterizer';
 export * from '../rasterizer/pixel-perfect-primitives';
+export * from '../terrain/hydrology-sdf-topology';

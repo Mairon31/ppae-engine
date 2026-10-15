@@ -81,12 +81,19 @@
 
 ### FASE 2A: Stream topology and distance fields
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [ ] Compilación aprobada — CI pending
+- [ ] Pruebas automatizadas aprobadas — CI pending
+- [ ] Revisión visual aprobada — requires field-to-tile rendering in Phase 2B
+- [ ] Verificada — visual terrain integration pending
+
+**Implementation:** `src/terrain/hydrology-sdf-topology.ts`, `tests/ppae-3-hydrology-topology-2a.test.ts`, public barrel exports. Deterministic continuous signed implicit field for curving rivers, tributaries, deltas, lakes/islands, ocean, flow, banks, depth, foam and waterfalls.
+
+**Coordinate contract:** `sampleWorldHydrology(wx,wy)` takes coordinates in **world tiles** (1 world tile = 16 existing engine logical units). The chunk sampler maps canonical tile texels to this field; native-24x24 is module 24/tile 96, hybrid-24 is module 4/tile 48.
+
+**Limitations:** This is an approximate signed implicit topology field, NOT an exact globally measured Euclidean SDF and NOT a fluid physics simulator. No changes to existing `DeterministicWorldField`, liquid renderer or autotiler yet; visual river corrections depend on Phase 2B/C. Phase 1B.3 generator integration remains pending.
+
 
 ### FASE 2B: Shoreline joining and sandbanks
 - [ ] Pendiente
