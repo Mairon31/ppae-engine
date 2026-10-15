@@ -72,7 +72,7 @@ describe('PPAE 3.0 / Phase 1B.2 — coordinate and primitive integration',()=>{
     const thirtySix=new CoordinateResolutionAdapter('native-36x36');
     const s36=thirtySix.computeAtlasSlotMetrics(0.25,0.25,2,0.5,0.5);
     expect([s36.spriteWidthTexels,s36.spriteHeightTexels]).toEqual([36,36]);
-    expect(s36.pivotInSlotX).toBe(19);
+    expect(s36.pivotInSlotX).toBe(20); // (36 - 1)/2 = 17.5 => 18, plus 2 texels of padding
     expect(s36.innerMarginTexels).toBe(2);
   });
 
