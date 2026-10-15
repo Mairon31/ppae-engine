@@ -147,7 +147,7 @@ describe('PPAE 3.0 Phase 4A — Evolved Visual Quality & Regression Auditor', ()
       wolfSprite.height,
       'native-24x24'
     );
-    expect(comprehensive.overallPassed).toBe(true);
+    expect(comprehensive.overallPassed, JSON.stringify(comprehensive)).toBe(true);
   });
 
   it('verifies cross-chunk pixel seam continuity and temporal animation continuity on Phase 2C water chunks', () => {
