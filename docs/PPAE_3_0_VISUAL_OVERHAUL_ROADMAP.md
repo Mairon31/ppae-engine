@@ -24,7 +24,7 @@
 **Limitaciones:** Los cinco tamaños nuevos todavía no son seleccionables en el Playground. El método de bloques RGBA detecta patrones compatibles con reescalado, pero no puede acreditar por sí mismo la procedencia nativa de una imagen.
 
 ### FASE 1B: Integrate public profile contracts, generators and renderer
-- [ ] Pendiente
+- [x] En desarrollo — 1B.1 and 1B.2 technical gates passed; 1B.3 and visual parity pending
 
 #### FASE 1B.1 — Standalone resolution contract bridge and material surface rasterizer
 - [x] Implementación entregada
@@ -40,7 +40,7 @@
 
 **Superficie nueva:** el rasterizador genera por defecto un buffer de un módulo artístico; permite solicitar explícitamente un tile canónico completo. La salida incluye `PixelBuffer` real y datos RGBA de alfa binario, máscaras de material y normales, todos probados. Un SDF con iluminación normalizada no demuestra por sí solo que las figuras resulten artísticamente mejores: falta QA de escenas y assets.
 
-**FASE 1B.2 pendiente:** integrar `ArtStyleProfile`, `GranularityProfileId`, `CoordinateSystem`, rasterizadores dependientes y validación de todos los consumidores en sus contratos reales. Los cinco perfiles nuevos todavía no están expuestos como modos completos del motor y el Playground.
+**FASE 1B.3 pendiente:** integrar `ArtStyleProfile`, `GranularityProfileId`, `CoordinateSystem`, rasterizadores dependientes y validar los consumidores en sus contratos reales. Los cinco perfiles nuevos todavía no están expuestos como modos completos del motor y el Playground.
 
 **Scope:** `src/core/resolution-contract-bridge.ts`, `src/rasterizer/surface-cluster-rasterizer.ts`, `tests/ppae-3-surface-rasterizer-1b.test.ts`; root public exports. Bridges the actual current profile constants rather than re-declaring incompatible tile sizes. `hybrid-24` is module 4/tile 48; `native-24x24` remains module 24/tile 96. The current adaptive selection is dynamic with 8/32 fallback; no new profile is usable in the legacy renderers yet. Surface raster samples a full art module by default; full tile requires explicit extent. Golden RGBA references unchanged.
 
@@ -48,23 +48,19 @@
 - [ ] Pendiente
 - [x] Implementación entregada
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — CI pending
-- [ ] Pruebas automatizadas aprobadas — CI pending
+- [x] Compilación aprobada — TypeScript, library and package build PASS
+- [x] Pruebas automatizadas aprobadas — 235/235 tests in 39 suites
 - [ ] Revisión visual aprobada — module output gallery not yet reviewed
 - [ ] Verificada — implementation of full legacy consumers remains pending
 
 **Code delivered:** `src/core/coordinate-resolution-adapter.ts`, `src/rasterizer/pixel-perfect-primitives.ts`, `src/core/ppae-3-phase1-barrel.ts`, `tests/ppae-3-coordinate-primitives-1b2.test.ts`, and root `src/index.ts` exports. Uses the existing 16-world-units-per-tile coordinate contract, retains native-24x24 as 24/96 and hybrid-24 as 4/48. Atlas slot computations use canonical tile size, not the module size. Pillow-shading scores are conservative heuristics, not artistic certification. Coordinate seams are mathematically continuous but this does not establish terrain pixel/color seamlessness.
 
+**Phase 1B.2 technical QA:** [GitHub Actions 38680396314](https://github.com/Mairon31/ppae-engine/actions/runs/38680396314) — 39/39 suites, 235/235 tests, build PASS, npm package audit PASS; 59 packed files (157989 bytes compressed), no release. First run failed due to an incorrect test pivot expectation (even 36px width, center round(17.5)=18 plus padding 2 => 20), corrected with no atlas algorithm change.
+
 **Deferred full Phase 1B integration:** The legacy `GranularityProfileId`, `ArtModuleSize`, `CanonicalTileTexelSize`, `DEFAULT_STYLE_PROFILES` and downstream renderers remain unchanged. New sizes render in the standalone surface API, **not** yet in all game assets or Playground. Complete native consumer migration and visual acceptance before closing Phase 1B or proceeding as though Phases 2–11 have full native parity.
 
-#### FASE 1B.2 — Native support in legacy public contracts and consumers
+#### FASE 1B.3 — Complete legacy public profile and generator migration
 - [x] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
 - [ ] Implementación entregada
 - [ ] Aplicada al repositorio
 - [ ] Compilación aprobada
