@@ -101,33 +101,27 @@
 - [ ] Pendiente
 - [x] Implementación entregada — standalone 47-mask field-backed shoreline sampler
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — CI pending
-- [ ] Pruebas automatizadas aprobadas — CI pending
+- [x] Compilación aprobada — build PASS
+- [x] Pruebas automatizadas aprobadas — 253/253 tests, 42 suites (combined 2B+2C CI)
 - [ ] Revisión visual aprobada — browser/terrain comparison pending
 - [ ] Verificada — legacy autotiler integration pending
 
 **Implementation:** `src/terrain/shoreline-autotiler-47.ts`, `tests/ppae-3-shoreline-autotiler-2b.test.ts`. Reuses original `CANONICAL_47_AUTOTILE_MASKS`; samples the signed implicit shoreline field per texel for sand/wetland/water rather than stamping square shore overlays. This prerequisite was absent in the branch and had to be created before Phase 2C. No legacy renderer replacement yet.
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
 
 ### FASE 2C: Water depth, flow and animation
 - [ ] Pendiente
 - [x] Implementación entregada — standalone bathymetric/optical water animator
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — CI pending
-- [ ] Pruebas automatizadas aprobadas — CI pending
+- [x] Compilación aprobada — build PASS
+- [x] Pruebas automatizadas aprobadas — 253/253 tests, 42 suites
 - [ ] Revisión visual aprobada — animation sequences and game world pending
 - [ ] Verificada — integration and visual acceptance pending
 
 **Implementation:** `src/terrain/bathymetric-water-animator.ts`, `tests/ppae-3-water-animation-2c.test.ts`. Six biome profiles, world-space periodic currents/shore/waterfall foam, quantized material ramps, shallow-bed visibility and lighting response. Tests cover exact frame wrapping, immutable land, all ten art modules and hybrid-24, palette compliance, and chunk-edge phase stability.
 
+**Validation:** [CI run 38747183127](https://github.com/Mairon31/ppae-engine/actions/runs/38747183127), 253 tests/42 suites, build PASS, npm pack audit PASS, 62 packed files (166406 packed bytes), no npm publish.
+
 **Readiness honesty:** `SUBSYSTEM_TEN_RESOLUTION_READINESS['terrain-hydrology']` remains `false` until `DeterministicWorldField`, `ChunkWorldRenderer`, and `LiquidTileGenerator` actually use the new modules in production and image QA passes. This explicit integration gate remains even though standalone Phase 2A/2B/2C APIs exist. Phase 1B.3 is also outstanding.
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
 
 ## FASE 3: Species anatomy and 8 directions
 
