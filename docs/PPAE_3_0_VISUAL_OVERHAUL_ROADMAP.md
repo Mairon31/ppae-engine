@@ -129,13 +129,15 @@
 - [ ] Pendiente
 - [x] Implementación entregada
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — CI pendiente
-- [ ] Pruebas automatizadas aprobadas — CI pendiente
+- [x] Compilación aprobada — library, TypeScript, demo, npm package audit
+- [x] Pruebas automatizadas aprobadas — 258/258 tests in 43 suites
 - [ ] Revisión visual aprobada — requiere renders reales en el Playground
 - [ ] Verificada — renderer y proyección 8 direcciones pendientes
 
 **Code:** `src/entities/species-anatomical-skeleton.ts`, `tests/ppae-3-creature-anatomy-3a.test.ts`, `src/core/ppae-3-phase1-barrel.ts`.
 Six standalone anatomical families with articulated limbs, deterministic gait phases, body conditions, five life stages, accessory anchors, mass/bounds, support contacts and ground support hull. Head/torso allometry and wolf thorax/abdomen proportions are regression-tested.
+
+**CI evidence:** [GitHub Actions run 38751816188](https://github.com/Mairon31/ppae-engine/actions/runs/38751816188) — 43/43 suites, 258/258 tests, production library and demo build PASS, npm package audit PASS. The FASE 3A integration is still structural only; visual fidelity and rendering parity remain unverified.
 
 **Scope limit:** This is a 2.5D **rig description API** only. Existing `CreatureGenerator`, character sprites, 8-direction projection, rasterizer composition, and Playground remain on their current renderers until Phase 3B/3C integration. A passing structural test is not visual acceptance.
 
