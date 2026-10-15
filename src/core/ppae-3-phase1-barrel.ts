@@ -9,3 +9,4 @@ export * from './coordinate-resolution-adapter';
 export * from '../rasterizer/surface-cluster-rasterizer';
 export * from '../rasterizer/pixel-perfect-primitives';
 export * from '../terrain/hydrology-sdf-topology';
+export * from '../terrain/shoreline-autotiler-47';
