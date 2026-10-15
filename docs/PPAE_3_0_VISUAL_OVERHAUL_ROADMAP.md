@@ -127,12 +127,17 @@
 
 ### FASE 3A: Taxonomic rigs and developmental proportions
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [ ] Compilación aprobada — CI pendiente
+- [ ] Pruebas automatizadas aprobadas — CI pendiente
+- [ ] Revisión visual aprobada — requiere renders reales en el Playground
+- [ ] Verificada — renderer y proyección 8 direcciones pendientes
+
+**Code:** `src/entities/species-anatomical-skeleton.ts`, `tests/ppae-3-creature-anatomy-3a.test.ts`, `src/core/ppae-3-phase1-barrel.ts`.
+Six standalone anatomical families with articulated limbs, deterministic gait phases, body conditions, five life stages, accessory anchors, mass/bounds, support contacts and ground support hull. Head/torso allometry and wolf thorax/abdomen proportions are regression-tested.
+
+**Scope limit:** This is a 2.5D **rig description API** only. Existing `CreatureGenerator`, character sprites, 8-direction projection, rasterizer composition, and Playground remain on their current renderers until Phase 3B/3C integration. A passing structural test is not visual acceptance.
 
 ### FASE 3B: Eight-direction anatomical occlusion
 - [ ] Pendiente
