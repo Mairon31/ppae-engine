@@ -83,10 +83,12 @@
 - [ ] Pendiente
 - [x] Implementación entregada
 - [x] Aplicada al repositorio
-- [ ] Compilación aprobada — CI pending
-- [ ] Pruebas automatizadas aprobadas — CI pending
+- [x] Compilación aprobada — build + TypeScript PASS
+- [x] Pruebas automatizadas aprobadas — 243 tests, 40 suites
 - [ ] Revisión visual aprobada — requires field-to-tile rendering in Phase 2B
 - [ ] Verificada — visual terrain integration pending
+
+**CI evidence:** [GitHub Actions 38682124926](https://github.com/Mairon31/ppae-engine/actions/runs/38682124926), 243/243 tests, 40/40 suites, npm build PASS, npm package audit PASS; 60 files, 161875 packed bytes, no publish.
 
 **Implementation:** `src/terrain/hydrology-sdf-topology.ts`, `tests/ppae-3-hydrology-topology-2a.test.ts`, public barrel exports. Deterministic continuous signed implicit field for curving rivers, tributaries, deltas, lakes/islands, ocean, flow, banks, depth, foam and waterfalls.
 
