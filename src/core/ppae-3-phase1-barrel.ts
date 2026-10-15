@@ -12,3 +12,4 @@ export * from '../terrain/hydrology-sdf-topology';
 export * from '../terrain/shoreline-autotiler-47';
 export * from '../terrain/bathymetric-water-animator';
 export * from '../entities/species-anatomical-skeleton';
+export * from '../entities/eight-direction-projection';

@@ -143,12 +143,18 @@ Six standalone anatomical families with articulated limbs, deterministic gait ph
 
 ### FASE 3B: Eight-direction anatomical occlusion
 - [ ] Pendiente
-- [ ] Implementación entregada
-- [ ] Aplicada al repositorio
-- [ ] Compilación aprobada
-- [ ] Pruebas automatizadas aprobadas
-- [ ] Revisión visual aprobada
-- [ ] Verificada
+- [x] Implementación entregada
+- [x] Aplicada al repositorio
+- [ ] Compilación aprobada — GitHub CI pending
+- [ ] Pruebas automatizadas aprobadas — GitHub CI pending
+- [ ] Revisión visual aprobada — gallery of eight-direction sprites and side-by-side comparisons pending
+- [ ] Verificada — legacy generator and Playground integration pending
+
+**Implementation:** `src/entities/eight-direction-projection.ts`, `tests/ppae-3-eight-direction-projection-3b.test.ts` and barrel export. Phase 3A rigs project with a constant per-rig reference span into eight 2.5D views, camera-relative joint depth, visible/hidden anatomical parts, far-side limb shading, eye markers, support points and equipment anchors; standalone RGBA generation uses `SurfaceClusterRasterizer`.
+
+**Validation note:** continuity audit tests geometric changes between **45-degree views**, not identical silhouettes. Bounds calibrated against real 3A cow and wolf shapes; eye primitives added to painter ordering before display. Tests include six species, all directions, profile sizes, deterministic native 24x24 pixels, binary alpha, support points, depth ordering and directional occlusion. These are structural/pixel-data tests and **do not certify artistic quality or production creature replacement**.
+
+**Unfinished:** 3C adds species-specific material texture and secondary anatomy. 1B.3 still requires full legacy consumer integration. Current creature cards and Playground are unchanged by this standalone projection API; do not mark full rendering parity verified.
 
 ### FASE 3C: Higher-resolution textures and poses
 - [ ] Pendiente
